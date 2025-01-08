@@ -12,6 +12,8 @@ import VerificationPageDecline from "../components/notify/VerificationPageDeclin
 import VerificationPageDelete from "../components/notify/VerificationPageDelete";
 import VerificationPageSub from "../components/notify/VerificationPageSub";
 import { router } from 'expo-router';
+import LockIcon from '@/components/svgConvertedIcons/LockIcon';
+import IconBack from '@/components/svgConvertedIcons/iconBack';
 
 function VerificationScreen() {
   let [step, setStep] = useState(0);
@@ -26,22 +28,23 @@ function VerificationScreen() {
   };
 
   const goBack = () => {
-    router.push('/verification/start'); // Navigate to VerificationPageStart
-  };
+    setStep((prevStep) => (prevStep > 0 ? prevStep - 1 : prevStep));
+  };  
 
   return (
     <View style={styles.container}>
       <View style={styles.headerIcons}>
-        <Image
+        <IconBack  onPress={goBack}/>
+        {/* <Image
           resizeMode="contain"
           source={{ uri: 'https://cdn.builder.io/api/v1/image/assets/TEMP/79908b091650bce0fbdeedac444a9417ae5c46510712ac9d9abedd2132d02e2f?placeholderIfAbsent=true&apiKey=f739d4c470a340468bd500c2bd45e954' }}
           style={styles.backIcon}
-          onPress={goBack}
-        />
+         
+        /> */}
         <Text style={styles.headerTitle}>Верификация</Text>
       </View>
 
-         <ScrollView contentContainerStyle={styles.scrollViewContent}>
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
         {step === 0 && <View style={styles.startVer}>
           <VerificationPageStart onStart={() => { setStep(1) }} />
         </View>}
@@ -60,7 +63,7 @@ function VerificationScreen() {
         <View style={styles.content}>
           {step === 1 && (
             <View>
-              <Text style={styles.stepIndicator1}>Шаг 1 из 2</Text>
+              <Text style={styles.stepIndicator}>Шаг 1 из 2</Text>
               <Text style={styles.instructions}>
                 Укажите реальные имя и фамилию, для построения безопасной среды, необходимо знать своих друзей.
               </Text>
@@ -70,7 +73,7 @@ function VerificationScreen() {
           )}
           {step === 2 && (
             <View>
-              <Text style={styles.stepIndicator2}>Шаг 2 из 2</Text>
+              <Text style={styles.stepIndicator}>Шаг 2 из 2</Text>
               <Text style={styles.instructions}>
                 Добавьте главную страницу паспорта гражданина РФ и ваше фото в реальном времени, чтобы подтвердить, что вы - это вы.
               </Text>
@@ -80,10 +83,7 @@ function VerificationScreen() {
           )}
 
           <View style={styles.lockTextContainer}>
-            <Image
-              source={require('../assets/images/verification/lock.png')}
-              style={styles.lockIcon}
-            />
+            <LockIcon/>
             <Text style={styles.text}>
               После верификации аккаунта, информация удаляется, не передаётся и не хранится на серверах, в целях нашей и вашей безопасности.
             </Text>
@@ -97,10 +97,9 @@ function VerificationScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(255, 255, 255, 1)',
+    backgroundColor: 'rgba(0, 0, 0, 100)',
     flex: 1,
     width: '100%',
-    alignItems: 'center',
   },
   headerIcons: {
     flexDirection: 'row',
@@ -116,16 +115,18 @@ const styles = StyleSheet.create({
   backIcon: {
     width: 8,
     aspectRatio: 0.57,
-    tintColor: 'black',
+    tintColor: '#fff',
     position: 'absolute',
     left: 16,
+    color: '#fff',
   },
   headerTitle: {
     fontSize: 15,
-    // fontFamily: "SFUIDisplay-Bold",
-    color: 'black',
+    paddingRight: 40,
+    color: '#fff',
     textAlign: 'center',
     width: '100%',
+    fontWeight: '700',
   },
   startVer: {
     position: 'absolute',
@@ -139,7 +140,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   content: {
-    backgroundColor: "rgba(255, 255, 255, 1)",
+    backgroundColor: 'rgba(0, 0, 0, 100)',
     width: "100%",
     flexDirection: "column",
     paddingLeft: 16,
@@ -147,21 +148,20 @@ const styles = StyleSheet.create({
     paddingBottom: 41,
     maxWidth: 600,
   },
-  stepIndicator1: {
+  stepIndicator: {
     // fontFamily: "SFUIDisplay-Bold",
     fontSize: 18,
     marginTop: 186,
-  },
-  stepIndicator2: {
-    // fontFamily: "SFUIDisplay-Bold",
-    fontSize: 18,
-    marginTop: 148,
+    color: '#fff',
+    fontWeight: '700'
   },
   instructions: {
     fontSize: 12,
     // fontFamily: "SFUIDisplay-Regular",
     marginTop: 10,
-    marginBottom: 26,
+    marginBottom: 30,
+    color: '#fff',
+    fontWeight: '400'
   },
   textContainer: {
     flexGrow: 1,
@@ -178,10 +178,13 @@ const styles = StyleSheet.create({
     height: 22,
     width: 22,
     marginRight: 8,
+    color: '#fff',
   },
   text: {
     fontSize: 10,
-    // fontFamily: "SFUIDisplay-Regular",
+    color: '#fff',
+    fontWeight: '500',
+    maxWidth: '92%'
   },
   Button: {
     marginBottom: 41,

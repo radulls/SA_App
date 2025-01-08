@@ -21,8 +21,7 @@ const ProfileHeader: React.FC<UserProps> = ({ user }) => {
       <View style={styles.topContainer}>
         <View style={styles.nameContainer}>
           <Text style={styles.name}>
-            {user.first_name}
-            {user.last_name}
+            {user.first_name} {user.last_name}
           </Text>
           <Text style={styles.username}>@{user.id_login}</Text>
           <View style={styles.locationContainer}>
@@ -35,10 +34,16 @@ const ProfileHeader: React.FC<UserProps> = ({ user }) => {
         <View style={styles.imageContainer}>
           <Image
             resizeMode="contain"
-            source={{ uri: "https://cdn.builder.io/api/v1/image/assets/TEMP/215e864e9ff79bab2be218f930df30061764f9fedd439706cd5d1785045d38cb?placeholderIfAbsent=true&apiKey=f739d4c470a340468bd500c2bd45e954" }}
+            source={require('../../assets/images/avatar_post.png')}
             style={styles.profileImage}
             accessibilityLabel="Profile picture of Катя Котова"
           />
+          {/* <Image
+            resizeMode="contain"
+            source={{ uri: "https://cdn.builder.io/api/v1/image/assets/TEMP/215e864e9ff79bab2be218f930df30061764f9fedd439706cd5d1785045d38cb?placeholderIfAbsent=true&apiKey=f739d4c470a340468bd500c2bd45e954" }}
+            style={styles.profileImage}
+            accessibilityLabel="Profile picture of Катя Котова"
+          /> */}
         </View>
       </View>
       <View style={styles.descriptionContainer}>
@@ -53,8 +58,7 @@ const ProfileHeader: React.FC<UserProps> = ({ user }) => {
 const styles = StyleSheet.create({
   container: {
     marginTop: 15,
-    paddingLeft: 16,
-    paddingRight: 16,
+    paddingHorizontal: 16,
     width: "100%",
     flexDirection: "column",
     alignItems: "flex-start",
@@ -86,8 +90,8 @@ const styles = StyleSheet.create({
     // fontFamily: "SFUIDisplay-medium",
     fontSize: 14,
     color: "#000000",
-    fontWeight: "medium",
-    marginTop: 2,
+    fontWeight: "500",
+    marginTop: 6,
   },
   locationContainer: {
     flexDirection: "row",

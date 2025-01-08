@@ -22,14 +22,17 @@ const ProfileScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.contentContainer}>
           <View style={styles.locationContainer}>
-            <View style={styles.locationIcon}>
-              <Text style={styles.locationIconText}>sa</Text>
-            </View>
-            <Text style={styles.locationText}>{user.city}</Text>
+            <View style={styles.locationContainerItem}>
+              <View style={styles.locationIcon}>
+                <Text style={styles.locationIconText}>sa</Text>
+              </View>
+              <Text style={styles.locationText}>{user.city}</Text>
+            </View>            
           </View>
+          <View style={styles.line}/>
           <NavigationButtons />
           <ProfileHeader user={user} />
-          <ProfileStats user={user} />
+          {/* <ProfileStats user={user} /> */}
           <Text style={{ padding: 16 }}>
             Официальная страница Бьюти салона Светланы Чигриной SA в {user.city}
           </Text>
@@ -62,6 +65,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
 		paddingTop: 49,
+    paddingBottom: 86,
   },
 	postsContainer: {
 		alignItems: 'center',
@@ -76,6 +80,14 @@ const styles = StyleSheet.create({
     marginTop: 9,
     marginLeft: 16,
   },
+  locationContainerItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: 2,  // Ширина нижней границы
+    borderBottomColor: '#000',  // Цвет нижней границы
+    borderStyle: 'solid', 
+    paddingBottom: 8
+  },
   locationIcon: {
     backgroundColor: "#000000",
     borderRadius: 4,
@@ -84,12 +96,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  locationText: {
+    marginLeft: 3,
+  },  
   locationIconText: {
     color: "#FFFFFF",
     fontSize: 14,
     fontWeight: "bold",
     textAlign: "center",
     marginBottom: 2,
+  },
+  line: {
+    height: 1,
+    backgroundColor: '#ECECEC'
   },
   divider: {
     backgroundColor: "rgba(236, 236, 236, 1)",

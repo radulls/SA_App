@@ -43,16 +43,17 @@ const styles = StyleSheet.create({
 	nav: {
 		position: 'absolute',  
 		bottom: 0,
-		height: 63,
+		height: 83,
 		width: '100%',
 		backgroundColor: '#FDFDFD',
 		borderTopColor: '#D8D8D8',
 		borderTopWidth: 1,
 		display: 'flex',
 		flexDirection: 'row',
-		alignItems: 'center',
+		alignItems: 'start',
 		justifyContent: 'center',
 		gap: 60,
+		paddingTop: 13.5
 		// zIndex: 99
 	},
 	navigationImage: {

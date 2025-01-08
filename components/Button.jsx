@@ -13,13 +13,13 @@ const styles = StyleSheet.create({
   button: {
     borderRadius: 8,
     backgroundColor: 'rgba(0, 122, 255, 100)',
-    padding: 15,
+    padding: 16,
     alignItems: 'center',
   },
   buttonText: {
     fontSize: 12,
-    // fontFamily: "SFUIDisplay-Bold",
-    color: 'rgba(255, 255, 255, 1)',
+    color: '#fff',
+    fontWeight: '700'
   },
 });
 

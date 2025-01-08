@@ -51,14 +51,12 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 12,
     fontWeight: "700",
-    color: "rgba(0, 0, 0, 1)",
+    color: "#000",
   },
   ratingBackground: {
-    backgroundColor: "rgba(255, 231, 114, 1)",
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-    borderRadius: 3,
-    overflow: "hidden",
+    backgroundColor: "#FFE772",
+    borderRadius: 2,
+    height: 20
   },
 });
 

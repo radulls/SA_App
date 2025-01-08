@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 import { View, TextInput, Text, StyleSheet, Image, Pressable } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import PhotoAddVerification from './svgConvertedIcons/PhotoAddVerification';
 
 const InputFieldUpload = ({ label, sublabel = '', secureTextEntry = false }) => {
 	const [image, setImage] = useState(null);
@@ -23,23 +24,12 @@ const InputFieldUpload = ({ label, sublabel = '', secureTextEntry = false }) => 
 
 	return (
 		<View style={styles.container}>
-			<View>
+			<View style={styles.title}>
 				<Text style={styles.label}>{label}</Text>
 				{sublabel.length > 0 && <Text style={styles.sublabel}>{sublabel}</Text>}
 			</View>
 			<Pressable onPress={pickImage} style={styles.back}>
-				{image && <Image
-					resizeMode="contain"
-					source={{ uri: image }}
-					style={styles.icon}
-					accessibilityLabel="Verification illustration"
-				/>}
-				{!image && <Image
-					resizeMode="contain"
-					source={require('../assets/images/Rectangle.png')}
-					style={styles.icon}
-					accessibilityLabel="Verification illustration"
-				/>}
+				<PhotoAddVerification/>
 				<Text style={styles.label}>{label}</Text>
 			</Pressable>
 		</View>
@@ -50,12 +40,17 @@ const styles = StyleSheet.create({
 	container: {
 		marginBottom: 18,
 	},
+	title: {
+		display: 'flex',
+		flexDirection: 'row',
+		alignItems: 'center',
+	},
 	icon: {
 		width: 22,
 		height: 22
 	},
 	label: {
-		color: 'rgba(0, 0, 0, 1)', // Label color set to white
+		color: '#fff', // Label color set to white
 		fontSize: 14,
 		fontWeight: '700',
 		// fontFamily: 'SFUIDisplay-Bold',
@@ -63,9 +58,10 @@ const styles = StyleSheet.create({
 		// marginTop: 10
 	},
 	sublabel: {
-		color: 'rgba(0, 0, 0, 0.85)', // Label color set to white
+		color: '#fff', // Label color set to white
 		fontSize: 12,
-		fontWeight: '300',
+		fontWeight: '400',
+		paddingLeft: 3
 		// fontFamily: 'SFUIDisplay-Bold',
 	},
 	back: {
@@ -76,14 +72,12 @@ const styles = StyleSheet.create({
 		borderRadius: 10,
 		marginTop: 6,
 		gap: 10,
-		backgroundColor: 'rgba(243, 243, 243, 1)',
-		paddingLeft: 16,
-		paddingRight: 12,
-		paddingTop: 14,
-		paddingBottom: 14,
+		backgroundColor: '#1E1E1E',
+		paddingHorizontal: 16,
+		paddingVertical: 1,
 		color: 'rgba(0, 0, 0, 1)',
 		textAlignVertical: 'center',
-		height: 80,
+		height: 48,
 	},
 });
 

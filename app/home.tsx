@@ -8,22 +8,23 @@ import BottomNavigation from '../components/BottomNavigation';
 import Verification from '../components/Verification';
 import { router } from 'expo-router';
 import Helper from '../components/Helper';
+import { mockUser } from '@/components/TestData/testdata';
 
-function ProfileScreen() {
+const ProfileScreen: React.FC = () => {
 	// const user = Helper.readUser()
-	const [user, setUser] = useState({});
-	useEffect(() => {
-		const dbUser = Helper.readUser().catch(console.error).then(dbUser => {
-			console.log('dbUser', dbUser);
-			setUser(dbUser)
-		})
-		// setUser(dbUser) 
-	}, []);
+	const [user, setUser] = useState(mockUser);
+	// useEffect(() => {
+	// 	const dbUser = Helper.readUser().catch(console.error).then(dbUser => {
+	// 		console.log('dbUser', dbUser);
+	// 		setUser(dbUser)
+	// 	})
+	// 	// setUser(dbUser) 
+	// }, []);
 	return (
 		<View style={styles.container}>
-				{user?.status == 'verification_request' && <View  style={styles.verificationContainer}>
+				{/* {user?.status == 'verification_request' && <View  style={styles.verificationContainer}>
 					<Verification />
-				</View>}
+				</View>} */}
 				{true && <ScrollView contentContainerStyle={styles.scrollViewContent}>
 				<View style={styles.contentContainer}>
 					<View style={styles.headerButtons}>
@@ -33,7 +34,6 @@ function ProfileScreen() {
 								style={styles.qrIcon}
 							/>
 						</TouchableOpacity>
-
 						<View style={styles.rightIcons}>
 							<Image
 								source={require('../assets/images/profile/sos.png')}
@@ -55,7 +55,7 @@ function ProfileScreen() {
 						/>
 					</View>
 
-					<ProfileHeader user={user}/>
+					<ProfileHeader user={user} />
 					<ProfileStats user={user}/>
 					<View style={styles.divider} />
 					<Post postType="image"/>
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
 	},
 	coverImageContainer: {
 		width: '100%',
-		aspectRatio: 16 / 9,
+		height: 210,
 	},
 	coverImage: {
 		width: '100%',

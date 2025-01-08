@@ -42,8 +42,8 @@ const styles = StyleSheet.create({
     alignItems: "stretch",
     gap: 10,
     width: '100%',
-    paddingTop: 10,
-    paddingLeft: 5,
+    paddingTop: 20,
+    paddingLeft: 16,
     
     fontFamily: "SF UI Display, sans-serif",
     fontSize: 12,
@@ -57,8 +57,8 @@ const styles = StyleSheet.create({
     borderStyle: "solid",
     borderWidth: 1,
     maxWidth: '33%',
-    paddingHorizontal: 18,
-    paddingVertical: 14,
+    paddingHorizontal: 31,
+    paddingVertical: 12,
   },
   activeButton: {
     backgroundColor: "#000",

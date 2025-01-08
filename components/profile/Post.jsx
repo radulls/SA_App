@@ -36,19 +36,19 @@ const ActionButtons = () => (
 const PostContent = ({ imageUri, captionText, postType }) => (
 	<>
 		{postType == 'image' && <Image
-			resizeMode="contain"
+			resizeMode="cover"
 			// source={{ uri: imageUri }}
 			source={require('../../assets/images/post.png')}
 			style={styles.postImage}
 		/>}
 		{postType == 'video' && <TouchableOpacity style={styles.postImage_video} onPress={() => { router.push('/PostView') }}><Image
-			resizeMode="contain"
+			resizeMode="cover"
 			// source={{ uri: imageUri }}
 			source={require('../../assets/images/post_video.png')}
 			style={styles.postImage_video}
 		/></TouchableOpacity>}
 		<Image
-			resizeMode="contain"
+			resizeMode="cover"
 			source={{ uri: "http://test.ru/sadasd.jpg" }}
 			style={styles.postIcon}
 		/>
@@ -115,21 +115,23 @@ const styles = StyleSheet.create({
 		width: '100%',
 		flexDirection: 'column',
 		alignItems: 'center',
+		marginBottom: 40
 	},
 	postContent: {
 		display: 'flex',
 		width: '100%',
 		flexDirection: 'row',
-		maxWidth: 382,
-		alignItems: 'stretch',
-		gap: 20,
-		justifyContent: 'space-between',
+		
+		// alignItems: 'stretch',
+		// gap: 20,
+		// justifyContent: 'space-between',
 	},
 	postHeader: {
 		display: 'flex',
 		flexDirection: 'row',
 		alignItems: 'center',
 		gap: 10,
+		marginLeft: 10
 		// fontFamily: 'SF UI Display, sans-serif',
 	},
 	avatarImage: {
@@ -181,9 +183,10 @@ const styles = StyleSheet.create({
 		// display: 'flex',
 		marginTop: 7,
 		width: '100%',
+		// height: '100%'
 		// objectFit: 'cover',
 		// maxHeight: 496,
-		aspectRatio: 0.8,
+		
 	},
 	postImage_video: {
 		alignSelf: 'stretch',
@@ -204,6 +207,8 @@ const styles = StyleSheet.create({
 	},
 	captionContainer: {
 		marginTop: 0,
+		paddingHorizontal: 16,
+		paddingTop: 13
 	},
 	captionText: {
 		color: 'rgba(0, 0, 0, 1)',

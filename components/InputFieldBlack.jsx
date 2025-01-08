@@ -20,7 +20,7 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   label: {
-    color: 'rgba(0, 0, 0, 1)', // Label color set to white
+    color: '#fff', // Label color set to white
     fontSize: 14,
     fontWeight: '700',
     // fontFamily: 'SFUIDisplay-Bold',
@@ -28,13 +28,14 @@ const styles = StyleSheet.create({
   },
   input: {
     borderRadius: 12,
-    backgroundColor: 'rgba(243, 243, 243, 1)',
+    backgroundColor: '#1E1E1E',
     paddingLeft: 12,
     paddingRight: 12,
     paddingTop: 14,  
     paddingBottom: 14,
-    color: 'rgba(0, 0, 0, 1)', 
-    textAlignVertical: 'center',
+    color: '#fff', 
+    fontSize: 14,
+    fontWeight: '400',
     height: 48,
   },
 });

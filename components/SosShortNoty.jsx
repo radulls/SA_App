@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 10,
 		paddingVertical: 9,
 		backgroundColor: "#000000",
-		width: 80
+		width: 81
 	},
 	actionButtonText: {
 		fontSize: 12,
