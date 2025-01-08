@@ -10,33 +10,37 @@ import City from '../components/register/City';
 import Button from '../components/Button';
 import { Link } from 'expo-router';
 import { router } from 'expo-router';
-import Helper from '../components/Helper';
+import { post } from '../api/index'; // Подключаем API
 
-const RegistrationScreen = () => {
-  const [step, setStep] = useState(0);
-  const [formData, setFormData] = useState({});
+const RegistrationScreen: React.FC = () => {
+  const [step, setStep] = useState<number>(0);
+  const [formData, setFormData] = useState<Record<string, any>>({});
 
   const handleNext = async () => {
-    let nextStep = step + 1;
+    const nextStep = step + 1;
 
     if (nextStep > 6) {
-      let newUserResponse =  await Helper.post('users/add', formData)
-      console.log('newUserResponse', newUserResponse)
-      router.push('/verification');
+      try {
+        // Отправка данных на API /users/register
+        const newUserResponse = await post('/users/register', formData);
+        console.log('newUserResponse', newUserResponse);
+        router.push('/verification'); // Переход на страницу верификации
+      } catch (error) {
+        console.error('Error during registration:', error);
+      }
     } else {
       setStep(nextStep);
     }
   };
 
   const handleBack = () => {
-    let prevStep = step - 1;
+    const prevStep = step - 1;
     if (prevStep >= 0) {
       setStep(prevStep);
     }
   };
 
-  const handleDataChange = (data) => {
-    console.log('handleDataChange', data, formData)
+  const handleDataChange = (data: Record<string, any>) => {
     setFormData({ ...formData, ...data });
   };
 
