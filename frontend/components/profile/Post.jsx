@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
 	},
 	usernameContainer: {
 		alignSelf: 'center',
-		margin: 'auto 0',
+		marginHorizontal: "auto",
 	},
 	username: {
 		color: 'rgba(0, 0, 0, 1)',
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
 	},
 	timeContainer: {
 		alignSelf: 'center',
-		margin: 'auto 0',
+		marginHorizontal: "auto",
 	},
 	timePosted: {
 		color: 'rgba(105, 105, 105, 1)',
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
 		display: 'flex',
 		alignItems: 'stretch',
 		gap: 20,
-		margin: 'auto 0',
+		marginHorizontal: "auto",
 	},
 	actionIcon: {
 		borderRadius: 0,
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
 		flexDirection: 'row',
 		alignItems: 'stretch',
 		gap: 13,
-		margin: 'auto 0',
+		marginHorizontal: "auto",
 	},
 	likesContainer: {
 		flexGrow: 1,

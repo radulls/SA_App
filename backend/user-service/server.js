@@ -15,8 +15,13 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // Роуты
+app.get('/api', (req, res) => {
+  res.status(200).json({ message: 'API is working!' });
+});
 app.use('/api/users', require('./src/routes/userRoutes')); // Роуты пользователей
 app.use('/api/cities', require('./src/routes/cityRoutes')); // Роуты городов
+app.use('/uploads', express.static('uploads'));
+
 
 const PORT = process.env.PORT || 5001;
 

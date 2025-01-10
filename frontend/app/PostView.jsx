@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     overflow: "hidden",
     alignItems: "stretch",
-    margin: "0 auto",
+    marginHorizontal: "auto",
   },
   postContainer: {
     backgroundColor: "rgba(0, 0, 0, 1)",
@@ -114,7 +114,9 @@ const styles = StyleSheet.create({
     width: "100%",
     flexDirection: "column",
     alignItems: "start",
-    padding: "59px 16px 21px",
+    paddingTop: 59,
+    paddingHorizontal: 16,
+    paddingBottom: 21,
   },
   backButton: {
     // borderRadius: "0px 0px 0px 0px",
@@ -144,7 +146,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     // fontFamily: "SF UI Display, sans-serif",
     color: "rgba(255, 255, 255, 1)",
-    padding: "0 33px 0 16px",
+    paddingVertical: 0,
+    paddingRight: 33,
+    paddingLeft: 16,
   },
   userAvatar: {
     // borderRadius: "0px 0px 0px 0px",
@@ -166,11 +170,11 @@ const styles = StyleSheet.create({
     marginLeft: 11,
 },
 postTimeText: {
-    color: 'white',
-    textShadow: "0px 1px 1px rgba(0, 0, 0, 0.5)",
-    fontSize: 12,
-    fontWeight: "400",
-  },
+  color: "white",
+  fontSize: 12,
+  fontWeight: "400",
+  textShadow: "0px 1px 1px rgba(0, 0, 0, 0.5)", // Смещение X, Y, размытие и цвет
+},
   postText: {
     marginTop: 6,
   },
@@ -185,7 +189,9 @@ postTimeText: {
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
-    margin: "14px 0 -4px",
+    marginTop: 14,    
+    marginHorizontal: 0,    
+    marginBottom: -4,    
   },
   progressFill: {
     backgroundColor: "rgba(147, 247, 255, 1)",
@@ -208,7 +214,9 @@ postTimeText: {
     width: "100%",
     flexDirection: "column",
     alignItems: "stretch",
-    padding: "18px 19px 36px",
+    paddingTop: 18,
+    paddingHorizontal: 19,
+    paddingBottom: 36,
   },
   commentInput: {
     color: "rgba(139, 139, 139, 1)",

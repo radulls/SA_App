@@ -2,12 +2,15 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
 const userSchema = new mongoose.Schema({
+  code: { type: String, unique: true, required: true },
   username: { type: String, unique: true, required: true }, // Уникальный username
-  firstName: { type: String, required: true },             // Имя
-  lastName: { type: String, required: true },              // Фамилия
+  firstName: { type: String, required: false },             // Имя
+  lastName: { type: String, required: false },              // Фамилия
+  passportPhoto: { type: String, required: false }, // Ссылка на фото паспорта
+  selfiePhoto: { type: String, required: false },   // Ссылка на селфи
   email: { type: String, unique: true, required: true },   // Почта
   phone: { type: String, required: true },                 // Телефон
-  city: { type: mongoose.Schema.Types.ObjectId, ref: 'City', required: true }, // Ссылка на город
+  city: { type: String, required: true },                  // Город (теперь строка)
   role: { type: String, enum: ['user', 'admin', 'creator'], default: 'user' }, // Роль
   rating: { type: Number, default: 0 },                    // Рейтинг
   subscriptionActive: { type: Boolean, default: false },   // Активна ли подписка

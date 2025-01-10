@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     overflow: "hidden",
     alignItems: "stretch",
-    margin: "0 auto",
+    marginHorizontal: "auto",
   },
   messageContainer: {
     display: "flex",

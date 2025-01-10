@@ -38,14 +38,12 @@ const styles = StyleSheet.create({
     flexBasis: "auto",
   },
   errorText: {
-    color: "rgba(255, 255, 255, 1)",
-    fontWeight: '700',
-    fontSize: 12,
-    // fontFamily: 'SF UI Display, sans-serif',
-    textShadowColor: 'rgba(162, 162, 162, 1)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 1,
-  },
+    color: "rgba(255, 255, 255, 1)", // Цвет текста
+    fontWeight: "700",              // Толщина шрифта
+    fontSize: 12,                   // Размер текста
+    fontFamily: "SFUIDisplay-Bold", // Название шрифта, который должен быть загружен через expo-font
+    textShadow: "0px 1px 1px rgba(162, 162, 162, 1)", // Смещение X, Y, размытие и цвет
+  },  
 });
 
 export default ErrorMessage;

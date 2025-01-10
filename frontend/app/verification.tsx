@@ -1,99 +1,138 @@
 import React, { useState } from 'react';
-
-import { View, ScrollView, StyleSheet, Image, Text, Pressable } from "react-native";
-// import Header from "./Header";
-import InputFieldBlack from "../components/InputFieldBlack";
-import InputFieldUpload from "../components/InputFieldUpload";
-// import SecurityInfo from "./SecurityInfo";
-import Button from "../components/Button";
-import VerificationPageStart from "../components/notify/VerificationPageStart";
-import VerificationPageProgress from "../components/notify/VerificationPageProgress";
-import VerificationPageDecline from "../components/notify/VerificationPageDecline";
-import VerificationPageDelete from "../components/notify/VerificationPageDelete";
-import VerificationPageSub from "../components/notify/VerificationPageSub";
-import { router } from 'expo-router';
-import LockIcon from '@/components/svgConvertedIcons/LockIcon';
+import { View, ScrollView, StyleSheet, Text, Alert } from 'react-native';
+import VerificationNameForm from '../components/verification/VerificationNameForm';
+import VerificationPhotoForm from '../components/verification/VerificationPhotoForm';
 import IconBack from '@/components/svgConvertedIcons/iconBack';
+import { router } from 'expo-router';
+import { patchWithFiles } from '../api/index';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-function VerificationScreen() {
-  let [step, setStep] = useState(0);
+const VerificationScreen: React.FC = () => {
+  const [step, setStep] = useState<number>(1); // Добавлено состояние для шагов
+  const [verificationData, setVerificationData] = useState({
+    firstName: '',
+    lastName: '',
+    passportPhoto: null,
+    selfiePhoto: null,
+  });
 
-  const toNextStep = () => {
-    let nextStep = step + 1;
-    console.log('toNextStep', step, nextStep);
-    if (nextStep > 6) {
-      router.push('/home');
-    }
-    setStep(nextStep);
+  const handleDataChange = (data: Partial<typeof verificationData>) => {
+    setVerificationData((prev) => ({ ...prev, ...data }));
   };
 
-  const goBack = () => {
-    setStep((prevStep) => (prevStep > 0 ? prevStep - 1 : prevStep));
-  };  
+  const handleSubmitName = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) throw new Error('userId не найден');
+  
+      const formData = new FormData();
+      formData.append('userId', userId);
+      formData.append('firstName', verificationData.firstName);
+      formData.append('lastName', verificationData.lastName);
+  
+      console.log('Отправляем FormData:', formData);
+  
+      const response = await patchWithFiles('/users/verify', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+  
+      console.log('Успешный ответ сервера:', response);
+  
+      // Alert.alert('Успех', 'Имя и фамилия успешно отправлены!');
+      setStep(2); // Переход ко второму шагу
+    } catch (error: any) {
+      console.error('Ошибка:', error.message || error.response?.data || error);
+      Alert.alert('Ошибка', error.message || 'Неизвестная ошибка');
+    }
+  };
+  
+
+  const handleSubmitPhotos = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) throw new Error('userId не найден');
+
+      const formData = new FormData();
+      formData.append('userId', userId);
+
+      const appendImageToFormData = (uri: string, fieldName: string) => {
+        formData.append(fieldName, {
+          uri,
+          name: `${fieldName}.${uri.split('.').pop()}`,
+          type: `image/${uri.split('.').pop()?.toLowerCase() || 'jpeg'}`,
+        } as any);
+      };
+
+      if (verificationData.passportPhoto) {
+        console.log('Добавляем паспортное фото...');
+        appendImageToFormData(verificationData.passportPhoto, 'passportPhoto');
+      }
+
+      if (verificationData.selfiePhoto) {
+        console.log('Добавляем селфи...');
+        appendImageToFormData(verificationData.selfiePhoto, 'selfiePhoto');
+      }
+
+      console.log('Отправляем FormData:', formData);
+
+      const response = await patchWithFiles('/users/verify', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      console.log('Ответ сервера:', response);
+
+      Alert.alert('Успех', 'Фото успешно загружены!');
+      router.push('/home');
+    } catch (error: any) {
+      console.error('Ошибка:', error.message || error.response?.data || error);
+      Alert.alert('Ошибка', error.message || 'Неизвестная ошибка');
+    }
+  };
+
+  const renderStepContent = () => {
+    if (step === 1) {
+      return (
+        <VerificationNameForm
+          value={{
+            firstName: verificationData.firstName,
+            lastName: verificationData.lastName,
+          }}
+          onDataChange={handleDataChange}
+          onSubmit={handleSubmitName} // Передача обработчика для первого шага
+        />
+      );
+    }
+
+    if (step === 2) {
+      return (
+        <VerificationPhotoForm
+          value={{
+            passportPhoto: verificationData.passportPhoto,
+            selfiePhoto: verificationData.selfiePhoto,
+          }}
+          onDataChange={handleDataChange}
+          onSubmit={handleSubmitPhotos} // Передача обработчика для второго шага
+        />
+      );
+    }
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.headerIcons}>
-        <IconBack  onPress={goBack}/>
-        {/* <Image
-          resizeMode="contain"
-          source={{ uri: 'https://cdn.builder.io/api/v1/image/assets/TEMP/79908b091650bce0fbdeedac444a9417ae5c46510712ac9d9abedd2132d02e2f?placeholderIfAbsent=true&apiKey=f739d4c470a340468bd500c2bd45e954' }}
-          style={styles.backIcon}
-         
-        /> */}
+        <IconBack onPress={() => (step > 1 ? setStep(step - 1) : router.back())} />
         <Text style={styles.headerTitle}>Верификация</Text>
       </View>
-
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        {step === 0 && <View style={styles.startVer}>
-          <VerificationPageStart onStart={() => { setStep(1) }} />
-        </View>}
-        {step === 3 && <View style={styles.startVer}>
-          <VerificationPageProgress onStart={() => { setStep(4) }} />
-        </View>}
-        {step === 4 && <View style={styles.startVer}>
-          <VerificationPageDecline onStart={() => { setStep(5) }} />
-        </View>}
-        {step === 5 && <View style={styles.startVer}>
-          <VerificationPageSub onStart={() => { setStep(6) }} />
-        </View>}
-        {step === 6 && <View style={styles.startVer}>
-          <VerificationPageDelete onStart={() => { setStep(7) }} />
-        </View>}
-        <View style={styles.content}>
-          {step === 1 && (
-            <View>
-              <Text style={styles.stepIndicator}>Шаг 1 из 2</Text>
-              <Text style={styles.instructions}>
-                Укажите реальные имя и фамилию, для построения безопасной среды, необходимо знать своих друзей.
-              </Text>
-              <InputFieldBlack label="Имя" />
-              <InputFieldBlack label="Фамилия" />
-            </View>
-          )}
-          {step === 2 && (
-            <View>
-              <Text style={styles.stepIndicator}>Шаг 2 из 2</Text>
-              <Text style={styles.instructions}>
-                Добавьте главную страницу паспорта гражданина РФ и ваше фото в реальном времени, чтобы подтвердить, что вы - это вы.
-              </Text>
-              <InputFieldUpload label="Паспорт" sublabel="(Главная страница)" />
-              <InputFieldUpload label="Ваше фото"/>
-            </View>
-          )}
-
-          <View style={styles.lockTextContainer}>
-            <LockIcon/>
-            <Text style={styles.text}>
-              После верификации аккаунта, информация удаляется, не передаётся и не хранится на серверах, в целях нашей и вашей безопасности.
-            </Text>
-          </View>
-          <Button title="Далее" onPress={toNextStep} />
-        </View>
+        {renderStepContent()}
       </ScrollView>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -112,14 +151,6 @@ const styles = StyleSheet.create({
     maxWidth: 600,
     height: 22,
   },
-  backIcon: {
-    width: 8,
-    aspectRatio: 0.57,
-    tintColor: '#fff',
-    position: 'absolute',
-    left: 16,
-    color: '#fff',
-  },
   headerTitle: {
     fontSize: 15,
     paddingRight: 40,
@@ -128,67 +159,10 @@ const styles = StyleSheet.create({
     width: '100%',
     fontWeight: '700',
   },
-  startVer: {
-    position: 'absolute',
-    top: 0,
-    zIndex: 999,
-    height: '100%',
-    width: '100%',
-  },
   scrollViewContent: {
     flexGrow: 1,
     width: '100%',
   },
-  content: {
-    backgroundColor: 'rgba(0, 0, 0, 100)',
-    width: "100%",
-    flexDirection: "column",
-    paddingLeft: 16,
-    paddingRight: 16,
-    paddingBottom: 41,
-    maxWidth: 600,
-  },
-  stepIndicator: {
-    // fontFamily: "SFUIDisplay-Bold",
-    fontSize: 18,
-    marginTop: 186,
-    color: '#fff',
-    fontWeight: '700'
-  },
-  instructions: {
-    fontSize: 12,
-    // fontFamily: "SFUIDisplay-Regular",
-    marginTop: 10,
-    marginBottom: 30,
-    color: '#fff',
-    fontWeight: '400'
-  },
-  textContainer: {
-    flexGrow: 1,
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  lockTextContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 22,
-    marginBottom: 20,
-  },
-  lockIcon: {
-    height: 22,
-    width: 22,
-    marginRight: 8,
-    color: '#fff',
-  },
-  text: {
-    fontSize: 10,
-    color: '#fff',
-    fontWeight: '500',
-    maxWidth: '92%'
-  },
-  Button: {
-    marginBottom: 41,
-  }
 });
 
 export default VerificationScreen;

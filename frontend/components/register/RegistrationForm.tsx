@@ -5,7 +5,7 @@ import styles from './style';
 
 // Тип для пропсов
 interface RegistrationFormProps {
-  onDataChange: (data: { first_name?: string; second_name?: string }) => void;
+  onDataChange: (data: { firstName?: string; lastName?: string }) => void;
 }
 
 const RegistrationForm: React.FC<RegistrationFormProps> = ({ onDataChange }) => {
@@ -16,9 +16,9 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onDataChange }) => 
         Укажите ваше настоящее имя и фамилию, это необходимо для подтверждения вашего аккаунта и создания безопасной среды.
       </Text>
       <View style={styles.inputContainer}>
-        <InputField label="Имя" onChange={(e) => onDataChange({ first_name: e })} />
+        <InputField label="Имя" onChange={(e) => onDataChange({ firstName: e })} />
       </View>
-      <InputField label="Фамилия" onChange={(e) => onDataChange({ second_name: e })} />
+      <InputField label="Фамилия" onChange={(e) => onDataChange({ lastName: e })} />
       <Text style={styles.termsText}>
         <Text style={styles.termsRegular}>Я ознакомился и согласен с </Text>
         <Text style={styles.termsHighlight}>Условиями предоставления услуг </Text>
@@ -28,5 +28,6 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onDataChange }) => 
     </View>
   );
 };
+
 
 export default RegistrationForm;

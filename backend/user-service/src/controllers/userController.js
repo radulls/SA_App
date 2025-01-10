@@ -1,40 +1,57 @@
-const User = require('../models/User');
-const City = require('../models/City');
-const jwt = require('jsonwebtoken');
+const User = require('../models/User'); // Подключение модели пользователя
 
 const registerUser = async (req, res) => {
   try {
-    const { username, firstName, lastName, email, phone, cityId, password } = req.body;
+    const { code, username, email, password, phone, city } = req.body;
 
-    // Проверка, существует ли пользователь
-    const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: 'Email уже используется' });
+    // Проверка обязательных полей
+    if (!code || !username || !email || !password || !phone || !city) {
+      return res.status(400).json({ message: "Все обязательные поля должны быть заполнены" });
+    }
 
-    const existingUsername = await User.findOne({ username });
-    if (existingUsername) return res.status(400).json({ message: 'Username уже используется' });
-
-    // Проверяем существование города
-    const city = await City.findById(cityId);
-    if (!city) return res.status(400).json({ message: 'Указанный город не существует' });
-
-    const user = new User({
+    // Логика создания пользователя
+    const newUser = await User.create({
+      code,
       username,
-      firstName,
-      lastName,
       email,
-      phone,
-      city: cityId,
       password,
+      phone,
+      city,
     });
 
-    await user.save();
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-    res.status(201).json({ token, user });
-  } catch (err) {
-    res.status(500).json({ message: 'Ошибка при регистрации', error: err.message });
+    res.status(201).json(newUser);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
-module.exports = { registerUser };
+const updateUserVerification = async (req, res) => {
+  try {
+    const { userId, firstName, lastName } = req.body;
+    const { passportPhoto, selfiePhoto } = req.files || {};
+
+    if (!userId) {
+      return res.status(400).json({ message: "ID пользователя обязателен" });
+    }
+
+    const updateData = {
+      ...(firstName && { firstName }),
+      ...(lastName && { lastName }),
+      ...(passportPhoto?.[0]?.processedPath && { passportPhoto: passportPhoto[0].processedPath }),
+      ...(selfiePhoto?.[0]?.processedPath && { selfiePhoto: selfiePhoto[0].processedPath }),
+    };
+
+    const user = await User.findByIdAndUpdate(userId, updateData, { new: true });
+
+    if (!user) {
+      return res.status(404).json({ message: "Пользователь не найден" });
+    }
+
+    res.status(200).json({ message: "Верификация успешно обновлена", user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+module.exports = { registerUser, updateUserVerification };
