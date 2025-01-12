@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
-import { View, TextInput, Text, StyleSheet } from 'react-native';
+import { View, TextInput, Text, StyleSheet, KeyboardTypeOptions } from 'react-native';
 
 interface InputFieldProps {
   label: string;
-  value: string; // Поддержка управления значением
-  secureTextEntry?: boolean;
-  onChange: (value: string) => void;
+  value: string; // Значение текстового поля
+  secureTextEntry?: boolean; // Флаг для скрытия текста (например, для пароля)
+  keyboardType?: KeyboardTypeOptions; // Тип клавиатуры
+  onChange: (value: string) => void; // Функция изменения значения
 }
 
 const InputField: React.FC<InputFieldProps> = ({
   label,
   value = '',
   secureTextEntry = false,
+  keyboardType = 'default',
   onChange = (e) => console.log(e),
 }) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -28,6 +30,7 @@ const InputField: React.FC<InputFieldProps> = ({
         value={value} // Связываем значение
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
+        keyboardType={keyboardType} // Указываем тип клавиатуры
       />
     </View>
   );
@@ -41,7 +44,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 1)',
     fontSize: 14,
     marginBottom: 6,
-    fontWeight: '700'
+    fontWeight: '700',
   },
   input: {
     borderRadius: 12,

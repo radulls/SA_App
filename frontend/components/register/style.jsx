@@ -28,7 +28,8 @@ const styles = StyleSheet.create({
     },
     input: {
       borderRadius: 12,
-      backgroundColor: 'rgba(255, 255, 255, 1)',
+      backgroundColor: 'rgba(30, 30, 30, 100)',
+      color: 'rgba(255, 255, 255, 1)',
       height: 48,
       paddingLeft: 12, 
     },

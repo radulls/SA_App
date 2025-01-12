@@ -68,7 +68,7 @@ const processUploadedFiles = (req, res, next) => {
 const upload = multer({
   storage,
   limits: {
-    fileSize: 1024 * 1024 * 5, // Ограничение 5MB
+    fileSize: 1024 * 1024 * 10, // Ограничение 5MB
   },
   fileFilter,
 });

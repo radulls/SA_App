@@ -139,6 +139,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 100)',
     flex: 1,
     width: '100%',
+    paddingHorizontal: 16
   },
   headerIcons: {
     flexDirection: 'row',
@@ -146,9 +147,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: '100%',
     paddingHorizontal: 16,
-    marginTop: 55,
+    marginTop: 75,
     position: 'relative',
-    maxWidth: 600,
     height: 22,
   },
   headerTitle: {
