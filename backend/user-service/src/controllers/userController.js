@@ -48,14 +48,25 @@ const registerUser = async (req, res) => {
 
     const { code } = req.body;
 
+    // Проверяем, существует ли код и не был ли он уже использован
+    const validCode = await Code.findOne({ code, isUsed: false });
+    if (!validCode) {
+      return res.status(400).json({ message: 'Код недействителен или уже использован.' });
+    }
+
     // Проверяем, существует ли уже пользователь с таким кодом
     const existingUser = await User.findOne({ code });
     if (existingUser) {
       return res.status(400).json({ message: 'Пользователь с таким кодом уже существует.' });
     }
 
+    // Создаём нового пользователя
     const newUser = await User.create({ code });
     console.log('Пользователь успешно создан:', newUser);
+
+    // Помечаем код как использованный
+    validCode.isUsed = true;
+    await validCode.save();
 
     // Генерируем токены
     const token = jwt.sign(
@@ -111,16 +122,18 @@ const loginUser = async (req, res) => {
     }
 
     // Логика проверки лимита попыток
-    const maxAttempts = 5;
+    const maxAttempts = 5; // Максимальное количество попыток
     const lockoutTime = 15 * 60 * 1000; // 15 минут
     const attemptKey = `loginAttempts:${identifier}`;
     const lockoutKey = `lockout:${identifier}`;
 
+    // Проверяем, заблокирован ли пользователь
     const isLocked = await redisClient.get(lockoutKey);
     if (isLocked) {
       return res.status(429).json({ message: 'Слишком много попыток' });
     }
 
+    // Проверяем количество попыток
     let attempts = await redisClient.get(attemptKey);
     attempts = attempts ? parseInt(attempts, 10) : 0;
 
@@ -130,13 +143,22 @@ const loginUser = async (req, res) => {
       return res.status(429).json({ message: 'Слишком много попыток' });
     }
 
+    // Поиск пользователя по email, username или phone
     const user = await User.findOne({
       $or: [
-        { email: identifier },
-        { username: identifier },
-        { phone: identifier },
+        { email: identifier.trim() },
+        { username: identifier.trim() },
+        { phone: identifier.trim() },
       ],
     });
+
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+console.log('Сравнение пароля:', {
+  enteredPassword: password,
+  storedPassword: user.password,
+  isPasswordCorrect,
+});
+
 
     // Если пользователь не найден или пароль неверный
     if (!user || user.isBlocked || !(await bcrypt.compare(password, user.password))) {
@@ -145,12 +167,12 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ message: 'Неверный логин или пароль' });
     }
 
-    // Если email не подтверждён
+    // Если email пользователя не подтверждён
     if (!user.emailVerified) {
       return res.status(400).json({ message: 'Email не подтверждён.' });
     }
 
-    // Успешный вход: сбрасываем попытки
+    // Сбрасываем количество попыток при успешной авторизации
     await redisClient.del(attemptKey);
 
     // Генерация токенов
@@ -166,6 +188,7 @@ const loginUser = async (req, res) => {
       { expiresIn: '7d' }
     );
 
+    // Возвращаем успешный ответ с токенами
     return res.status(200).json({
       message: 'Успешный вход',
       token,
@@ -185,35 +208,50 @@ const sendTemporaryPassword = async (req, res) => {
       return res.status(400).json({ message: 'Email обязателен.' });
     }
 
-    // Проверяем, существует ли пользователь с указанным email
     const user = await User.findOne({ email });
-
     if (!user) {
       return res.status(404).json({ message: 'Пользователь с таким email не найден.' });
     }
 
     // Генерация временного пароля
-    const temporaryPassword = crypto.randomBytes(4).toString('hex'); // 8-значный пароль
+    const temporaryPassword = crypto.randomBytes(4).toString('hex');
 
-    // Хеширование временного пароля перед сохранением
+    // Хеширование пароля
     const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+    console.log('Сгенерированный временный пароль:', temporaryPassword);
+    console.log('Хэшированный временный пароль:', hashedPassword);
 
-    // Обновляем пароль пользователя в базе
-    user.password = hashedPassword;
-    await user.save();
+    // Убедитесь, что вы обновляете только поле `password`
+    await User.updateOne(
+      { email },
+      { $set: { password: hashedPassword } }
+    );
 
-    // Отправляем временный пароль на почту
-    await transporter.sendMail({
-      from: 'noreply@yourapp.com',
-      to: email,
-      subject: 'Ваш временный пароль',
-      text: `Ваш временный пароль: ${temporaryPassword}. Используйте его для входа и смените его как можно скорее.`,
-    });
+    // Повторно проверяем сохранённый пароль
+    const savedUser = await User.findOne({ email });
+    if (!await bcrypt.compare(temporaryPassword, savedUser.password)) {
+      console.error('Ошибка: сохранённый пароль не совпадает с хэшированным паролем.');
+      return res.status(500).json({ message: 'Ошибка сохранения временного пароля.' });
+    }
 
-    res.status(200).json({ message: `Мы отправили ссылку на электронную почту: ${email}, чтобы сбросить пароль.` });
+    // Отправка email с временным паролем
+    try {
+      await transporter.sendMail({
+        from: 'noreply@yourapp.com',
+        to: email,
+        subject: 'Ваш временный пароль',
+        text: `Ваш временный пароль: ${temporaryPassword}. Используйте его для входа и смените его как можно скорее.`,
+      });
+
+      console.log('Временный пароль успешно отправлен на email:', email);
+      return res.status(200).json({ message: 'Временный пароль отправлен на ваш email.' });
+    } catch (emailError) {
+      console.error('Ошибка при отправке email:', emailError.message);
+      return res.status(500).json({ message: 'Ошибка при отправке временного пароля.' });
+    }
   } catch (error) {
-    console.error('Ошибка при отправке временного пароля:', error);
-    res.status(500).json({ message: 'Ошибка при отправке временного пароля.' });
+    console.error('Ошибка при отправке временного пароля:', error.message);
+    return res.status(500).json({ message: 'Ошибка при отправке временного пароля.' });
   }
 };
 
@@ -222,9 +260,31 @@ const updateUser = async (req, res) => {
     const { username, email, phone, city, password, firstName, lastName } = req.body;
     const userId = req.user.id; // Получаем ID из токена
 
+    // Логика ограничения количества запросов
+    const maxAttempts = 5; // Максимальное количество попыток
+    const lockoutTime = 15 * 60 * 1000; // 15 минут
+    const attemptKey = `updateAttempts:${userId}`;
+    const lockoutKey = `updateLockout:${userId}`;
+
+    // Проверяем, заблокирован ли пользователь
+    const isLocked = await redisClient.get(lockoutKey);
+    if (isLocked) {
+      return res.status(429).json({ message: 'Слишком много попыток' });
+    }
+
+    // Проверяем количество попыток
+    let attempts = await redisClient.get(attemptKey);
+    attempts = attempts ? parseInt(attempts, 10) : 0;
+
+    if (attempts >= maxAttempts) {
+      await redisClient.set(lockoutKey, 'locked', 'PX', lockoutTime);
+      await redisClient.del(attemptKey);
+      return res.status(429).json({ message: 'Слишком много попыток обновления данных. Повторите через 15 минут.' });
+    }
+
+    // Начало обновления данных
     const updates = {};
 
-    // Проверка имени пользователя
     if (username) {
       const usernameExists = await User.findOne({ username });
       if (usernameExists && usernameExists._id.toString() !== userId) {
@@ -233,16 +293,14 @@ const updateUser = async (req, res) => {
       updates.username = username;
     }
 
-    // Проверка email
     if (email) {
       const emailExists = await User.findOne({ email });
       if (emailExists && emailExists._id.toString() !== userId) {
-        return res.status(400).json({ message: 'Email уже занят.' });
+        return res.status(400).json({ message: 'Email уже используется.' });
       }
       updates.email = email;
     }
 
-    // Проверка телефона
     if (phone) {
       const phoneExists = await User.findOne({ phone });
       if (phoneExists && phoneExists._id.toString() !== userId) {
@@ -251,7 +309,6 @@ const updateUser = async (req, res) => {
       updates.phone = phone;
     }
 
-    // Проверка города
     if (city) {
       const cityExists = await City.findById(city);
       if (!cityExists) {
@@ -260,26 +317,33 @@ const updateUser = async (req, res) => {
       updates.city = city;
     }
 
-    // Хеширование и обновление пароля
     if (password) {
       const hashedPassword = await bcrypt.hash(password, 10);
       updates.password = hashedPassword;
     }
 
-    // Обновление имени и фамилии
     if (firstName) updates.firstName = firstName;
     if (lastName) updates.lastName = lastName;
 
-    // Обновление пользователя
     const updatedUser = await User.findByIdAndUpdate(userId, updates, { new: true });
 
     if (!updatedUser) {
       return res.status(404).json({ message: 'Пользователь не найден.' });
     }
 
+    // Сбрасываем количество попыток при успешном обновлении
+    await redisClient.del(attemptKey);
+
     res.status(200).json({ message: 'Данные обновлены.', user: updatedUser });
   } catch (error) {
     console.error('Ошибка обновления пользователя:', error.message);
+
+    // Увеличиваем счётчик попыток в случае ошибки
+    const attemptKey = `updateAttempts:${req.user.id}`;
+    const lockoutTime = 15 * 60; // Время истечения в секундах
+    await redisClient.incr(attemptKey);
+    await redisClient.expire(attemptKey, lockoutTime);
+
     res.status(500).json({ message: 'Ошибка сервера.', error: error.message });
   }
 };
@@ -345,21 +409,48 @@ const verifyEmailCode = async (req, res) => {
       return res.status(400).json({ message: 'Email и код обязательны.' });
     }
 
+    // Логика ограничения количества попыток
+    const maxAttempts = 5; // Максимальное количество попыток
+    const lockoutTime = 1 * 60 * 1000; // 15 минут
+    const attemptKey = `emailVerifyAttempts:${email}`;
+    const lockoutKey = `emailVerifyLockout:${email}`;
+
+    // Проверяем, заблокирован ли пользователь
+    const isLocked = await redisClient.get(lockoutKey);
+    if (isLocked) {
+      return res.status(429).json({ message: 'Слишком много попыток' });
+    }
+
+    // Проверяем количество попыток
+    let attempts = await redisClient.get(attemptKey);
+    attempts = attempts ? parseInt(attempts, 10) : 0;
+
+    if (attempts >= maxAttempts) {
+      await redisClient.set(lockoutKey, 'locked', 'PX', lockoutTime);
+      await redisClient.del(attemptKey);
+      return res.status(429).json({ message: 'Слишком много попыток' });
+    }
+
     const user = await User.findOne({ email });
 
     if (!user) {
       return res.status(404).json({ message: 'Пользователь не найден.' });
     }
 
-    // Если email уже подтвержден
+    // Если email уже подтверждён
     if (user.emailVerified) {
-      console.log('Email уже подтвержден:', email);
-      return res.status(200).json({ message: 'Email уже подтвержден.' });
+      console.log('Email уже подтверждён:', email);
+      return res.status(200).json({ message: 'Email уже подтверждён.' });
     }
 
     // Проверяем код
     if (user.emailVerificationCode !== code) {
       console.error('Неверный код подтверждения для пользователя:', user._id);
+
+      // Увеличиваем счётчик попыток
+      await redisClient.incr(attemptKey);
+      await redisClient.expire(attemptKey, lockoutTime / 1000); // Устанавливаем время истечения
+
       return res.status(400).json({ message: 'Неверный код подтверждения.' });
     }
 
@@ -370,7 +461,10 @@ const verifyEmailCode = async (req, res) => {
     user.emailVerificationCode = null;
     await user.save();
 
-    console.log('Пользователь успешно обновлен:', user);
+    // Сбрасываем количество попыток при успешном подтверждении
+    await redisClient.del(attemptKey);
+
+    console.log('Пользователь успешно обновлён:', user);
     res.status(200).json({ message: 'Email подтверждён.' });
   } catch (error) {
     console.error('Ошибка при проверке кода:', error);

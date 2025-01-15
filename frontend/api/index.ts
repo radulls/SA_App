@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'https://53aa-5-76-221-62.ngrok-free.app/api';
+const API_BASE_URL = 'http://192.168.1.65:5001/api';
 
 // Создаём экземпляр axios
 const api: AxiosInstance = axios.create({
@@ -91,7 +91,6 @@ export const patchWithFiles = async (url: string, formData: FormData): Promise<a
   }
 };
 
-// Специфические методы API
 export const loginUser = async (identifier: string, password: string): Promise<any> => {
   try {
     const response = await post('/users/login', { identifier, password });
@@ -111,8 +110,6 @@ export const loginUser = async (identifier: string, password: string): Promise<a
     throw error;
   }
 };
-
-
 
 export const registerUser = async (code: string): Promise<any> => {
   try {
@@ -146,7 +143,6 @@ export const sendTemporaryPassword = async (email: string): Promise<any> => {
   }
 };
 
-
 export const validateActivationCode = async (code: string): Promise<any> => {
   try {
     const response = await post('/users/validate-code', { code });
@@ -161,7 +157,19 @@ export const validateActivationCode = async (code: string): Promise<any> => {
 };
 
 export const updateUser = async (data: Record<string, any>): Promise<any> => {
-  return await patch('/users/update', data);
+  try {
+    const response = await patch('/users/update', data);
+    return response;
+  } catch (error: any) {
+    if (error.response?.status === 429) {
+      throw new Error('Слишком много попыток');
+    }
+    const customError = handleError(error);
+    if (customError) {
+      throw new Error(customError);
+    }
+    throw new Error('Ошибка при обновлении данных. Попробуйте снова.');
+  }
 };
 
 export const sendVerificationCode = async (email: string): Promise<any> => {
@@ -175,10 +183,18 @@ export const verifyEmailCode = async (email: string, code: string): Promise<any>
     console.log('Ответ от сервера на проверку кода:', response);
     return response;
   } catch (error: any) {
+    if (error.response?.status === 429) {
+      throw new Error('Слишком много попыток');
+    }
+    if (error.response?.data?.message === 'Неверный код подтверждения.') {
+      throw new Error('Неверный код подтверждения.');
+    }
+
     const customError = handleError(error);
     if (!customError) {
       console.log('Скрытая ошибка проверки кода');
     }
+
     throw error;
   }
 };

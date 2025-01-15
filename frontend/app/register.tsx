@@ -25,6 +25,7 @@ const RegistrationScreen: React.FC = () => {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [isValid, setIsValid] = useState<boolean>(true);
   const [isChecked, setIsChecked] = useState<boolean>(false);
+  const [isCodeSent, setIsCodeSent] = useState<boolean>(false);
   const [isTouched, setIsTouched] = useState<boolean>(false);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
 
@@ -96,9 +97,15 @@ const RegistrationScreen: React.FC = () => {
         await updateUser({ password: formData.password });
       } else if (step === 3) {
         await updateUser({ phone: formData.phone });
-      } else if (step === 4) {
+      }if (step === 4 && emailFormRef.current) {
+        await emailFormRef.current.validateInput();
+  
+        // Отправляем код подтверждения
+        console.log('Отправка кода подтверждения...');
         await sendVerificationCode(formData.email);
+        setIsCodeSent(true); // Устанавливаем флаг для подтверждения
       } else if (step === 5) {
+        console.log('Проверка кода подтверждения...');
         await verifyEmailCode(formData.email, formData.verificationCode);
       } else if (step === 6) {
         await updateUser({ city: formData.city });
