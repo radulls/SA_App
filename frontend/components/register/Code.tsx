@@ -2,7 +2,7 @@ import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import InputField from '../InputField';
 import ErrorMessage from '../ErrorMessage';
-import { registerUser, handleError, validateActivationCode } from '@/api';
+import { validateActivationCode } from '@/api';
 import styles from './style';
 
 export interface CodeFormRef {
@@ -42,7 +42,6 @@ const CodeForm = forwardRef<CodeFormRef, CodeFormProps>(
         throw new Error(errorMessage); // Пробрасываем ошибку для обработки
       }
     };
-    
     
     useImperativeHandle(ref, () => ({
       validateInput,

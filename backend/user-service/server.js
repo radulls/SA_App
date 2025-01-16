@@ -1,8 +1,7 @@
 const express = require('express');
-const bodyParser = require('body-parser');
+const bodyParser = require('body-parser'); // Для обработки тела запроса
 const cors = require('cors');
 const connectDB = require('./src/config/db');
-const redisClient = require('./src/redis')
 
 require('dotenv').config();
 
@@ -12,17 +11,22 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors());
-app.use(bodyParser.json());
+app.use(cors()); // Разрешение CORS
+app.use(bodyParser.json()); // Парсинг JSON
+app.use(bodyParser.urlencoded({ extended: true })); // Парсинг URL-кодированных данных
 
-// Роуты
+// Подключение маршрутов
+app.use('/api/captcha', require('./src/routes/captchaRoutes'));
+
+// Другие маршруты
+app.use('/api/users', require('./src/routes/userRoutes')); 
+app.use('/api/cities', require('./src/routes/cityRoutes')); 
+app.use('/uploads', express.static('uploads'));
+
+// Проверка работы сервера
 app.get('/api', (req, res) => {
   res.status(200).json({ message: 'API is working!' });
 });
-app.use('/api/users', require('./src/routes/userRoutes')); // Роуты пользователей
-app.use('/api/cities', require('./src/routes/cityRoutes')); // Роуты городов
-app.use('/uploads', express.static('uploads'));
-
 
 const PORT = process.env.PORT || 5001;
 

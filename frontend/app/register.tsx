@@ -210,7 +210,7 @@ const RegistrationScreen: React.FC = () => {
           {renderStepContent()}
           <View style={styles.footer}>
             <Text style={styles.footerText}>
-              <Text style={styles.regularText}>Уже есть аккаунт? </Text>
+              <Text style={styles.regularText}>Уже есть аккаунт?</Text>
               <Link style={styles.highlightText} href="/auth/login">
                 Войти
               </Link>
@@ -222,7 +222,6 @@ const RegistrationScreen: React.FC = () => {
     </ScrollView>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {

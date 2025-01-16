@@ -32,11 +32,8 @@ const VerificationScreen: React.FC = () => {
   
       console.log('Отправляем FormData:', formData);
   
-      const response = await patchWithFiles('/users/verify', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await patchWithFiles('/users/verify', formData);
+
   
       console.log('Успешный ответ сервера:', response);
   
@@ -77,11 +74,7 @@ const VerificationScreen: React.FC = () => {
 
       console.log('Отправляем FormData:', formData);
 
-      const response = await patchWithFiles('/users/verify', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await patchWithFiles('/users/verify', formData);
 
       console.log('Ответ сервера:', response);
 

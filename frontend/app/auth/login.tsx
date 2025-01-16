@@ -23,6 +23,8 @@ const LoginScreen = () => {
     try {
       const { identifier, password } = formData;
   
+      console.log('Отправка данных на сервер:', { identifier, password });
+  
       if (!identifier || !password) {
         setErrorMessage('Заполните все поля.');
         setIsLoading(false);
@@ -30,14 +32,24 @@ const LoginScreen = () => {
       }
   
       const response = await loginUser(identifier, password);
+      console.log('Ответ от сервера:', response);
+  
       await AsyncStorage.setItem('token', response.token);
-      router.push('/home');
+  
+      // Переход на экран с капчей
+      router.push('/captcha');
     } catch (error: any) {
+      console.error('Ошибка при авторизации:', error);
+  
       if (error.message === 'Слишком много попыток') {
         setErrorMessage('Слишком много попыток');
+      } else if (error.message === 'Аккаунт не существует') {
+        setErrorMessage('Аккаунт не существует');
       } else if (error.message === 'Неверный логин или пароль') {
         setErrorMessage('Неверный логин или пароль');
-      } 
+      } else {
+        setErrorMessage('Произошла ошибка. Попробуйте позже.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -58,7 +70,7 @@ const LoginScreen = () => {
             <View style={styles.passwordContainer}>        
             <View style={styles.passwordContainerTitles}>
               <Text style={styles.passwordLabel}>Пароль</Text>
-              <Link style={styles.forgotPassword} href="/forgot">
+              <Link style={styles.forgotPassword} href="/reset-password">
                 Забыли пароль?
               </Link>
             </View>
@@ -75,7 +87,7 @@ const LoginScreen = () => {
             <View style={styles.footer}>
               <Text style={styles.signUpText}>
                 <Text style={styles.signUpTextGray}>У вас ещё нет аккаунта? </Text>
-                <Link style={styles.signUpTextBlue} href="/register">
+                <Link style={styles.signUpTextBlue} href="/captcha?action=register">
                   Зарегистрироваться
                 </Link>
               </Text>

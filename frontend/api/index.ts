@@ -93,20 +93,37 @@ export const patchWithFiles = async (url: string, formData: FormData): Promise<a
 
 export const loginUser = async (identifier: string, password: string): Promise<any> => {
   try {
+    console.log('Отправка данных на сервер:', { identifier, password });
+
+    // Выполняем запрос
     const response = await post('/users/login', { identifier, password });
 
+    console.log('Ответ от сервера:', response);
+
+    // Сохраняем токен в хранилище, если он есть
     if (response.token) {
-      await AsyncStorage.setItem('token', response.token); // Сохраняем токен
+      console.log('Токен сохранён:', response.token);
+      await AsyncStorage.setItem('token', response.token);
+    } else {
+      console.warn('Токен отсутствует в ответе сервера');
     }
 
     return response;
   } catch (error: any) {
+    console.error('Ошибка при выполнении запроса:', error);
+
+    // Обработка ошибок
     if (error.response?.status === 429) {
       throw new Error('Слишком много попыток');
+    }
+    if (error.response?.status === 404) {
+      throw new Error('Аккаунт не существует');
     }
     if (error.response?.data?.message === 'Неверный логин или пароль') {
       throw new Error('Неверный логин или пароль');
     }
+
+    // Если ошибка не соответствует описанным, выбрасываем её
     throw error;
   }
 };
@@ -130,16 +147,37 @@ export const registerUser = async (code: string): Promise<any> => {
   }
 };
 
-export const sendTemporaryPassword = async (email: string): Promise<any> => {
+// Функция для отправки кода смены пароля
+export const sendResetPasswordCode = async (email: string): Promise<{ message: string; email: string }> => {
   try {
-    const response = await post('/users/send-temporary-password', { email });
+    const response = await post('/users/send-reset-password-code', { email });
+    return { message: response.message, email }; // Возвращаем email
+  } catch (error: any) {
+    const serverMessage = error.response?.data?.message;
+
+    if (serverMessage === 'Пользователь не найден') {
+      throw new Error('Пользователь не найден');
+    }
+
+    throw new Error('Ошибка при отправке кода для смены пароля. Попробуйте снова.');
+  }
+};
+
+// Функция для смены пароля
+export const changePassword = async (
+  email: string,
+  code: string,
+  newPassword: string
+): Promise<any> => {
+  try {
+    const response = await post('/users/change-password', { email, code, newPassword });
     return response;
   } catch (error: any) {
     const customError = handleError(error);
     if (customError) {
       throw new Error(customError);
     }
-    throw new Error('Ошибка при отправке временного пароля. Попробуйте снова.');
+    throw new Error('Ошибка при смене пароля. Попробуйте снова.');
   }
 };
 
@@ -174,6 +212,23 @@ export const updateUser = async (data: Record<string, any>): Promise<any> => {
 
 export const sendVerificationCode = async (email: string): Promise<any> => {
   return await patch('/users/send-code', { email });
+};
+
+export const verifyResetPasswordCode = async (email: string, code: string): Promise<any> => {
+  try {
+    console.log('Проверяем код смены пароля:', { email, code });
+    const response = await post('/users/verify-reset-password-code', { email, code });
+    console.log('Ответ от сервера на проверку кода:', response);
+    return response;
+  } catch (error: any) {
+    if (error.response?.status === 400) {
+      throw new Error('Неверный или истёкший код смены пароля.');
+    }
+    if (error.response?.status === 404) {
+      throw new Error('Пользователь не найден.');
+    }
+    throw error;
+  }
 };
 
 export const verifyEmailCode = async (email: string, code: string): Promise<any> => {
@@ -215,8 +270,25 @@ export const checkPhone = async (phone: string): Promise<any> => {
   return await post('/users/check-phone', { phone });
 };
 
-export const checkVerificationStatus = async (userId: string): Promise<any> => {
-  return await post('/users/check-verify-status', { userId });
+export const checkVerificationStatus = async (): Promise<any> => {
+  const token = await AsyncStorage.getItem('token'); // Получаем токен из AsyncStorage
+
+  if (!token) {
+    throw new Error('Токен отсутствует. Пожалуйста, авторизуйтесь.');
+  }
+
+  console.log('Используем токен:', token);
+
+  const response = await api.post('/users/check-verify-status', {}, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  console.log('Ответ API:', response);
+
+  // Возвращаем только данные ответа
+  return response.data;
 };
 
 // Обработка ошибок
@@ -231,6 +303,7 @@ export const handleError = (error: any): string | null => {
       'Email уже используется.',
       'Телефон уже используется.',
       'ID уже используется.',
+      'Пользователь не найден',
     ];
 
     if (allowedMessages.includes(serverMessage)) {
@@ -241,6 +314,5 @@ export const handleError = (error: any): string | null => {
   console.log('Скрытая ошибка:', error.response?.data || error.message);
   return 'Произошла ошибка. Попробуйте снова.';
 };
-
 
 export default api;

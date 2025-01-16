@@ -25,6 +25,8 @@ const userSchema = new mongoose.Schema({
   },
   emailVerificationCode: { type: String },
   emailVerified: { type: Boolean, default: false },
+  resetPasswordCode: { type: String, required: false }, // Новый код для смены пароля
+  resetPasswordCodeExpires: { type: Date, required: false },
   rejectionReason: { type: String, required: false },
   isBlocked: { type: Boolean, default: false },
   isRegistrationComplete: { type: Boolean, default: false },

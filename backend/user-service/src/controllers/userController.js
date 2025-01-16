@@ -122,7 +122,7 @@ const loginUser = async (req, res) => {
     }
 
     // Логика проверки лимита попыток
-    const maxAttempts = 5; // Максимальное количество попыток
+    const maxAttempts = 5;
     const lockoutTime = 15 * 60 * 1000; // 15 минут
     const attemptKey = `loginAttempts:${identifier}`;
     const lockoutKey = `lockout:${identifier}`;
@@ -143,7 +143,7 @@ const loginUser = async (req, res) => {
       return res.status(429).json({ message: 'Слишком много попыток' });
     }
 
-    // Поиск пользователя по email, username или phone
+    // Поиск пользователя
     const user = await User.findOne({
       $or: [
         { email: identifier.trim() },
@@ -152,22 +152,21 @@ const loginUser = async (req, res) => {
       ],
     });
 
+    if (!user) {
+      return res.status(404).json({ message: 'Аккаунт не существует.' });
+    }
+
+    console.log('Хэшированный пароль из базы данных:', user.password);
+
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
-console.log('Сравнение пароля:', {
-  enteredPassword: password,
-  storedPassword: user.password,
-  isPasswordCorrect,
-});
 
-
-    // Если пользователь не найден или пароль неверный
-    if (!user || user.isBlocked || !(await bcrypt.compare(password, user.password))) {
+    // Если пароль неверный
+    if (!isPasswordCorrect || user.isBlocked) {
       await redisClient.incr(attemptKey);
       await redisClient.expire(attemptKey, lockoutTime / 1000);
       return res.status(400).json({ message: 'Неверный логин или пароль' });
     }
 
-    // Если email пользователя не подтверждён
     if (!user.emailVerified) {
       return res.status(400).json({ message: 'Email не подтверждён.' });
     }
@@ -188,7 +187,6 @@ console.log('Сравнение пароля:', {
       { expiresIn: '7d' }
     );
 
-    // Возвращаем успешный ответ с токенами
     return res.status(200).json({
       message: 'Успешный вход',
       token,
@@ -200,7 +198,7 @@ console.log('Сравнение пароля:', {
   }
 };
 
-const sendTemporaryPassword = async (req, res) => {
+const sendResetPasswordCode = async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -210,48 +208,89 @@ const sendTemporaryPassword = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ message: 'Пользователь с таким email не найден.' });
+      return res.status(404).json({ message: 'Пользователь не найден' });
     }
 
-    // Генерация временного пароля
-    const temporaryPassword = crypto.randomBytes(4).toString('hex');
+    const resetCode = crypto.randomBytes(3).toString('hex').toUpperCase();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // Код действует 15 минут
 
-    // Хеширование пароля
-    const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
-    console.log('Сгенерированный временный пароль:', temporaryPassword);
-    console.log('Хэшированный временный пароль:', hashedPassword);
+    user.resetPasswordCode = resetCode;
+    user.resetPasswordCodeExpires = expiresAt;
+    await user.save();
 
-    // Убедитесь, что вы обновляете только поле `password`
-    await User.updateOne(
-      { email },
-      { $set: { password: hashedPassword } }
-    );
+    await transporter.sendMail({
+      from: 'noreply@yourapp.com',
+      to: email,
+      subject: 'Код для смены пароля',
+      text: `Ваш код для смены пароля: ${resetCode}. Срок действия 15 минут.`,
+    });
 
-    // Повторно проверяем сохранённый пароль
-    const savedUser = await User.findOne({ email });
-    if (!await bcrypt.compare(temporaryPassword, savedUser.password)) {
-      console.error('Ошибка: сохранённый пароль не совпадает с хэшированным паролем.');
-      return res.status(500).json({ message: 'Ошибка сохранения временного пароля.' });
-    }
-
-    // Отправка email с временным паролем
-    try {
-      await transporter.sendMail({
-        from: 'noreply@yourapp.com',
-        to: email,
-        subject: 'Ваш временный пароль',
-        text: `Ваш временный пароль: ${temporaryPassword}. Используйте его для входа и смените его как можно скорее.`,
-      });
-
-      console.log('Временный пароль успешно отправлен на email:', email);
-      return res.status(200).json({ message: 'Временный пароль отправлен на ваш email.' });
-    } catch (emailError) {
-      console.error('Ошибка при отправке email:', emailError.message);
-      return res.status(500).json({ message: 'Ошибка при отправке временного пароля.' });
-    }
+    res.status(200).json({ message: `Код для смены пароля отправлен на ваш email ${email}` });
   } catch (error) {
-    console.error('Ошибка при отправке временного пароля:', error.message);
-    return res.status(500).json({ message: 'Ошибка при отправке временного пароля.' });
+    console.error('Ошибка при отправке кода:', error.message);
+    res.status(500).json({ message: 'Ошибка при отправке кода.' });
+  }
+};
+
+const changePassword = async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+
+    if (!email || !code || !newPassword) {
+      console.log('Отсутствуют обязательные поля:', { email, code, newPassword });
+      return res.status(400).json({ message: 'Email, код и новый пароль обязательны.' });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      console.log('Пользователь не найден для email:', email);
+      return res.status(404).json({ message: 'Пользователь не найден.' });
+    }
+
+    console.log('Найден пользователь:', {
+      email: user.email,
+      password: user.password,
+      resetPasswordCode: user.resetPasswordCode,
+      resetPasswordCodeExpires: user.resetPasswordCodeExpires,
+    });
+
+    if (!user.resetPasswordCode || user.resetPasswordCode !== code) {
+      console.log('Неверный код подтверждения:', { providedCode: code, savedCode: user.resetPasswordCode });
+      return res.status(400).json({ message: 'Неверный код подтверждения.' });
+    }
+
+    if (new Date() > new Date(user.resetPasswordCodeExpires)) {
+      console.log('Код подтверждения истёк:', { codeExpiresAt: user.resetPasswordCodeExpires });
+      return res.status(400).json({ message: 'Код подтверждения истёк.' });
+    }
+
+    // Устанавливаем сырой пароль — модель сама выполнит хэширование
+    user.password = newPassword;
+    user.resetPasswordCode = null;
+    user.resetPasswordCodeExpires = null;
+
+    const validationError = user.validateSync();
+    if (validationError) {
+      console.error('Ошибка валидации модели пользователя:', validationError);
+      return res.status(400).json({ message: 'Ошибка валидации данных пользователя.' });
+    }
+
+    await user.save();
+    const updatedUser = await User.findOne({ email });
+    console.log('Данные пользователя после сохранения:', {
+      email: updatedUser.email,
+      password: updatedUser.password,
+    });
+
+    console.log('Пароль успешно изменён для пользователя:', email);
+    res.status(200).json({ message: 'Пароль успешно изменён.' });
+  } catch (error) {
+    console.error('Ошибка при смене пароля:', {
+      message: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({ message: 'Ошибка сервера.' });
   }
 };
 
@@ -401,6 +440,32 @@ const sendVerificationCode = async (req, res) => {
   }
 };
 
+const verifyResetPasswordCode = async (req, res) => {
+  try {
+    const { email, code } = req.body;
+
+    if (!email || !code) {
+      return res.status(400).json({ message: 'Email и код обязательны.' });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: 'Пользователь не найден.' });
+    }
+
+    // Проверяем код смены пароля
+    if (user.resetPasswordCode !== code || new Date() > user.resetPasswordCodeExpires) {
+      return res.status(400).json({ message: 'Неверный или истёкший код смены пароля.' });
+    }
+
+    res.status(200).json({ message: 'Код успешно подтверждён.' });
+  } catch (error) {
+    console.error('Ошибка при проверке кода смены пароля:', error.message);
+    res.status(500).json({ message: 'Ошибка сервера.' });
+  }
+};
+
 const verifyEmailCode = async (req, res) => {
   try {
     const { email, code } = req.body;
@@ -531,7 +596,8 @@ const checkPhone = async (req, res) => {
 
 const updateUserVerification = async (req, res) => {
   try {
-    const { userId, firstName, lastName } = req.body;
+    const userId = req.user.id;
+    const { firstName, lastName } = req.body;
     const { passportPhoto, selfiePhoto } = req.files || {};
 
     if (!userId) {
@@ -573,19 +639,22 @@ const updateUserVerification = async (req, res) => {
 
 const checkVerificationStatus = async (req, res) => {
   try {
-    const { userId } = req.body; // Получаем userId из тела запроса
+    console.log('req.user:', req.user); // Логируем содержимое req.user
+    const userId = req.user.id; // Получаем userId из req.user
 
     if (!userId) {
+      console.error('ID пользователя отсутствует в req.user');
       return res.status(400).json({ message: 'ID пользователя обязателен.' });
     }
 
-    const user = await User.findById(userId); // Ищем пользователя по ID
-
+    const user = await User.findById(userId);
     if (!user) {
+      console.error('Пользователь не найден для ID:', userId);
       return res.status(404).json({ message: 'Пользователь не найден.' });
     }
 
-    // Возвращаем статус верификации
+    console.log('Пользователь найден:', user);
+    console.log('Отправляем статус верификации:', user.verificationStatus); // Логируем статус
     return res.status(200).json({ verificationStatus: user.verificationStatus });
   } catch (error) {
     console.error('Ошибка при проверке статуса верификации:', error.message);
@@ -618,9 +687,11 @@ module.exports = {
   registerUser,
   validateActivationCode,
   loginUser,
-  sendTemporaryPassword,
+  sendResetPasswordCode,
+  changePassword,
   updateUser,
   sendVerificationCode,
+  verifyResetPasswordCode,
   verifyEmailCode,
   checkUsername,
   checkEmail,

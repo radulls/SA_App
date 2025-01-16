@@ -4,8 +4,10 @@ const {
   registerUser, 
   validateActivationCode,
   loginUser, 
-  sendTemporaryPassword, 
+  sendResetPasswordCode,
+  changePassword, 
   sendVerificationCode, 
+  verifyResetPasswordCode,
   verifyEmailCode, 
   updateUser, 
   updateUserVerification, 
@@ -32,14 +34,17 @@ router.patch('/update', verifyToken, updateUser);
 
 // Отправка кода подтверждения на email
 router.patch('/send-code', verifyToken, sendVerificationCode);
-// Маршрут для отправки временного пароля
-router.post('/send-temporary-password', sendTemporaryPassword);
+// Маршрут для смены пароля
+router.post('/send-reset-password-code', sendResetPasswordCode);
+router.post('/verify-reset-password-code', verifyResetPasswordCode);
+router.post('/change-password', changePassword);
+
 
 router.post('/validate-code', validateActivationCode);
 router.post('/check-username', checkUsername);
 router.post('/check-email', checkEmail);
 router.post('/check-phone', checkPhone);
-router.post('/check-verify-status', checkVerificationStatus);
+router.post('/check-verify-status', verifyToken, checkVerificationStatus);
 
 // Подтверждение email с помощью кода
 router.post('/verify-code', (req, res, next) => {
