@@ -2,6 +2,21 @@ import axios, { AxiosInstance } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_BASE_URL = 'http://192.168.1.65:5001/api';
+export const IMAGE_URL = 'http://192.168.1.65:5001';
+
+export interface UserDataProps {
+  id?: string;
+  firstName: string;
+  lastName: string;
+  aboutMe: string;
+  username: string;
+  city: string; // Меняем тип на строку
+  intro?: string;
+  profileImage?: string;
+  subscribers?: number;
+  rating?: number;
+  qrCode?: string;
+}
 
 // Создаём экземпляр axios
 const api: AxiosInstance = axios.create({
@@ -12,11 +27,39 @@ const api: AxiosInstance = axios.create({
 });
 
 // Метод для обновления токена
-const refreshToken = async () => {
-  const refreshToken = await AsyncStorage.getItem('refreshToken');
-  const response = await axios.post(`${API_BASE_URL}/users/refresh-token`, { refreshToken });
-  await AsyncStorage.setItem('token', response.data.token);
-  return response.data.token;
+const refreshToken = async (): Promise<string> => {
+  try {
+    const storedRefreshToken = await AsyncStorage.getItem('refreshToken');
+
+    if (!storedRefreshToken) {
+      console.error('Отсутствует refreshToken в AsyncStorage');
+      throw new Error('Требуется повторная авторизация.');
+    }
+
+    const response = await axios.post(`${API_BASE_URL}/users/refresh-token`, {
+      refreshToken: storedRefreshToken,
+    });
+
+    console.log('Ответ сервера при обновлении токена:', response.data);
+
+    const { token, refreshToken: newRefreshToken } = response.data;
+
+    if (!token || !newRefreshToken) {
+      console.error('Сервер не вернул новые токены');
+      throw new Error('Токены не получены. Требуется повторная авторизация.');
+    }
+
+    // Сохраняем новые токены
+    await AsyncStorage.setItem('token', token);
+    await AsyncStorage.setItem('refreshToken', newRefreshToken);
+
+    return token;
+  } catch (error) {
+    console.error('Ошибка при обновлении токена:', error.message);
+    await AsyncStorage.removeItem('token');
+    await AsyncStorage.removeItem('refreshToken');
+    throw new Error('Не удалось обновить токен. Требуется повторная авторизация.');
+  }
 };
 
 // Перехватчик для обработки ошибок
@@ -27,10 +70,16 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      const newToken = await refreshToken();
-      api.defaults.headers.Authorization = `Bearer ${newToken}`;
-      originalRequest.headers.Authorization = `Bearer ${newToken}`;
-      return api(originalRequest);
+
+      try {
+        const newToken = await refreshToken();
+        api.defaults.headers.Authorization = `Bearer ${newToken}`;
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        console.error('Не удалось обновить токен. Требуется повторная авторизация.');
+        throw refreshError;
+      }
     }
 
     return Promise.reject(error);
@@ -51,9 +100,9 @@ export const post = async <T>(url: string, data: T): Promise<any> => {
   }
 };
 
-export const patch = async <T>(url: string, data: T): Promise<any> => {
+export const patch = async <T>(url: string, data: T, config: Record<string, any> = {}): Promise<any> => {
   try {
-    const response = await api.patch(url, data);
+    const response = await api.patch(url, data, config);
     return response.data;
   } catch (error: any) {
     const customError = handleError(error);
@@ -91,59 +140,50 @@ export const patchWithFiles = async (url: string, formData: FormData): Promise<a
   }
 };
 
+// Функция логина пользователя
 export const loginUser = async (identifier: string, password: string): Promise<any> => {
   try {
-    console.log('Отправка данных на сервер:', { identifier, password });
+    await AsyncStorage.removeItem('token');
+    await AsyncStorage.removeItem('refreshToken');
 
-    // Выполняем запрос
     const response = await post('/users/login', { identifier, password });
 
-    console.log('Ответ от сервера:', response);
+    const { token, refreshToken } = response;
 
-    // Сохраняем токен в хранилище, если он есть
-    if (response.token) {
-      console.log('Токен сохранён:', response.token);
-      await AsyncStorage.setItem('token', response.token);
-    } else {
-      console.warn('Токен отсутствует в ответе сервера');
+    if (!token || !refreshToken) {
+      console.error('Сервер не вернул токены');
+      throw new Error('Ошибка логина. Попробуйте снова.');
     }
+
+    await AsyncStorage.setItem('token', token);
+    await AsyncStorage.setItem('refreshToken', refreshToken);
 
     return response;
-  } catch (error: any) {
-    console.error('Ошибка при выполнении запроса:', error);
-
-    // Обработка ошибок
-    if (error.response?.status === 429) {
-      throw new Error('Слишком много попыток');
-    }
-    if (error.response?.status === 404) {
-      throw new Error('Аккаунт не существует');
-    }
-    if (error.response?.data?.message === 'Неверный логин или пароль') {
-      throw new Error('Неверный логин или пароль');
-    }
-
-    // Если ошибка не соответствует описанным, выбрасываем её
+  } catch (error) {
+    console.error('Ошибка логина:', error.message);
     throw error;
   }
 };
 
+// Функция регистрации пользователя
 export const registerUser = async (code: string): Promise<any> => {
   try {
     const response = await post('/users/register', { code });
-    if (response?.token) {
-      await AsyncStorage.setItem('token', response.token);
+
+    const { token, refreshToken } = response;
+
+    if (!token || !refreshToken) {
+      console.error('Сервер не вернул токены');
+      throw new Error('Ошибка регистрации. Попробуйте снова.');
     }
-    if (response?.refreshToken) {
-      await AsyncStorage.setItem('refreshToken', response.refreshToken);
-    }
+
+    await AsyncStorage.setItem('token', token);
+    await AsyncStorage.setItem('refreshToken', refreshToken);
+
     return response;
-  } catch (error: any) {
-    const customError = handleError(error);
-    if (customError) {
-      throw new Error(customError);
-    }
-    throw new Error('Произошла ошибка. Попробуйте снова.');
+  } catch (error) {
+    console.error('Ошибка регистрации:', error.message);
+    throw error;
   }
 };
 
@@ -194,9 +234,28 @@ export const validateActivationCode = async (code: string): Promise<any> => {
   }
 };
 
-export const updateUser = async (data: Record<string, any>): Promise<any> => {
+export const updateUser = async (data: Record<string, any>, file?: File): Promise<any> => {
   try {
-    const response = await patch('/users/update', data);
+    const formData = new FormData();
+
+    // Добавляем данные в FormData
+    for (const key in data) {
+      if (data.hasOwnProperty(key)) {
+        formData.append(key, data[key]);
+      }
+    }
+
+    // Если передан файл, добавляем его в FormData
+    if (file) {
+      formData.append('profileImage', file);
+    }
+
+    const response = await patch('/users/update', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
     return response;
   } catch (error: any) {
     if (error.response?.status === 429) {
@@ -289,6 +348,64 @@ export const checkVerificationStatus = async (): Promise<any> => {
 
   // Возвращаем только данные ответа
   return response.data;
+};
+
+export const getUserProfile = async (): Promise<UserDataProps> => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+    if (!token) {
+      throw new Error('Токен отсутствует. Пожалуйста, авторизуйтесь.');
+    }
+
+    const response = await api.get('/users/profile', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const userData = response.data.user;
+
+    // Логируем полученные данные
+    console.log('Получены данные пользователя из API:', userData);
+
+    return {
+      id: userData._id, // Убедимся, что это поле возвращается
+      firstName: userData.firstName || '',
+      lastName: userData.lastName || '',
+      aboutMe: userData.aboutMe || '',
+      username: userData.username || '',
+      city: typeof userData.city === 'string' ? userData.city : userData.city?.name || 'Не указан', // Проверяем, строка или объект
+      profileImage: userData.profileImage || '',
+      qrCode: userData.qrCode || '',
+    };
+  } catch (error: any) {
+    console.error('Ошибка при получении данных пользователя:', error.message);
+    throw error;
+  }
+};
+
+export const getPublicProfile = async (userId: string): Promise<UserDataProps> => {
+  try {
+    console.log('Запрос данных профиля для ID:', userId);
+    const response = await api.get(`/users/public-qr-code/${userId}`);
+    const userData = response.data.user;
+
+    console.log('Получены данные профиля:', userData);
+
+    return {
+      id: userData._id,
+      firstName: userData.firstName || '',
+      lastName: userData.lastName || '',
+      aboutMe: userData.aboutMe || '',
+      username: userData.username || '',
+      city: typeof userData.city === 'string' ? userData.city : userData.city?.name || 'Не указан', // Проверяем, строка или объект
+      profileImage: userData.profilePicture || undefined,
+      qrCode: userData.qrCodeLink || '',
+    };
+  } catch (error: any) {
+    console.error('Ошибка при получении публичного профиля:', error.message);
+    throw error;
+  }
 };
 
 // Обработка ошибок

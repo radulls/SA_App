@@ -27,7 +27,6 @@ const ProfileScreen: React.FC = () => {
   
     fetchVerificationStatus();
   }, []);
-  
 
   if (loading) {
     return <VerificationPageProgress onStart={(value) => console.log('Старт нажат:', value)} />; // Пока идет загрузка, показываем индикатор
@@ -43,10 +42,11 @@ const ProfileScreen: React.FC = () => {
   } else if (verificationStatus === 'pending') {
     return <VerificationPageProgress onStart={(value) => console.log('Старт нажат:', value)} />;
   } else if (verificationStatus === 'verified') {
-    return <VerificationPageProgress onStart={(value) => console.log('Старт нажат:', value)} />;
-  } else {
     return <ProfileMain />;
-  }
+  } 
+  // else if (verificationStatus === 'verified') {
+  //   return <VerificationPageProgress onStart={(value) => console.log('Старт нажат:', value)} />;
+  // } 
 };
 
 export default ProfileScreen;

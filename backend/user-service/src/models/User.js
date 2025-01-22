@@ -6,13 +6,17 @@ const userSchema = new mongoose.Schema({
   username: { type: String, unique: true, default: null }, // Делаем обязательным, но генерируем временные уникальные значения
   firstName: { type: String, required: false },
   lastName: { type: String, required: false },
+  aboutMe: { type: String, required: false },
   passportPhoto: { type: String, required: false },
   selfiePhoto: { type: String, required: false },
+  profileImage: { type: String, required: false },
+  qrCode: { type: String, required: false },
   email: { type: String, unique: true, default: null }, // Аналогично
   phone: { type: String, unique: true, default: null },
   city: { type: mongoose.Schema.Types.ObjectId, ref: 'City', required: false },
   role: { type: String, enum: ['user', 'admin', 'creator'], default: 'user' },
-  rating: { type: Number, default: 0 },
+  rating: { type: Number, default: 0, min: 0 }, 
+  subscribers: { type: Number, default: 0, min: 0 }, // Количество подписчиков, минимальное значение 0
   subscriptionActive: { type: Boolean, default: false },
   subscriptionStart: { type: Date },
   subscriptionEnd: { type: Date },

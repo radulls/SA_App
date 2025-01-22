@@ -1,11 +1,10 @@
 import React from 'react';
 import { View, StyleSheet, Text } from 'react-native';
-import { UserDataProps } from '../TestData/testdata';
+import { UserDataProps } from '@/api/index'; // Импортируем интерфейс из API
 
 interface UserProps {
-  user: UserDataProps | null;
+  user: UserDataProps;
 }
-
 
 const ProfileStats: React.FC<UserProps> = ({ user }) => {
   // Проверяем, что `user` не null
@@ -19,17 +18,13 @@ const ProfileStats: React.FC<UserProps> = ({ user }) => {
 
   return (
     <View style={styles.container}>
-      <View>
-        <Text>
-          <Text style={styles.label}>Подписчики: </Text>
-          <Text style={styles.value}>{user.subs ?? 0}</Text>
-        </Text>
+      <View style={styles.item}>
+        <Text style={styles.label}>Подписчики: </Text>
+        <Text style={styles.value}>{user.subscribers ?? 0}</Text>
       </View>
-      <View>
-        <Text>
-          <Text style={styles.label}>Рейтинг: </Text>
-          <Text style={[styles.value, styles.ratingBackground]}>{user.rating ?? 0}</Text>
-        </Text>
+      <View style={styles.item}>
+        <Text style={styles.label}>Рейтинг: </Text>
+        <Text style={[styles.value, styles.ratingBackground]}>{(user.rating ?? 0).toFixed(1)}</Text>
       </View>
     </View>
   );
@@ -44,6 +39,10 @@ const styles = StyleSheet.create({
     paddingRight: 16,
     gap: 18,
   },
+  item: {
+  flexDirection: "row",
+  alignItems: "center",
+  },
   label: {
     fontSize: 12,
     color: "rgba(153, 153, 153, 1)",
@@ -52,11 +51,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
     color: "#000",
+    paddingVertical: 3,
+    paddingHorizontal: 3,
   },
   ratingBackground: {
     backgroundColor: "#FFE772",
     borderRadius: 2,
-    height: 20
   },
 });
 

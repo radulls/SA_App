@@ -7,6 +7,10 @@ const nodemailer = require('nodemailer');
 const { log } = require('console');
 const Code = require('../models/Code');
 const redisClient = require('../redis'); // Обновите путь в зависимости от расположения файла
+const QRCode = require('qrcode');
+const path = require('path');
+const fs = require('fs');
+const mongoose = require('mongoose');
 
 // Настраиваем локальный SMTP-сервер (например, Mailhog)
 const transporter = nodemailer.createTransport({
@@ -14,6 +18,85 @@ const transporter = nodemailer.createTransport({
   port: 1025,
   ignoreTLS: true,
 });
+
+const generateUserQRCode = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error('Пользователь не найден.');
+    }
+    // Создаём данные для QR-кода
+    const qrData = JSON.stringify({
+      id: user._id,
+      username: user.username,
+      email: user.email,
+    });
+    // Путь для сохранения QR-кода (корневой путь проекта)
+    const projectRoot = path.resolve(__dirname, '../../'); // Поднимаемся к корню проекта
+    const qrDir = path.join(projectRoot, 'uploads/qr-codes');
+    const qrPath = path.join(qrDir, `${user._id}.png`);
+    // Проверяем, существует ли директория, если нет — создаём
+    if (!fs.existsSync(qrDir)) {
+      fs.mkdirSync(qrDir, { recursive: true });
+    }
+    // Генерация QR-кода с прозрачным фоном и высоким качеством
+    await QRCode.toFile(qrPath, qrData, {
+      scale: 10, // Увеличиваем плотность пикселей
+      margin: 1, // Минимальный отступ
+      color: {
+        dark: '#000000', // Цвет QR-кода
+        light: '#0000'   // Прозрачный фон
+      },
+    });
+
+    // Сохраняем путь в базе данных
+    user.qrCode = `/uploads/qr-codes/${user._id}.png`;
+    await user.save();
+
+    return user.qrCode; // Возвращаем путь к QR-коду
+  } catch (error) {
+    console.error('Ошибка при генерации QR-кода:', error.message);
+    throw error; // Генерируем ошибку для обработки выше
+  }
+};
+
+const getPublicProfile = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log('Получен userId на сервере:', userId);
+
+    if (!userId) {
+      return res.status(400).json({ message: 'ID пользователя обязателен.' });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: 'Некорректный ID пользователя.' });
+    }
+
+    const user = await User.findById(userId).populate('city', 'name').select('-password');
+
+    if (!user) {
+      return res.status(404).json({ message: 'Пользователь не найден.' });
+    }
+
+    const profileLink = `http://${req.headers.host}/uploads/qr-codes/${user._id}.png`;
+
+    res.status(200).json({
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        username: user.username,
+        city: user.city?.name || 'Не указан',
+        qrCodeLink: profileLink,
+        profilePicture: user.passportPhoto,
+      },
+    });
+  } catch (error) {
+    console.error('Ошибка при получении публичного профиля:', error.message);
+    res.status(500).json({ message: 'Ошибка сервера.' });
+  }
+};
 
 const refreshAccessToken = async (req, res) => {
   try {
@@ -32,12 +115,19 @@ const refreshAccessToken = async (req, res) => {
         { expiresIn: '1d' }
       );
 
-      return res.status(200).json({ token: newToken });
+      const newRefreshToken = jwt.sign(
+        { id: decoded.id },
+        process.env.REFRESH_TOKEN_SECRET,
+        { expiresIn: '7d' }
+      );
+
+      return res.status(200).json({ token: newToken, refreshToken: newRefreshToken });
     } catch (error) {
+      console.error('Ошибка верификации refreshToken:', error.message);
       return res.status(403).json({ message: 'Недействительный refresh token.' });
     }
   } catch (error) {
-    console.error('Ошибка при обновлении токена:', error);
+    console.error('Ошибка при обновлении токена:', error.message);
     res.status(500).json({ message: 'Ошибка сервера.' });
   }
 };
@@ -198,6 +288,29 @@ const loginUser = async (req, res) => {
   }
 };
 
+const getUserProfile = async (req, res) => {
+  try {
+    // Получаем ID пользователя из токена
+    const userId = req.user.id;
+
+    if (!userId) {
+      return res.status(400).json({ message: 'ID пользователя обязателен.' });
+    }
+
+    // Ищем пользователя в базе данных
+    const user = await User.findById(userId).select('-password'); // Исключаем пароль из выборки
+
+    if (!user) {
+      return res.status(404).json({ message: 'Пользователь не найден.' });
+    }
+
+    res.status(200).json({ message: 'Данные пользователя успешно получены.', user });
+  } catch (error) {
+    console.error('Ошибка при получении данных пользователя:', error.message);
+    res.status(500).json({ message: 'Ошибка сервера.' });
+  }
+};
+
 const sendResetPasswordCode = async (req, res) => {
   try {
     const { email } = req.body;
@@ -296,7 +409,7 @@ const changePassword = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
-    const { username, email, phone, city, password, firstName, lastName } = req.body;
+    const { username, email, phone, city, password, firstName, lastName, aboutMe } = req.body;
     const userId = req.user.id; // Получаем ID из токена
 
     // Логика ограничения количества запросов
@@ -363,6 +476,12 @@ const updateUser = async (req, res) => {
 
     if (firstName) updates.firstName = firstName;
     if (lastName) updates.lastName = lastName;
+    if (aboutMe) updates.aboutMe = aboutMe;
+
+    // Если есть загруженное фото профиля
+    if (req.file) {
+      updates.profileImage = `/uploads/${req.file.filename}`;
+    }
 
     const updatedUser = await User.findByIdAndUpdate(userId, updates, { new: true });
 
@@ -630,7 +749,14 @@ const updateUserVerification = async (req, res) => {
     // Обновляем данные пользователя
     const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true });
 
-    res.status(200).json({ message: 'Данные отправлены на верификацию. Регистрация завершена.', user: updatedUser });
+    // Генерация QR-кода
+    const qrCode = await generateUserQRCode(userId);
+
+    res.status(200).json({
+      message: 'Данные отправлены на верификацию. Регистрация завершена.',
+      user: updatedUser,
+      qrCode, // Возвращаем ссылку на QR-код
+    });
   } catch (error) {
     console.error('Ошибка при обновлении данных для верификации:', error.message);
     res.status(500).json({ message: 'Ошибка сервера.' });
@@ -684,9 +810,12 @@ const blockUser = async (req, res) => {
 
 module.exports = {
   refreshAccessToken,
+  generateUserQRCode,
+  getPublicProfile,
   registerUser,
   validateActivationCode,
   loginUser,
+  getUserProfile,
   sendResetPasswordCode,
   changePassword,
   updateUser,

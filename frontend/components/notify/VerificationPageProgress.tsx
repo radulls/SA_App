@@ -5,7 +5,6 @@ interface VerificationPageProgressProps {
   onStart: (value: string) => void;
 }
 
-
 const VerificationPageProgress: React.FC<VerificationPageProgressProps> = ({onStart}) => {
   return (
     <View style={styles.container}>

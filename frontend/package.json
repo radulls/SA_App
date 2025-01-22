@@ -23,6 +23,7 @@
     "axios": "^1.7.9",
     "expo": "~52.0.25",
     "expo-av": "~15.0.2",
+    "expo-clipboard": "^7.0.1",
     "expo-constants": "~17.0.4",
     "expo-file-system": "~18.0.7",
     "expo-font": "~13.0.3",
@@ -42,6 +43,7 @@
     "react-native-fs": "^2.20.0",
     "react-native-gesture-handler": "~2.20.2",
     "react-native-image-crop-picker": "^0.41.6",
+    "react-native-image-picker": "^7.2.3",
     "react-native-reanimated": "~3.16.1",
     "react-native-recaptcha-that-works": "^2.0.0",
     "react-native-recaptcha-v3": "^0.0.16",
@@ -49,6 +51,7 @@
     "react-native-screens": "~4.4.0",
     "react-native-svg": "15.8.0",
     "react-native-svg-transformer": "^1.5.0",
+    "react-native-toast-message": "^2.2.1",
     "react-native-view-shot": "^4.0.3",
     "react-native-web": "~0.19.13",
     "react-native-webview": "^13.13.1"
