@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, Text, TouchableOpacity, Modal } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, Modal, Image } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { IMAGE_URL } from '@/api';
-import EditProfileImage from './EditProfileImage'; // Импортируем отдельный компонент
+import EditProfileImage from './EditProfileImage';
 
 interface UserProps {
   user: {
@@ -13,24 +14,21 @@ interface UserProps {
     profileImage?: string;
     aboutMe: string;
   };
+  onUpdateUserProfile: (updatedProfileImage: string) => void;
 }
 
-const ProfileHeader: React.FC<UserProps> = ({ user }) => {
+const ProfileHeader: React.FC<UserProps> = ({ user, onUpdateUserProfile }) => {
   const [profileImage, setProfileImage] = useState(user.profileImage);
   const [isModalVisible, setModalVisible] = useState(false);
+  const [imageKey, setImageKey] = useState(Date.now());
 
-  useEffect(() => {
-    const requestPermissions = async () => {
-      const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
-      const mediaLibraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-      if (!cameraPermission.granted || !mediaLibraryPermission.granted) {
-        console.error('Для работы приложения необходимо разрешить доступ к камере и галерее.');
-      }
-    };
-
-    requestPermissions();
-  }, []);
+  const handleSave = (newImage: string) => {
+    setProfileImage(newImage);
+    setImageKey(Date.now()); // Обновляем ключ для сброса кэша
+    onUpdateUserProfile(newImage); // Передаем новое изображение в родительский компонент
+    setModalVisible(false);
+    console.log('ProfileHeader props:', { profileImage, user });
+  };  
 
   return (
     <View style={styles.container}>
@@ -48,34 +46,37 @@ const ProfileHeader: React.FC<UserProps> = ({ user }) => {
           </View>
         </View>
         <TouchableOpacity onPress={() => setModalVisible(true)}>
-          <Image
+          {profileImage ? (
+            <Image
+            source={{
+              uri: `${IMAGE_URL}${profileImage}?key=${imageKey}`,
+              cache: 'reload',
+            }}
             style={styles.profileImage}
-            source={
-              profileImage
-                ? { uri: `${IMAGE_URL}${profileImage}` }
-                : require('../../assets/images/avatar_post.png')
-            }
+            resizeMode="cover"
           />
+          
+        
+          ) : (
+            <View style={styles.profileImage} />
+          )}
         </TouchableOpacity>
       </View>
       <View style={styles.descriptionContainer}>
         <Text style={styles.description}>{user.aboutMe}</Text>
       </View>
 
-      {/* Используем отдельный компонент для редактирования */}
       <Modal visible={isModalVisible} animationType="slide">
         <EditProfileImage
           profileImage={profileImage || ''}
           onClose={() => setModalVisible(false)}
-          onSave={(newImage) => {
-            setProfileImage(newImage);
-            setModalVisible(false);
-          }}
+          onSave={handleSave}
         />
       </Modal>
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

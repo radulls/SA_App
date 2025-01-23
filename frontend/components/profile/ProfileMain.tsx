@@ -29,6 +29,14 @@ const ProfileMain: React.FC = () => {
     fetchUserData();
   }, []);
 
+  const updateUserProfile = (updatedProfileImage: string) => {
+    if (user) {
+      const updatedUser = { ...user, profileImage: updatedProfileImage };
+      console.log('Updated user:', updatedUser);
+      setUser(updatedUser);
+    }
+  };   
+
   // Если данные загружаются
   if (loading) {
     return (
@@ -98,7 +106,9 @@ const ProfileMain: React.FC = () => {
               accessibilityLabel="Profile cover image"
             />
           </View>
-          <ProfileHeader user={user} />
+          <ProfileHeader user={user} onUpdateUserProfile={updateUserProfile} />
+
+
           <ProfileStats user={user} />
           <View style={styles.divider} />
           <Post postType="image" />
