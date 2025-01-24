@@ -17,7 +17,7 @@ export default function Index() {
       <Link style={linkStyle} href="/register">Регистрация</Link>
       <Link style={linkStyle} href="/verification">Верификация</Link>
       <Link style={linkStyle} href="/home">Профиль</Link>
-      <Link style={linkStyle} href="/profileQR">QR профиля</Link>
+      <Link style={linkStyle} href="/profileQR/${user.id}">QR профиля</Link>
       <Link style={linkStyle} href="/eventCreation">Создать пост</Link>
       <Link style={linkStyle} href="/search">Поиск</Link>
       <Link style={linkStyle} href="/messages">Сообщения</Link>

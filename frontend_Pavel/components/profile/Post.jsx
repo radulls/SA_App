@@ -121,31 +121,26 @@ const styles = StyleSheet.create({
 		display: 'flex',
 		width: '100%',
 		flexDirection: 'row',
-		
-		// alignItems: 'stretch',
-		// gap: 20,
-		// justifyContent: 'space-between',
+		height: 38,
 	},
 	postHeader: {
-		display: 'flex',
 		flexDirection: 'row',
-		alignItems: 'center',
-		gap: 10,
-		marginLeft: 10
-		// fontFamily: 'SF UI Display, sans-serif',
+		alignItems: 'center',		
 	},
 	avatarImage: {
-		borderRadius: 0,
-		alignSelf: 'stretch',
-		position: 'relative',
-		display: 'flex',
-		width: 38,
-		flexShrink: 0,
-		aspectRatio: 1,
+		height: '100%',
+		// borderRadius: 0,
+		// alignSelf: 'stretch',
+		// position: 'relative',
+		// display: 'flex',
+		// width: 38,
+		// flexShrink: 0,
+		// aspectRatio: 1,
 	},
 	usernameContainer: {
 		alignSelf: 'center',
 		marginHorizontal: "auto",
+		marginLeft: -5
 	},
 	username: {
 		color: 'rgba(0, 0, 0, 1)',
@@ -156,6 +151,7 @@ const styles = StyleSheet.create({
 	timeContainer: {
 		alignSelf: 'center',
 		marginHorizontal: "auto",
+		paddingLeft: 10,
 	},
 	timePosted: {
 		color: 'rgba(105, 105, 105, 1)',
@@ -192,7 +188,7 @@ const styles = StyleSheet.create({
 		alignSelf: 'stretch',
 		position: 'relative',
 		// display: 'flex',
-		marginTop: 0,
+		marginTop: 7,
 		width: '100%',
 		// objectFit: 'cover',
 		// maxHeight: 496,

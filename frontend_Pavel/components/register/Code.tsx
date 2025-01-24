@@ -2,6 +2,7 @@ import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import InputField from '../InputField';
 import ErrorMessage from '../ErrorMessage';
+import { validateActivationCode } from '@/api/mockApi';
 import styles from './style';
 
 export interface CodeFormRef {
@@ -20,19 +21,34 @@ const CodeForm = forwardRef<CodeFormRef, CodeFormProps>(
     const [error, setError] = useState<string | null>(null);
 
     const validateInput = async (): Promise<void> => {
-      console.log(`Ввод активационного кода (без проверки): "${value}"`);
-      // Убираем любые проверки, чтобы всегда пропускать
-      return;
+      setError(null); // Сбрасываем предыдущую ошибку
+    
+      if (!value.trim()) {
+        setError('Активационный код обязателен.');
+        throw new Error('Validation Error');
+      }
+    
+      try {
+        await validateActivationCode(value); // Проверяем код
+      } catch (error: any) {
+        const errorMessage = error.message;
+    
+        if (errorMessage === 'Неверный активационный код.') {
+          setError('Неверный активационный код.');
+        } else {
+          setError('Произошла ошибка. Попробуйте снова.');
+        }
+    
+        throw new Error(errorMessage); // Пробрасываем ошибку для обработки
+      }
     };
-
+    
     useImperativeHandle(ref, () => ({
       validateInput,
     }));
 
-    const handleInputChange = (input: string) => {
-      const trimmedValue = input.trim();
-      console.log(`Ввод активационного кода: "${trimmedValue}"`);
-      onDataChange(trimmedValue);
+    const handleInputChange = (value: string) => {
+      onDataChange(value.trim());
       setError(null); // Убираем ошибку при изменении
     };
 
@@ -65,5 +81,6 @@ const CodeForm = forwardRef<CodeFormRef, CodeFormProps>(
     );
   }
 );
+
 
 export default CodeForm;

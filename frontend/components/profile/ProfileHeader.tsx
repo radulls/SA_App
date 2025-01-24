@@ -1,26 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, Modal, Image } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
-import { IMAGE_URL } from '@/api';
+import { View, StyleSheet, Text, TouchableOpacity, Modal, Image, ActivityIndicator } from 'react-native';
+import { IMAGE_URL, getUserProfile, UserDataProps } from '@/api';
 import EditProfileImage from './EditProfileImage';
 
 interface UserProps {
-  user: {
-    firstName: string;
-    lastName: string;
-    username: string;
-    city: string;
-    profileImage?: string;
-    aboutMe: string;
-  };
   onUpdateUserProfile: (updatedProfileImage: string) => void;
 }
 
-const ProfileHeader: React.FC<UserProps> = ({ user, onUpdateUserProfile }) => {
-  const [profileImage, setProfileImage] = useState(user.profileImage);
+const ProfileHeader: React.FC<UserProps> = ({ onUpdateUserProfile }) => {
+  const [user, setUser] = useState<UserDataProps | null>(null); // Состояние пользователя
+  const [profileImage, setProfileImage] = useState<string | null>(null); // Состояние изображения профиля
   const [isModalVisible, setModalVisible] = useState(false);
   const [imageKey, setImageKey] = useState(Date.now());
+  const [loading, setLoading] = useState<boolean>(true); // Состояние загрузки
+
+  // Загрузка данных пользователя
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        setLoading(true);
+        const userData = await getUserProfile(); // Запрос данных пользователя из API
+        setUser(userData);
+        setProfileImage(userData.profileImage || null);
+      } catch (err) {
+        console.error('Ошибка загрузки данных пользователя:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   const handleSave = (newImage: string) => {
     setProfileImage(newImage);
@@ -28,7 +38,24 @@ const ProfileHeader: React.FC<UserProps> = ({ user, onUpdateUserProfile }) => {
     onUpdateUserProfile(newImage); // Передаем новое изображение в родительский компонент
     setModalVisible(false);
     console.log('ProfileHeader props:', { profileImage, user });
-  };  
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#000" />
+        <Text>Загрузка данных...</Text>
+      </View>
+    );
+  }
+
+  if (!user) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Не удалось загрузить данные пользователя.</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -48,15 +75,13 @@ const ProfileHeader: React.FC<UserProps> = ({ user, onUpdateUserProfile }) => {
         <TouchableOpacity onPress={() => setModalVisible(true)}>
           {profileImage ? (
             <Image
-            source={{
-              uri: `${IMAGE_URL}${profileImage}?key=${imageKey}`,
-              cache: 'reload',
-            }}
-            style={styles.profileImage}
-            resizeMode="cover"
-          />
-          
-        
+              source={{
+                uri: `${IMAGE_URL}${profileImage}?key=${imageKey}`,
+                cache: 'reload',
+              }}
+              style={styles.profileImage}
+              resizeMode="cover"
+            />
           ) : (
             <View style={styles.profileImage} />
           )}
@@ -76,7 +101,6 @@ const ProfileHeader: React.FC<UserProps> = ({ user, onUpdateUserProfile }) => {
     </View>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
@@ -146,6 +170,20 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 14,
     color: '#000000',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
   },
 });
 

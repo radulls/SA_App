@@ -14,30 +14,29 @@ const EmailForm = forwardRef<EmailFormRef, ValueProps>(({ value, onDataChange },
   const [error, setError] = useState<string | null>(null);
 
   const validateInput = async () => {
-    setError(null); // Сбрасываем ошибку
+    setError(null);
 
     if (!value.trim()) {
       setError('Email обязателен.');
-      throw new Error('Validation Error'); // Прерываем процесс
+      throw new Error('Validation Error');
     }
 
-    // Проверяем формат email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(value.trim())) {
-      setError('Неверный формат email.');
-      throw new Error('Validation Error'); // Прерываем процесс
+    const phoneRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!phoneRegex.test(value)) {
+      setError('Неверный формат');
+      throw new Error('Validation Error');
     }
 
     try {
-      await checkEmail(value.trim());
+      await checkEmail(value); // Проверяем, используется ли email
     } catch (error: any) {
       const customError = handleError(error);
-      if (customError) {
-        setError(customError); // Показываем только кастомное сообщение
+      if (customError === 'Email уже используется.') {
+        setError('Email уже используется.');
       } else {
-        setError('Произошла ошибка. Попробуйте снова.'); // Дефолтное сообщение для прочих ошибок
+        setError('Произошла ошибка. Попробуйте снова.');
       }
-      throw error; // Прерываем процесс
+      throw new Error(customError || 'Validation Error'); // Прерываем процесс
     }
   };
 
@@ -53,19 +52,14 @@ const EmailForm = forwardRef<EmailFormRef, ValueProps>(({ value, onDataChange },
   return (
     <View style={styles.form}>
       <Text style={styles.title}>Регистрация</Text>
-      <Text style={styles.description}>
-        На почту придёт подтверждение аккаунта.
-      </Text>
+      <Text style={styles.description}>На почту придёт подтверждение аккаунта.</Text>
       {error && <ErrorMessage message={error} />}
       <View style={styles.inputContainer}>
-        <InputField
-          label="Почта"
-          onChange={handleInputChange}
-          value={value}
-        />
+        <InputField label="Почта" onChange={handleInputChange} value={value} />
       </View>
     </View>
   );
 });
+
 
 export default EmailForm;

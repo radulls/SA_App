@@ -56,19 +56,24 @@ router.get('/profile', verifyToken, async (req, res) => {
 // Обновление данных пользователя и загрузка фото профиля
 router.patch(
   '/update',
-  verifyToken, // Проверка токена
+  verifyToken,
   (req, res, next) => {
-    upload.single('profileImage')(req, res, (err) => {
+    upload.fields([
+      { name: 'profileImage', maxCount: 1 },
+      { name: 'backgroundImage', maxCount: 1 },
+    ])(req, res, (err) => {
       if (err) {
         if (err.code === 'LIMIT_FILE_SIZE') {
           return res.status(400).json({ message: 'Файл слишком большой.' });
         }
         return res.status(400).json({ message: err.message });
       }
+      console.log('Файлы загружены:', req.files); // Логируем загруженные файлы
       next();
     });
   },
-  updateUser
+  processUploadedFiles, // Обработка изображений (уменьшение размера)
+  updateUser // Обновление данных пользователя
 );
 
 // Отправка кода подтверждения на email

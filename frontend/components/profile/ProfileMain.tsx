@@ -1,16 +1,41 @@
 import React, { useEffect, useState } from 'react';
-import { UserDataProps, getUserProfile } from '@/api/index'; // Импортируем интерфейс и функцию API
-import { View, ScrollView, StyleSheet, Image, TouchableOpacity, ActivityIndicator, Text } from 'react-native';
+import { IMAGE_URL, UserDataProps, getUserProfile } from '@/api/index'; // Импортируем интерфейс и функцию API
+import { View, ScrollView, StyleSheet, Image, TouchableOpacity, ActivityIndicator, Text, Modal } from 'react-native';
 import { router } from 'expo-router';
 import ProfileHeader from './ProfileHeader';
 import ProfileStats from './ProfileStats';
 import Post from './Post';
 import BottomNavigation from '../BottomNavigation';
+import EditBackgroundImage from './EditBackgroundImage';
 
 const ProfileMain: React.FC = () => {
   const [user, setUser] = useState<UserDataProps | null>(null); // Состояние для данных пользователя
   const [loading, setLoading] = useState<boolean>(true); // Состояние загрузки
   const [error, setError] = useState<string | null>(null); // Состояние ошибок
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [imageKey, setImageKey] = useState(Date.now());
+  const [backgroundImage, setBackgroundImage] = useState(user?.backgroundImage);
+
+  const updateUserBackgroundProfile = (updatedBackgroundImage: string) => {
+    if (user) {
+      setUser({ ...user, backgroundImage: updatedBackgroundImage });
+    }
+  };
+
+  const handleSave = (newImage: string) => {
+    setBackgroundImage(newImage);
+    setImageKey(Date.now()); // Обновляем ключ для сброса кэша
+    updateUserBackgroundProfile(newImage); // Передаем новое изображение в родительский компонент
+    setModalVisible(false);
+    console.log('ProfileHeader props:', { backgroundImage, user });
+  };  
+
+  useEffect(() => {
+    if (user?.backgroundImage) {
+      setBackgroundImage(user.backgroundImage);
+    }
+  }, [user]);
+  
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -31,11 +56,9 @@ const ProfileMain: React.FC = () => {
 
   const updateUserProfile = (updatedProfileImage: string) => {
     if (user) {
-      const updatedUser = { ...user, profileImage: updatedProfileImage };
-      console.log('Updated user:', updatedUser);
-      setUser(updatedUser);
+      setUser({ ...user, profileImage: updatedProfileImage });
     }
-  };   
+  };
 
   // Если данные загружаются
   if (loading) {
@@ -99,16 +122,29 @@ const ProfileMain: React.FC = () => {
               </TouchableOpacity>
             </View>
           </View>
+          <TouchableOpacity onPress={() => setModalVisible(true)}>
           <View style={styles.coverImageContainer}>
-            <Image
-              source={require('../../assets/images/profile_bg.png')}
-              style={styles.coverImage}
-              accessibilityLabel="Profile cover image"
-            />
-          </View>
-          <ProfileHeader user={user} onUpdateUserProfile={updateUserProfile} />
-
-
+            {backgroundImage ? ( 
+              <Image
+                resizeMode="cover"
+                source={{
+                  uri: `${IMAGE_URL}${backgroundImage}?key=${imageKey}`,
+                  cache: 'reload',
+                }}
+                style={styles.coverImage}
+              />              
+              ): (
+              <View style={styles.coverImage} />
+            )}
+            </View>
+          </TouchableOpacity>  
+          <Modal visible={isModalVisible} animationType="slide">
+              <EditBackgroundImage
+              backgroundImage={backgroundImage || ''}
+              onClose={() => setModalVisible(false)}
+              onSave={handleSave}/>
+            </Modal>        
+          <ProfileHeader onUpdateUserProfile={updateUserProfile} />
           <ProfileStats user={user} />
           <View style={styles.divider} />
           <Post postType="image" />
@@ -183,7 +219,7 @@ const styles = StyleSheet.create({
   coverImage: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
+    backgroundColor: '#D2D2D2',
   },
   divider: {
     backgroundColor: 'rgba(236, 236, 236, 1)',

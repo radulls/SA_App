@@ -5,18 +5,8 @@ import ErrorMessage from '../../components/ErrorMessage';
 import Button from '../../components/Button';
 import { Link } from 'expo-router';
 import { router } from 'expo-router';
+import { loginUser } from '@/api/mockApi';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Фиктивная функция логина
-const mockLoginUser = async (identifier: string, password: string): Promise<any> => {
-  console.log(`Mock login attempt: identifier="${identifier}", password="${password}"`);
-
-  if (identifier === 'test' && password === '1234') {
-    return { token: 'mockToken' }; // Успех
-  }
-
-  throw new Error('Неверный логин или пароль'); // Эмуляция ошибки
-};
 
 const LoginScreen = () => {
   const [formData, setFormData] = useState<{ identifier: string; password: string }>({
@@ -29,30 +19,42 @@ const LoginScreen = () => {
   const handleSubmit = async () => {
     setErrorMessage(null);
     setIsLoading(true);
-
+  
     try {
       const { identifier, password } = formData;
-
+  
+      console.log('Отправка данных на сервер:', { identifier, password });
+  
       if (!identifier || !password) {
         setErrorMessage('Заполните все поля.');
         setIsLoading(false);
         return;
       }
-
-      const response = await mockLoginUser(identifier, password); // Используем mock API
+  
+      const response = await loginUser(identifier, password);
+      console.log('Ответ от сервера:', response);
+  
       await AsyncStorage.setItem('token', response.token);
-      router.push('/home');
+  
+      // Переход на экран с капчей
+      router.push('/captcha');
     } catch (error: any) {
+      console.error('Ошибка при авторизации:', error);
+  
       if (error.message === 'Слишком много попыток') {
         setErrorMessage('Слишком много попыток');
+      } else if (error.message === 'Аккаунт не существует') {
+        setErrorMessage('Аккаунт не существует');
       } else if (error.message === 'Неверный логин или пароль') {
         setErrorMessage('Неверный логин или пароль');
+      } else {
+        setErrorMessage('Произошла ошибка. Попробуйте позже.');
       }
     } finally {
       setIsLoading(false);
     }
   };
-
+  
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
@@ -65,25 +67,27 @@ const LoginScreen = () => {
               value={formData.identifier}
               onChange={(e) => setFormData((prev) => ({ ...prev, identifier: e }))}
             />
-            <View style={styles.passwordContainer}>
-              <View style={styles.passwordContainerTitles}>
-                <Text style={styles.passwordLabel}>Пароль</Text>
-                <Link style={styles.forgotPassword} href="/forgot">
-                  Забыли пароль?
-                </Link>
-              </View>
-              <InputField
-                value={formData.password}
-                secureTextEntry
-                onChange={(e) => setFormData((prev) => ({ ...prev, password: e }))}
-                label=""
-              />
+            <View style={styles.passwordContainer}>        
+            <View style={styles.passwordContainerTitles}>
+              <Text style={styles.passwordLabel}>Пароль</Text>
+              <Link style={styles.forgotPassword} href="/reset-password">
+                Забыли пароль?
+              </Link>
             </View>
-            {errorMessage && <ErrorMessage message={errorMessage} />}
+            <InputField
+              value={formData.password}
+              secureTextEntry
+              onChange={(e) => setFormData((prev) => ({ ...prev, password: e }))}
+              label=""
+            />
+          </View>
+            {errorMessage && (
+              <ErrorMessage message={errorMessage} />
+            )}
             <View style={styles.footer}>
               <Text style={styles.signUpText}>
                 <Text style={styles.signUpTextGray}>У вас ещё нет аккаунта? </Text>
-                <Link style={styles.signUpTextBlue} href="/register">
+                <Link style={styles.signUpTextBlue} href="/captcha?action=register">
                   Зарегистрироваться
                 </Link>
               </Text>
@@ -143,17 +147,17 @@ const styles = StyleSheet.create({
     width: '100%',
     position: 'absolute',
     top: 0,
-    zIndex: 10,
+    zIndex: 10
   },
   passwordLabel: {
     color: 'rgba(255, 255, 255, 1)',
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '700'
   },
   forgotPassword: {
     color: '#94B3FF',
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '700'
   },
   signUpText: {
     fontSize: 12,

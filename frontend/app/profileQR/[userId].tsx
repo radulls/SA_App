@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Image, Text, Pressable, ScrollView, Dimensions, Share } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import Toast from 'react-native-toast-message';
-import { UserDataProps, getPublicProfile } from '@/api/index';
+import { UserDataProps, getPublicProfile, IMAGE_URL } from '@/api/index';
 import CopyLink from '@/components/svgConvertedIcons/copyLink';
 import ShareIcon from '@/components/svgConvertedIcons/shareIcon';
 import IconBack from '@/components/svgConvertedIcons/iconBack';
@@ -66,6 +66,7 @@ const ProfileQRCard: React.FC = () => {
             type: 'success',
             text1: 'Ссылка скопирована!',
             text2: 'Ссылка добавлена в буфер обмена.',
+            position: 'bottom',
           });
         })
         .catch(() => {
@@ -73,6 +74,7 @@ const ProfileQRCard: React.FC = () => {
             type: 'error',
             text1: 'Ошибка',
             text2: 'Не удалось скопировать ссылку.',
+            position: 'bottom',
           });
         });
     }
@@ -108,7 +110,9 @@ const ProfileQRCard: React.FC = () => {
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
         <View style={styles.headerIcons}>
-          <IconBack onPress={goBack} width={14} height={14} />
+          <View style={styles.iconBack}>
+            <IconBack onPress={goBack} width={14} height={14} />
+          </View>
           <ScanQr />
         </View>
         {loading ? (
@@ -119,9 +123,9 @@ const ProfileQRCard: React.FC = () => {
           <>
             <View style={styles.header}>
               <Image
-                resizeMode="contain"
+                resizeMode="cover"
                 source={{
-                  uri: user?.profileImage || 'https://via.placeholder.com/150',
+                  uri: `${IMAGE_URL}${user?.profileImage}` || 'https://via.placeholder.com/150',
                 }}
                 style={styles.profilePicture}
               />
@@ -185,6 +189,9 @@ const styles = StyleSheet.create({
     marginTop: 75,
     width: '100%',
   },
+  iconBack: {
+    marginLeft: -20
+  },
   header: {
     flexDirection: 'column',
     alignItems: 'stretch',
@@ -193,9 +200,10 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   profilePicture: {
+    height: 68,
     width: 68,
-    aspectRatio: 1,
-    alignSelf: 'flex-start',
+    borderRadius: '50%',
+    backgroundColor: '#D2D2D2',
   },
   userName: {
     color: 'rgba(255, 255, 255, 1)',

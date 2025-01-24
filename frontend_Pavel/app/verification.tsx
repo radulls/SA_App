@@ -4,10 +4,11 @@ import VerificationNameForm from '../components/verification/VerificationNameFor
 import VerificationPhotoForm from '../components/verification/VerificationPhotoForm';
 import IconBack from '@/components/svgConvertedIcons/iconBack';
 import { router } from 'expo-router';
+import { patchWithFiles } from '../api/index';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const VerificationScreen: React.FC = () => {
-  const [step, setStep] = useState<number>(1);
+  const [step, setStep] = useState<number>(1); // Добавлено состояние для шагов
   const [verificationData, setVerificationData] = useState({
     firstName: '',
     lastName: '',
@@ -21,32 +22,63 @@ const VerificationScreen: React.FC = () => {
 
   const handleSubmitName = async () => {
     try {
-      // Логируем данные, которые отправлялись бы на сервер
-      console.log('Имя и фамилия:', {
-        firstName: verificationData.firstName,
-        lastName: verificationData.lastName,
-      });
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) throw new Error('userId не найден');
+  
+      const formData = new FormData();
+      formData.append('userId', userId);
+      formData.append('firstName', verificationData.firstName);
+      formData.append('lastName', verificationData.lastName);
+  
+      console.log('Отправляем FormData:', formData);
+  
+      const response = await patchWithFiles('/users/verify', formData);
 
-      // Симулируем успешную отправку
-      Alert.alert('Успех', 'Имя и фамилия успешно отправлены!');
+  
+      console.log('Успешный ответ сервера:', response);
+  
+      // Alert.alert('Успех', 'Имя и фамилия успешно отправлены!');
       setStep(2); // Переход ко второму шагу
     } catch (error: any) {
       console.error('Ошибка:', error.message || error.response?.data || error);
       Alert.alert('Ошибка', error.message || 'Неизвестная ошибка');
     }
   };
-
+  
   const handleSubmitPhotos = async () => {
     try {
-      // Логируем фото, которые отправлялись бы на сервер
-      console.log('Фото:', {
-        passportPhoto: verificationData.passportPhoto,
-        selfiePhoto: verificationData.selfiePhoto,
-      });
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) throw new Error('userId не найден');
 
-      // Симулируем успешную отправку
+      const formData = new FormData();
+      formData.append('userId', userId);
+
+      const appendImageToFormData = (uri: string, fieldName: string) => {
+        formData.append(fieldName, {
+          uri,
+          name: `${fieldName}.${uri.split('.').pop()}`,
+          type: `image/${uri.split('.').pop()?.toLowerCase() || 'jpeg'}`,
+        } as any);
+      };
+
+      if (verificationData.passportPhoto) {
+        console.log('Добавляем паспортное фото...');
+        appendImageToFormData(verificationData.passportPhoto, 'passportPhoto');
+      }
+
+      if (verificationData.selfiePhoto) {
+        console.log('Добавляем селфи...');
+        appendImageToFormData(verificationData.selfiePhoto, 'selfiePhoto');
+      }
+
+      console.log('Отправляем FormData:', formData);
+
+      const response = await patchWithFiles('/users/verify', formData);
+
+      console.log('Ответ сервера:', response);
+
       Alert.alert('Успех', 'Фото успешно загружены!');
-      router.push('/home'); // Переход на домашнюю страницу
+      router.push('/home');
     } catch (error: any) {
       console.error('Ошибка:', error.message || error.response?.data || error);
       Alert.alert('Ошибка', error.message || 'Неизвестная ошибка');
@@ -99,7 +131,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 100)',
     flex: 1,
     width: '100%',
-    paddingHorizontal: 16,
+    paddingHorizontal: 16
   },
   headerIcons: {
     flexDirection: 'row',

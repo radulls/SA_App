@@ -13,6 +13,7 @@ export interface UserDataProps {
   city: string; // Меняем тип на строку
   intro?: string;
   profileImage?: string;
+  backgroundImage?: string;
   subscribers?: number;
   rating?: number;
   qrCode?: string;
@@ -55,7 +56,7 @@ const refreshToken = async (): Promise<string> => {
 
     return token;
   } catch (error) {
-    console.error('Ошибка при обновлении токена:', error.message);
+    console.error('Ошибка при обновлении токена:', (error as Error).message);
     await AsyncStorage.removeItem('token');
     await AsyncStorage.removeItem('refreshToken');
     throw new Error('Не удалось обновить токен. Требуется повторная авторизация.');
@@ -160,7 +161,7 @@ export const loginUser = async (identifier: string, password: string): Promise<a
 
     return response;
   } catch (error) {
-    console.error('Ошибка логина:', error.message);
+    console.error('Ошибка логина:', (error as Error).message);
     throw error;
   }
 };
@@ -182,7 +183,7 @@ export const registerUser = async (code: string): Promise<any> => {
 
     return response;
   } catch (error) {
-    console.error('Ошибка регистрации:', error.message);
+    console.error('Ошибка регистрации:', (error as Error).message);
     throw error;
   }
 };
@@ -234,20 +235,18 @@ export const validateActivationCode = async (code: string): Promise<any> => {
   }
 };
 
-export const updateUser = async (data: Record<string, any>, file?: File): Promise<any> => {
+export const updateUser = async (
+  data: Record<string, any>,
+  files?: FormData
+): Promise<any> => {
   try {
-    const formData = new FormData();
+    const formData = files || new FormData();
 
-    // Добавляем данные в FormData
+    // Добавляем текстовые данные в FormData
     for (const key in data) {
       if (data.hasOwnProperty(key)) {
         formData.append(key, data[key]);
       }
-    }
-
-    // Если передан файл, добавляем его в FormData
-    if (file) {
-      formData.append('profileImage', file);
     }
 
     const response = await patch('/users/update', formData, {
@@ -372,10 +371,11 @@ export const getUserProfile = async (): Promise<UserDataProps> => {
       id: userData._id, // Убедимся, что это поле возвращается
       firstName: userData.firstName || '',
       lastName: userData.lastName || '',
-      aboutMe: userData.aboutMe || '',
+      aboutMe: userData.aboutMe || 'Всем привет, меня зовут Катя, катаюсь на скейте и сноуборде, люблю вкусную еду)',
       username: userData.username || '',
       city: typeof userData.city === 'string' ? userData.city : userData.city?.name || 'Не указан', // Проверяем, строка или объект
       profileImage: userData.profileImage || '',
+      backgroundImage: userData.backgroundImage || '',
       qrCode: userData.qrCode || '',
     };
   } catch (error: any) {
@@ -399,7 +399,7 @@ export const getPublicProfile = async (userId: string): Promise<UserDataProps> =
       aboutMe: userData.aboutMe || '',
       username: userData.username || '',
       city: typeof userData.city === 'string' ? userData.city : userData.city?.name || 'Не указан', // Проверяем, строка или объект
-      profileImage: userData.profilePicture || undefined,
+      profileImage: userData.profileImage || '',
       qrCode: userData.qrCodeLink || '',
     };
   } catch (error: any) {

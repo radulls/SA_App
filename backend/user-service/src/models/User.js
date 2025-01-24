@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
   passportPhoto: { type: String, required: false },
   selfiePhoto: { type: String, required: false },
   profileImage: { type: String, required: false },
+  backgroundImage: { type: String, required: false },
   qrCode: { type: String, required: false },
   email: { type: String, unique: true, default: null }, // Аналогично
   phone: { type: String, unique: true, default: null },

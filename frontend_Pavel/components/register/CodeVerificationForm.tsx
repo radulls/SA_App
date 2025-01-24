@@ -30,15 +30,20 @@ const CodeVerificationForm = forwardRef<CodeVerificationFormRef, ValueProps>(({ 
       const result = await verifyEmailCode(email, value.trim());
       console.log('Код успешно подтвержден');
     } catch (err: any) {
-      const customError = handleError(err);
-      if (customError) {
-        setError(customError); // Показываем только кастомную ошибку
+      if (err.message === 'Слишком много попыток') {
+        setError('Слишком много попыток');
+      } else if (err.message === 'Неверный код подтверждения.') {
+        setError('Неверный код подтверждения.');
       } else {
-        setError('Произошла ошибка. Попробуйте снова.');
+        const customError = handleError(err);
+        if (customError) {
+          setError(customError);
+        } else {
+          setError('Произошла ошибка. Попробуйте снова.');
+        }
       }
-      return Promise.reject(customError || 'Произошла ошибка. Попробуйте снова.');
+      return Promise.reject(err.message || 'Произошла ошибка. Попробуйте снова.');
     }
-    
   };
 
   useImperativeHandle(ref, () => ({
@@ -54,7 +59,7 @@ const CodeVerificationForm = forwardRef<CodeVerificationFormRef, ValueProps>(({ 
     <View style={styles.form}>
       <Text style={styles.title}>Регистрация</Text>
       <Text style={styles.description}>
-      Введите код, который пришёл на вашу электронную почту.
+        Введите код, который пришёл на вашу электронную почту.
       </Text>
       {error && <ErrorMessage message={error} />}
       <View style={styles.inputContainer}>
@@ -69,4 +74,3 @@ const CodeVerificationForm = forwardRef<CodeVerificationFormRef, ValueProps>(({ 
 });
 
 export default CodeVerificationForm;
-

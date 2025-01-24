@@ -89,7 +89,7 @@ const getPublicProfile = async (req, res) => {
         username: user.username,
         city: user.city?.name || 'Не указан',
         qrCodeLink: profileLink,
-        profilePicture: user.passportPhoto,
+        profileImage: user.profileImage,
       },
     });
   } catch (error) {
@@ -410,33 +410,59 @@ const changePassword = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     const { username, email, phone, city, password, firstName, lastName, aboutMe } = req.body;
-    const userId = req.user.id; // Получаем ID из токена
+    const userId = req.user.id;
 
     // Логика ограничения количества запросов
-    const maxAttempts = 5; // Максимальное количество попыток
-    const lockoutTime = 15 * 60 * 1000; // 15 минут
+    const maxAttempts = 5;
+    const lockoutTime = 15 * 60 * 1000;
     const attemptKey = `updateAttempts:${userId}`;
     const lockoutKey = `updateLockout:${userId}`;
 
-    // Проверяем, заблокирован ли пользователь
     const isLocked = await redisClient.get(lockoutKey);
     if (isLocked) {
-      return res.status(429).json({ message: 'Слишком много попыток' });
+      return res.status(429).json({ message: 'Слишком много попыток обновления данных. Повторите через 15 минут.' });
     }
 
-    // Проверяем количество попыток
     let attempts = await redisClient.get(attemptKey);
     attempts = attempts ? parseInt(attempts, 10) : 0;
 
     if (attempts >= maxAttempts) {
       await redisClient.set(lockoutKey, 'locked', 'PX', lockoutTime);
       await redisClient.del(attemptKey);
-      return res.status(429).json({ message: 'Слишком много попыток обновления данных. Повторите через 15 минут.' });
+      return res.status(429).json({ message: 'Слишком много попыток. Повторите через 15 минут.' });
     }
 
-    // Начало обновления данных
     const updates = {};
+    const user = await User.findById(userId);
 
+    if (!user) {
+      return res.status(404).json({ message: 'Пользователь не найден.' });
+    }
+
+    // Удаляем старые фотографии, если они существуют
+    if (req.files) {
+      if (req.files.profileImage) {
+        if (user.profileImage) {
+          const oldProfileImagePath = `.${user.profileImage}`;
+          if (fs.existsSync(oldProfileImagePath)) {
+            fs.unlinkSync(oldProfileImagePath); // Удаление старого файла
+          }
+        }
+        updates.profileImage = `/uploads/${req.files.profileImage[0].filename}`;
+      }
+
+      if (req.files.backgroundImage) {
+        if (user.backgroundImage) {
+          const oldBackgroundImagePath = `.${user.backgroundImage}`;
+          if (fs.existsSync(oldBackgroundImagePath)) {
+            fs.unlinkSync(oldBackgroundImagePath); // Удаление старого файла
+          }
+        }
+        updates.backgroundImage = `/uploads/${req.files.backgroundImage[0].filename}`;
+      }
+    }
+
+    // Обновляем текстовые данные
     if (username) {
       const usernameExists = await User.findOne({ username });
       if (usernameExists && usernameExists._id.toString() !== userId) {
@@ -478,11 +504,7 @@ const updateUser = async (req, res) => {
     if (lastName) updates.lastName = lastName;
     if (aboutMe) updates.aboutMe = aboutMe;
 
-    // Если есть загруженное фото профиля
-    if (req.file) {
-      updates.profileImage = `/uploads/${req.file.filename}`;
-    }
-
+    // Обновляем пользователя
     const updatedUser = await User.findByIdAndUpdate(userId, updates, { new: true });
 
     if (!updatedUser) {
@@ -496,9 +518,8 @@ const updateUser = async (req, res) => {
   } catch (error) {
     console.error('Ошибка обновления пользователя:', error.message);
 
-    // Увеличиваем счётчик попыток в случае ошибки
     const attemptKey = `updateAttempts:${req.user.id}`;
-    const lockoutTime = 15 * 60; // Время истечения в секундах
+    const lockoutTime = 15 * 60;
     await redisClient.incr(attemptKey);
     await redisClient.expire(attemptKey, lockoutTime);
 

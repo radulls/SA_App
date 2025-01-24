@@ -21,12 +21,13 @@ const VerificationPageStart: React.FC<VerificationPageStartProps> = ({ onStart }
             Благодаря верификации мы создаём безопасную среду добрососедства. Пройдите верификацию, чтобы открыть все разделы объединения.
           </Text>
           <TouchableOpacity
-            style={styles.verifyButton}
-            onPress={() => onStart('verification')} // Вызов функции onStart
-            accessibilityRole="button"
-          >
-            <Text style={styles.buttonText}>Пройти</Text>
-          </TouchableOpacity>
+  style={styles.verifyButton}
+  onPress={() => onStart('verification')} // Вызов обработчика
+  accessibilityRole="button"
+>
+  <Text style={styles.buttonText}>Пройти</Text>
+</TouchableOpacity>
+
         </View>
       </View>
     </View>

@@ -45,7 +45,6 @@ const VerificationScreen: React.FC = () => {
     }
   };
   
-
   const handleSubmitPhotos = async () => {
     try {
       const userId = await AsyncStorage.getItem('userId');
