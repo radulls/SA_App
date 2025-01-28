@@ -34,20 +34,23 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 12,
+    marginTop: 13,
     paddingLeft: 16,
     paddingRight: 16,
     gap: 18,
   },
   item: {
-  flexDirection: "row",
-  alignItems: "center",
+    flexDirection: "row",
+    alignItems: "center",
   },
   label: {
+    // fontFamily: "SFUIDisplay-regular",
     fontSize: 12,
     color: "rgba(153, 153, 153, 1)",
+    fontWeight: '400'
   },
   value: {
+    // fontFamily: "SFUIDisplay-bold",
     fontSize: 12,
     fontWeight: "700",
     color: "#000",
@@ -56,7 +59,9 @@ const styles = StyleSheet.create({
   },
   ratingBackground: {
     backgroundColor: "#FFE772",
-    borderRadius: 2,
+    paddingHorizontal: 2.5,
+    paddingVertical: 3,
+    borderRadius: 3,
   },
 });
 

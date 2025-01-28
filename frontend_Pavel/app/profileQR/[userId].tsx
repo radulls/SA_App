@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     height: 22,
-    marginTop: 75,
+    marginTop: 55,
     width: '100%',
   },
   iconBack: {

@@ -27,7 +27,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'absolute',
     zIndex: 100,
-    top: -70
+    top: -70,
+    width: '100%',
+    maxWidth: 600,
   },
   errorIcon: {
     alignSelf: "flex-start",

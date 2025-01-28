@@ -214,12 +214,13 @@ const styles = StyleSheet.create({
   },
   coverImageContainer: {
     width: '100%',
-    height: 210,
+    aspectRatio: 16 / 9,  // Устанавливаем соотношение сторон 16:9, но можно адаптировать под нужное
   },
   coverImage: {
     width: '100%',
     height: '100%',
     backgroundColor: '#D2D2D2',
+    resizeMode: 'cover',  // Сохраняет пропорции изображения при изменении размеров контейнера
   },
   divider: {
     backgroundColor: 'rgba(236, 236, 236, 1)',

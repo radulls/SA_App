@@ -83,15 +83,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   name: {
+    fontFamily: "SFUIDisplay-Bold",
     fontSize: 18,
     fontWeight: 'bold',
     color: '#000000',
   },
   username: {
+    fontFamily: "SFUIDisplay-medium",
     fontSize: 14,
     color: '#000000',
     fontWeight: '500',
-    marginTop: 6,
+    marginTop: 2,
   },
   locationContainer: {
     flexDirection: 'row',
@@ -107,15 +109,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   locationIconText: {
+    fontFamily: "SFUIDisplay-Bold",
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: 'bold',
+    alignItems: "center",
+    marginBottom: 2,
   },
   locationText: {
+    fontFamily: "SFUIDisplay-Bold",
     marginLeft: 3,
     fontSize: 14,
     fontWeight: 'bold',
     color: '#000000',
+    marginBottom: 2,
   },
   profileImage: {
     width: 68,
@@ -128,6 +135,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   description: {
+    fontFamily: "SFUIDisplay-regular",
     fontSize: 14,
     color: '#000000',
   },

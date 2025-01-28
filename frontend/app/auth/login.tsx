@@ -68,18 +68,18 @@ const LoginScreen = () => {
               onChange={(e) => setFormData((prev) => ({ ...prev, identifier: e }))}
             />
             <View style={styles.passwordContainer}>        
-            <View style={styles.passwordContainerTitles}>
-              <Text style={styles.passwordLabel}>Пароль</Text>
-              <Link style={styles.forgotPassword} href="/reset-password">
-                Забыли пароль?
-              </Link>
-            </View>
-            <InputField
-              value={formData.password}
-              secureTextEntry
-              onChange={(e) => setFormData((prev) => ({ ...prev, password: e }))}
-              label=""
-            />
+              <View style={styles.forgotContainer}>
+                <Link style={styles.forgotPassword} href="/reset-password">
+                  Забыли пароль?
+                </Link>
+              </View>        
+              {/* </View> */}
+              <InputField
+                value={formData.password}
+                secureTextEntry
+                onChange={(e) => setFormData((prev) => ({ ...prev, password: e }))}
+                label=" Пароль"
+              />
           </View>
             {errorMessage && (
               <ErrorMessage message={errorMessage} />
@@ -102,8 +102,11 @@ const LoginScreen = () => {
 
 const styles = StyleSheet.create({
   scrollContainer: {
+    marginHorizontal: 'auto',
     flexGrow: 1,
     backgroundColor: 'rgba(255, 255, 255, 1)',
+    width: '100%',
+    maxWidth: 600,
   },
   container: {
     flexGrow: 1,
@@ -145,19 +148,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
-    position: 'absolute',
-    top: 0,
-    zIndex: 10
   },
   passwordLabel: {
     color: 'rgba(255, 255, 255, 1)',
     fontSize: 14,
     fontWeight: '700'
   },
+  forgotContainer: {
+    position: 'relative',
+  },
   forgotPassword: {
     color: '#94B3FF',
     fontSize: 12,
-    fontWeight: '700'
+    fontWeight: '700',
+    position: 'absolute',
+    right: 0
   },
   signUpText: {
     fontSize: 12,

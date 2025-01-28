@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     height: 22,
-    marginTop: 75,
+    marginTop: 55,
     width: '100%',
   },
   iconBack: {
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   profilePicture: {
     height: 68,
     width: 68,
-    borderRadius: '50%',
+    borderRadius: 34,
     backgroundColor: '#D2D2D2',
   },
   userName: {
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   qrCodeContainer: {
     borderRadius: 20,
     backgroundColor: 'rgba(246, 246, 246, 1)',
-    boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.15)',
+    shadowColor: 'rgba(0, 0, 0, 0.15)',
     alignSelf: 'center',
     marginTop: 24,
     flexDirection: 'column',

@@ -131,7 +131,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 100)',
     flex: 1,
     width: '100%',
-    paddingHorizontal: 16
+    paddingHorizontal: 16,
+    maxWidth: 600,
+    marginHorizontal: 'auto'
   },
   headerIcons: {
     flexDirection: 'row',
