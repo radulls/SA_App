@@ -829,6 +829,43 @@ const blockUser = async (req, res) => {
   }
 };
 
+const getUserProfileById = async (req, res) => {
+  try {
+    const { userId } = req.params; // Получаем ID пользователя из URL
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: 'Некорректный ID пользователя.' });
+    }
+
+    const user = await User.findById(userId)
+      .populate('city', 'name') // Подтягиваем город
+      .select('-password -email'); // Исключаем чувствительные данные
+
+    if (!user) {
+      return res.status(404).json({ message: 'Пользователь не найден.' });
+    }
+
+    res.status(200).json({
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        username: user.username,
+        city: user.city?.name || 'Не указан',
+        profileImage: user.profileImage,
+        backgroundImage: user.backgroundImage,
+        aboutMe: user.aboutMe,
+        followersCount: user.followers?.length || 0, // Количество подписчиков
+        followingCount: user.following?.length || 0, // Количество подписок
+      },
+    });
+  } catch (error) {
+    console.error('Ошибка при получении профиля пользователя:', error.message);
+    res.status(500).json({ message: 'Ошибка сервера.' });
+  }
+};
+
+
 module.exports = {
   refreshAccessToken,
   generateUserQRCode,

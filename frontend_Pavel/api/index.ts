@@ -1,8 +1,8 @@
 import axios, { AxiosInstance } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'http://192.168.1.65:5001/api';
-export const IMAGE_URL = 'http://192.168.1.65:5001';
+const API_BASE_URL = 'http://192.168.3.16:5001/api';
+export const IMAGE_URL = 'http://192.168.3.16:5001';
 
 export interface UserDataProps {
   id?: string;
