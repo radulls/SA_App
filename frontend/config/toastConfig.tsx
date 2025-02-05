@@ -20,29 +20,27 @@ export const toastConfig: ToastConfig = {
 
 const styles = StyleSheet.create({
   success: {
-    backgroundColor: '#fff',
-    padding: 10,
-    borderRadius: 8,
-    marginHorizontal: 10,
-    alignItems: 'flex-start',
+    backgroundColor: '#000',
+    padding: 15,
+    borderRadius: 10,
     justifyContent: 'center',
+    width: '95%'
   },
   error: {
     backgroundColor: 'red',
-    padding: 10,
-    borderRadius: 8,
-    marginHorizontal: 10,
-    alignItems: 'flex-start',
+    padding: 15,
+    borderRadius: 10,
     justifyContent: 'center',
+    width: '95%'
   },
   text: {
-    color: '#000',
-    fontWeight: 'bold',
-    fontSize: 16,
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 12,
   },
   textSmall: {
-    color: '#000',
-    fontSize: 14,
+    color: '#fff',
+    fontSize: 10,
     marginTop: 4,
   },
 });

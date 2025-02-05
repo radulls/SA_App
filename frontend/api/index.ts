@@ -418,7 +418,7 @@ export const getUserProfileById = async (userId: string): Promise<UserDataProps>
       id: userData._id,
       firstName: userData.firstName || '',
       lastName: userData.lastName || '',
-      aboutMe: userData.aboutMe || '',
+      aboutMe: userData.aboutMe || 'Основатель магазина Скейтшоп SK8, в сфободное время фотографирую природу.',
       username: userData.username || '',
       city: typeof userData.city === 'string' ? userData.city : userData.city?.name || 'Не указан',
       profileImage: userData.profileImage || '',

@@ -7,6 +7,9 @@ import ProfileStats from './ProfileStats';
 import Post from './Post';
 import BottomNavigation from '../BottomNavigation';
 import EditBackgroundImage from './EditBackgroundImage';
+import SettingsIcon from '../svgConvertedIcons/SettingsIcon';
+import SosIcon from '../svgConvertedIcons/SosIcon';
+import QrIcon from '../svgConvertedIcons/qrIcon';
 
 const ProfileMain: React.FC = () => {
   const [user, setUser] = useState<UserDataProps | null>(null); // Состояние для данных пользователя
@@ -40,20 +43,23 @@ const ProfileMain: React.FC = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        console.log('Запуск загрузки данных профиля...');
         setLoading(true);
-        const userData = await getUserProfile(); // Получаем данные пользователя через API
-        setUser(userData); // Устанавливаем данные пользователя
+        const userData = await getUserProfile();
+        console.log('Данные пользователя получены:', userData);
+        setUser(userData);
       } catch (err: any) {
         console.error('Ошибка при загрузке данных пользователя:', err.message);
         setError(err.message || 'Ошибка при загрузке данных пользователя.');
       } finally {
-        setLoading(false); // Скрываем индикатор загрузки
+        console.log('✅ Загрузка завершена, устанавливаем setLoading(false)');
+        setLoading(false); // Убеждаемся, что setLoading(false) вызывается
       }
     };
-
+  
     fetchUserData();
   }, []);
-
+  
   const updateUserProfile = (updatedProfileImage: string) => {
     if (user) {
       setUser({ ...user, profileImage: updatedProfileImage });
@@ -104,26 +110,17 @@ const ProfileMain: React.FC = () => {
               }
             }}
           >
-            <Image
-              source={require('../../assets/images/profile/qr.png')}
-              style={styles.qrIcon}
-            />
+           <QrIcon width={22} height={22}/>
           </TouchableOpacity>
             <View style={styles.rightIcons}>
-              <Image
-                source={require('../../assets/images/profile/sos.png')}
-                style={styles.sosIcon}
-              />
-              <TouchableOpacity onPress={() => { router.push('/settings'); }}>
-                <Image
-                  source={require('../../assets/images/profile/settings.png')}
-                  style={styles.settingsIcon}
-                />
+              <SosIcon width={22} height={22}/>
+              <TouchableOpacity onPress={() => { router.push('/settings'); }} style={styles.settingIcon}>
+                <SettingsIcon width={22} height={22}/>
               </TouchableOpacity>
             </View>
           </View>
           <TouchableOpacity onPress={() => setModalVisible(true)}>
-          <View style={styles.coverImageContainer}>
+            <View style={styles.coverImageContainer}>
             {backgroundImage ? ( 
               <Image
                 resizeMode="cover"
@@ -139,12 +136,12 @@ const ProfileMain: React.FC = () => {
             </View>
           </TouchableOpacity>  
           <Modal visible={isModalVisible} animationType="slide">
-              <EditBackgroundImage
-              backgroundImage={backgroundImage || ''}
-              onClose={() => setModalVisible(false)}
-              onSave={handleSave}/>
-            </Modal>        
-          <ProfileHeader onUpdateUserProfile={updateUserProfile} />
+            <EditBackgroundImage
+            backgroundImage={backgroundImage || ''}
+            onClose={() => setModalVisible(false)}
+            onSave={handleSave}/>
+          </Modal>          
+          {user && <ProfileHeader user={user} isOwnProfile={true} onUpdateUserProfile={updateUserProfile} />}
           <ProfileStats user={user} />
           <View style={styles.divider} />
           <Post postType="image" />
@@ -229,6 +226,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     width: '100%',
   },
+  settingIcon: {
+    marginLeft: 20,
+  }
 });
 
 export default ProfileMain;

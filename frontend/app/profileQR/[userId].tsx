@@ -22,11 +22,9 @@ const ProfileQRCard: React.FC = () => {
     const fetchUserData = async () => {
       try {
         setLoading(true);
-
         if (!userId) {
           throw new Error('ID пользователя не указан.');
         }
-
         // Загружаем публичные данные пользователя
         const userData = await getPublicProfile(userId as string);
         setUser(userData); // Устанавливаем данные пользователя
@@ -65,15 +63,13 @@ const ProfileQRCard: React.FC = () => {
           Toast.show({
             type: 'success',
             text1: 'Ссылка скопирована!',
-            text2: 'Ссылка добавлена в буфер обмена.',
             position: 'bottom',
           });
         })
         .catch(() => {
           Toast.show({
             type: 'error',
-            text1: 'Ошибка',
-            text2: 'Не удалось скопировать ссылку.',
+            text1: 'Не удалось скопировать ссылку.',
             position: 'bottom',
           });
         });

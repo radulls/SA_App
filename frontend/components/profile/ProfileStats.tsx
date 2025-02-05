@@ -20,11 +20,14 @@ const ProfileStats: React.FC<UserProps> = ({ user }) => {
     <View style={styles.container}>
       <View style={styles.item}>
         <Text style={styles.label}>Подписчики: </Text>
-        <Text style={styles.value}>{user.subscribers ?? 0}</Text>
+        <Text style={styles.value}>{Number(user.subscribers ?? 0)}</Text>
       </View>
       <View style={styles.item}>
         <Text style={styles.label}>Рейтинг: </Text>
-        <Text style={[styles.value, styles.ratingBackground]}>{(user.rating ?? 0).toFixed(1)}</Text>
+        <Text style={[styles.value, styles.ratingBackground]}>
+          {Number(user.rating ?? 0).toFixed(1)}
+        </Text>
+
       </View>
     </View>
   );

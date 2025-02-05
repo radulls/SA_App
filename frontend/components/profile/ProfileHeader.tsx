@@ -1,43 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, Modal, Image, ActivityIndicator } from 'react-native';
-import { IMAGE_URL, getUserProfile, UserDataProps } from '@/api';
+import { IMAGE_URL, UserDataProps } from '@/api';
 import EditProfileImage from './EditProfileImage';
 
-interface UserProps {
-  onUpdateUserProfile: (updatedProfileImage: string) => void;
+interface ProfileHeaderProps {
+  user: UserDataProps | null;
+  isOwnProfile: boolean; // Определяем, чей профиль
+  onUpdateUserProfile?: (updatedProfileImage: string) => void; // Обновление фото профиля
 }
 
-const ProfileHeader: React.FC<UserProps> = ({ onUpdateUserProfile }) => {
-  const [user, setUser] = useState<UserDataProps | null>(null); // Состояние пользователя
-  const [profileImage, setProfileImage] = useState<string | null>(null); // Состояние изображения профиля
+const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, isOwnProfile, onUpdateUserProfile }) => {
+  const [profileImage, setProfileImage] = useState<string | null>(user?.profileImage || null);
   const [isModalVisible, setModalVisible] = useState(false);
   const [imageKey, setImageKey] = useState(Date.now());
-  const [loading, setLoading] = useState<boolean>(true); // Состояние загрузки
+  const [loading, setLoading] = useState<boolean>(!user); // Если user === null, ждем
 
-  // Загрузка данных пользователя
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        setLoading(true);
-        const userData = await getUserProfile(); // Запрос данных пользователя из API
-        setUser(userData);
-        setProfileImage(userData.profileImage || null);
-      } catch (err) {
-        console.log('Ошибка загрузки данных пользователя:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, []);
+    if (user?.profileImage) {
+      setProfileImage(user.profileImage);
+    }
+  }, [user]);
 
   const handleSave = (newImage: string) => {
     setProfileImage(newImage);
-    setImageKey(Date.now()); // Обновляем ключ для сброса кэша
-    onUpdateUserProfile(newImage); // Передаем новое изображение в родительский компонент
+    setImageKey(Date.now());
+    if (onUpdateUserProfile) onUpdateUserProfile(newImage);
     setModalVisible(false);
-    console.log('ProfileHeader props:', { profileImage, user });
   };
 
   if (loading) {
@@ -61,24 +49,24 @@ const ProfileHeader: React.FC<UserProps> = ({ onUpdateUserProfile }) => {
     <View style={styles.container}>
       <View style={styles.topContainer}>
         <View style={styles.nameContainer}>
-          <Text style={styles.name}>
-            {user.firstName} {user.lastName}
-          </Text>
-          <Text style={styles.username}>@{user.username}</Text>
+          <Text style={styles.name}>{user?.firstName} {user?.lastName}</Text>
+          <Text style={styles.username}>@{user?.username}</Text>
           <View style={styles.locationContainer}>
             <View style={styles.locationIcon}>
               <Text style={styles.locationIconText}>sa</Text>
             </View>
-            <Text style={styles.locationText}>{user.city}</Text>
+            <Text style={styles.locationText}>{user?.city}</Text>
           </View>
         </View>
-        <TouchableOpacity onPress={() => setModalVisible(true)}>
+
+        {/* Фото профиля */}
+        <TouchableOpacity 
+          onPress={() => isOwnProfile && setModalVisible(true)} 
+          disabled={!isOwnProfile} // Отключаем кликабельность, если не свой профиль
+        >
           {profileImage ? (
             <Image
-              source={{
-                uri: `${IMAGE_URL}${profileImage}?key=${imageKey}`,
-                cache: 'reload',
-              }}
+              source={{ uri: `${IMAGE_URL}${profileImage}?key=${imageKey}`, cache: 'reload' }}
               style={styles.profileImage}
               resizeMode="cover"
             />
@@ -87,17 +75,16 @@ const ProfileHeader: React.FC<UserProps> = ({ onUpdateUserProfile }) => {
           )}
         </TouchableOpacity>
       </View>
-      <View style={styles.descriptionContainer}>
-        <Text style={styles.description}>{user.aboutMe}</Text>
-      </View>
 
-      <Modal visible={isModalVisible} animationType="slide">
-        <EditProfileImage
-          profileImage={profileImage || ''}
-          onClose={() => setModalVisible(false)}
-          onSave={handleSave}
-        />
-      </Modal>
+      <View style={styles.descriptionContainer}>
+        <Text style={styles.description}>{user?.aboutMe}</Text>
+      </View>
+      {/* Модальное окно для редактирования фото (только для владельца профиля) */}
+      {isOwnProfile && (
+        <Modal visible={isModalVisible} animationType="slide">
+          <EditProfileImage profileImage={profileImage || ''} onClose={() => setModalVisible(false)} onSave={handleSave} />
+        </Modal>
+      )}
     </View>
   );
 };
@@ -123,13 +110,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   name: {
-    // fontFamily: "SFUIDisplay-Bold",
     fontSize: 18,
     fontWeight: 'bold',
     color: '#000000',
   },
   username: {
-    // fontFamily: "SFUIDisplay-medium",
     fontSize: 14,
     color: '#000000',
     fontWeight: '500',
@@ -149,15 +134,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   locationIconText: {
-    // fontFamily: "SFUIDisplay-Bold",
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: 'bold',
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: 2,
   },
   locationText: {
-    // fontFamily: "SFUIDisplay-Bold",
     marginLeft: 3,
     fontSize: 14,
     fontWeight: 'bold',
@@ -175,12 +158,11 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   description: {
-    // fontFamily: "SFUIDisplay-regular",
     fontSize: 14,
     color: '#000000',
-    fontWeight: '400'
+    fontWeight: '400',
   },
-    loadingContainer: {
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',

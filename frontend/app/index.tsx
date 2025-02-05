@@ -1,8 +1,30 @@
-import { Text, View } from "react-native";
-import { Link } from 'expo-router';
+import React, { useEffect, useState } from "react";
+import { View, Text } from "react-native";
+import { Link } from "expo-router";
+import { getUserProfile } from "@/api/index"; // Импортируем API
 
 export default function Index() {
   const linkStyle = {fontSize: 24, marginBottom: 16}
+  const [userId, setUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const userData = await getUserProfile();
+        if (userData?.id) {
+          setUserId(userData.id);
+        }
+      } catch (error) {
+        console.error("Ошибка при получении данных пользователя:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
   return (
     <View
       style={{
@@ -17,7 +39,10 @@ export default function Index() {
       <Link style={linkStyle} href="/register">Регистрация</Link>
       <Link style={linkStyle} href="/verification">Верификация</Link>
       <Link style={linkStyle} href="/home">Профиль</Link>
-      <Link style={linkStyle} href="/profileQR">QR профиля</Link>
+      <Link style={linkStyle} href={`/profile/6787bfd597715a6fc67231c9`}>Чужой профиль</Link>
+      <Link style={linkStyle} href={`/profileQR/${userId}`}>
+        QR профиля
+      </Link>
       <Link style={linkStyle} href="/eventCreation">Создать пост</Link>
       <Link style={linkStyle} href="/search">Поиск</Link>
       <Link style={linkStyle} href="/messages">Сообщения</Link>
