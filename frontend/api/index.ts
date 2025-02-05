@@ -408,6 +408,30 @@ export const getPublicProfile = async (userId: string): Promise<UserDataProps> =
   }
 };
 
+export const getUserProfileById = async (userId: string): Promise<UserDataProps> => {
+  try {
+    console.log('Запрос данных профиля для ID:', userId);
+    const response = await api.get(`/users/profile/${userId}`);
+    const userData = response.data.user;
+    console.log('Получены данные профиля:', userData);
+    return {
+      id: userData._id,
+      firstName: userData.firstName || '',
+      lastName: userData.lastName || '',
+      aboutMe: userData.aboutMe || '',
+      username: userData.username || '',
+      city: typeof userData.city === 'string' ? userData.city : userData.city?.name || 'Не указан',
+      profileImage: userData.profileImage || '',
+      backgroundImage: userData.backgroundImage || '',
+      rating: userData.rating || '',
+      subscribers: userData.subscribers || '',
+    };
+  } catch (error: any) {
+    console.error('Ошибка при получении публичного профиля:', error.message);
+    throw error;
+  }
+};
+
 // Обработка ошибок
 export const handleError = (error: any): string | null => {
   if (error.response?.data?.message) {

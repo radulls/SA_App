@@ -854,9 +854,9 @@ const getUserProfileById = async (req, res) => {
         city: user.city?.name || 'Не указан',
         profileImage: user.profileImage,
         backgroundImage: user.backgroundImage,
+        rating: user.rating,
         aboutMe: user.aboutMe,
-        followersCount: user.followers?.length || 0, // Количество подписчиков
-        followingCount: user.following?.length || 0, // Количество подписок
+        subscribers: user.subscribers,
       },
     });
   } catch (error) {
@@ -886,4 +886,5 @@ module.exports = {
   updateUserVerification,
   checkVerificationStatus,
   blockUser,
+  getUserProfileById,
 };

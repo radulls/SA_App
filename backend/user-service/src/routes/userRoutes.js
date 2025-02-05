@@ -17,7 +17,8 @@ const {
   checkEmail,
   checkPhone,
   checkVerificationStatus,
-  blockUser 
+  blockUser,
+  getUserProfileById 
 } = require('../controllers/userController');
 const { upload, processUploadedFiles } = require('../middlewares/upload.jsx');
 const { verifyToken } = require('../middlewares/authMiddleware');
@@ -125,5 +126,9 @@ router.patch(
 
 // Блокировка/разблокировка пользователя
 router.patch('/block', verifyToken, blockUser);
+
+// Получение данных пользователя по id
+router.get('/profile/:userId', getUserProfileById);
+
 
 module.exports = router;
