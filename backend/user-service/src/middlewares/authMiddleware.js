@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
+const User = require('../models/User'); // Подключаем модель пользователя
 
+// Проверка токена
 const verifyToken = (req, res, next) => {
   const token = req.headers['authorization']?.split(' ')[1]; // Извлекаем токен из заголовка Authorization
 
@@ -17,4 +19,27 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-module.exports = { verifyToken };
+// Проверка на администратора
+const isAdmin = async (req, res, next) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(403).json({ message: 'Доступ запрещён. Пользователь не найден.' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'Пользователь не найден.' });
+    }
+
+    if (user.role !== 'admin') {
+      return res.status(403).json({ message: 'Доступ запрещён. Требуются права администратора.' });
+    }
+
+    next(); // Продолжаем выполнение запроса
+  } catch (error) {
+    console.error('Ошибка при проверке роли администратора:', error.message);
+    res.status(500).json({ message: 'Ошибка сервера.' });
+  }
+};
+
+module.exports = { verifyToken, isAdmin };

@@ -20,6 +20,7 @@ app.use('/api/captcha', require('./src/routes/captchaRoutes'));
 
 // Другие маршруты
 app.use('/api/users', require('./src/routes/userRoutes')); 
+app.use('/api/reports', require('./src/routes/reportRoutes'))
 app.use('/api/cities', require('./src/routes/cityRoutes')); 
 app.use('/uploads', express.static('uploads'));
 

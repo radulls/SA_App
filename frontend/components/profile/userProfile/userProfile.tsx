@@ -1,4 +1,5 @@
 import { IMAGE_URL, UserDataProps, getUserProfileById } from '@/api';
+import { getReportTopics, reportUser } from '@/api/reportService';
 import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator, Text, ScrollView, Image, TouchableOpacity, Share } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -21,6 +22,8 @@ const UserProfile: React.FC = () => {
   const { userId } = useLocalSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
+  const [isReportMenuVisible, setIsReportMenuVisible] = useState(false);
+  const [reportTopics, setReportTopics] = useState<{ _id: string; name: string }[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -37,7 +40,7 @@ const UserProfile: React.FC = () => {
         setUser(userData);
       } catch (err: any) {
         console.error('❌ Ошибка при загрузке данных пользователя:', err.message);
-        setError(err.message || 'Ошибка при загрузке данных пользователя.');
+        setError(err.message || 'Ошибка загрузки.');
       } finally {
         setLoading(false);
       }
@@ -50,88 +53,61 @@ const UserProfile: React.FC = () => {
   if (error) return <Text style={styles.errorText}>Ошибка: {error}</Text>;
   if (!user) return <Text style={styles.errorText}>Пользователь не найден.</Text>;
 
-  // 📌 Копирование ссылки с использованием Clipboard
+  // 📌 Копирование ссылки
   const copyToClipboard = async () => {
-    console.log('Кнопка нажата!'); // Проверяем, вызывается ли функция
     if (!userId) {
-      Toast.show({
-        type: 'error',
-        text1: 'Ошибка',
-        text2: 'ID пользователя отсутствует.',
-        position: 'bottom',
-      });
+      Toast.show({ type: 'error', text1: 'Ошибка', text2: 'ID отсутствует.', position: 'bottom' });
       return;
     }
-  
     try {
       const deepLink = Linking.createURL(`/profile/${userId}`);
-      console.log('🔗 Ссылка для копирования:', deepLink);
-  
-      await Clipboard.setStringAsync(deepLink); // <-- Проверяем работает ли это
-  
-      console.log('✅ Ссылка успешно скопирована!');
-      Toast.show({
-        type: 'success',
-        text1: 'Ссылка скопирована!',
-        position: 'bottom',
-      });
+      await Clipboard.setStringAsync(deepLink);
+      Toast.show({ type: 'success', text1: 'Ссылка скопирована!', position: 'bottom' });
     } catch (err) {
-      console.error('❌ Ошибка при копировании:', err);
-      Toast.show({
-        type: 'error',
-        text1: 'Не удалось скопировать ссылку.',
-        position: 'bottom',
-      });
+      Toast.show({ type: 'error', text1: 'Ошибка копирования.', position: 'bottom' });
     }
   };
-  
 
   // 📌 Поделиться ссылкой
   const shareLink = async () => {
     if (!userId) {
-      Toast.show({
-        type: 'error',
-        text1: 'Ошибка',
-        text2: 'ID пользователя отсутствует.',
-        position: 'bottom',
-      });
+      Toast.show({ type: 'error', text1: 'Ошибка', text2: 'ID отсутствует.', position: 'bottom' });
       return;
     }
-
     try {
       const deepLink = Linking.createURL(`/profile/${userId}`);
-      console.log('📤 Ссылка для шаринга:', deepLink);
-
-      await Share.share({
-        message: `Посмотрите мой профиль: ${deepLink}`,
-        url: deepLink,
-      });
+      await Share.share({ message: `Посмотрите профиль: ${deepLink}`, url: deepLink });
     } catch (err) {
-      console.error('❌ Ошибка при шаринге:', err);
-      Toast.show({
-        type: 'error',
-        text1: 'Не удалось поделиться ссылкой.',
-        position: 'bottom',
-      });
+      Toast.show({ type: 'error', text1: 'Ошибка при шаринге.', position: 'bottom' });
+    }
+  };
+
+  // 📌 Открыть меню жалоб
+  const openReportMenu = async () => {
+    try {
+      const topics = await getReportTopics();
+      setReportTopics(topics);
+      setIsReportMenuVisible(true);
+    } catch (error) {
+      Toast.show({ type: 'error', text1: 'Не удалось загрузить темы.', position: 'bottom' });
     }
   };
 
   // 📌 Отправка жалобы
-  const reportUser = () => {
-    Toast.show({
-      type: 'success',
-      text1: 'Спасибо, что сообщили нам об этом',
-      position: 'bottom',
-    });
+  const handleReportSubmit = async (topicId: string) => {
+    try {
+      await reportUser(userId as string, topicId);
+      Toast.show({ type: 'success', text1: 'Спасибо, что сообщили нам об этом', position: 'bottom' });
+    } catch (error) {
+      Toast.show({ type: 'error', text1: 'Не удалось отправить жалобу.', position: 'bottom' });
+    } finally {
+      setIsReportMenuVisible(false);
+    }
   };
 
   // 📌 Блокировка пользователя
   const blockUser = () => {
-    Toast.show({
-      type: 'success',
-      text1: 'Пользователь заблокирован',
-      position: 'bottom',
-    });
+    Toast.show({ type: 'success', text1: 'Пользователь заблокирован', position: 'bottom' });
   };
 
   return (
@@ -140,11 +116,7 @@ const UserProfile: React.FC = () => {
         <View style={styles.contentContainer}>
           <View style={styles.coverImageContainer}>
             {user?.backgroundImage ? (
-              <Image
-                resizeMode="cover"
-                source={{ uri: `${IMAGE_URL}${user.backgroundImage}` }}
-                style={styles.coverImage}
-              />
+              <Image resizeMode="cover" source={{ uri: `${IMAGE_URL}${user.backgroundImage}` }} style={styles.coverImage} />
             ) : (
               <View style={styles.coverImage} />
             )}
@@ -163,15 +135,30 @@ const UserProfile: React.FC = () => {
         </View>
       </ScrollView>
 
-      {/* Вызов меню */}
+      {/* Главное меню */}
       <BottomSheetMenu
         isVisible={isMenuVisible}
         onClose={() => setIsMenuVisible(false)}
         buttons={[
           { label: 'Копировать ссылку', onPress: copyToClipboard, icon: <CopyLink fill={'#000'} />, isRowButton: true },
           { label: 'Поделиться через…', onPress: shareLink, icon: <ShareIcon fill={'#000'} />, isRowButton: true },
-          { label: 'Пожаловаться', onPress: reportUser, icon: null, isRowButton: false },
+          { label: 'Пожаловаться', onPress: openReportMenu, icon: null, isRowButton: false },
           { label: 'Заблокировать', onPress: blockUser, icon: null, isRowButton: false },
+        ]}
+      />
+
+      {/* Меню с темами жалоб */}
+      <BottomSheetMenu
+        isVisible={isReportMenuVisible}
+        onClose={() => setIsReportMenuVisible(false)}
+        buttons={[
+          ...reportTopics.map((topic) => ({
+            label: topic.name,
+            onPress: () => handleReportSubmit(topic._id),
+            icon: null,
+            isRowButton: false,
+          })),
+          { label: 'Назад', onPress: () => setIsReportMenuVisible(false), icon: null, isRowButton: false },
         ]}
       />
     </View>

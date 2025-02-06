@@ -1,3 +1,4 @@
+import CheckMarkIcon from '@/components/svgConvertedIcons/checkMarkIcon';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { ToastConfig, BaseToastProps } from 'react-native-toast-message';
@@ -6,6 +7,7 @@ import { ToastConfig, BaseToastProps } from 'react-native-toast-message';
 export const toastConfig: ToastConfig = {
   success: ({ text1, text2 }: BaseToastProps) => (
     <View style={styles.success}>
+      <CheckMarkIcon/>
       <Text style={styles.text}>{text1}</Text>
       {text2 ? <Text style={styles.textSmall}>{text2}</Text> : null}
     </View>
@@ -23,8 +25,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     padding: 15,
     borderRadius: 10,
-    justifyContent: 'center',
-    width: '95%'
+    width: '95%',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   error: {
     backgroundColor: 'red',
@@ -37,6 +40,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '700',
     fontSize: 12,
+    paddingLeft: 15,
   },
   textSmall: {
     color: '#fff',
