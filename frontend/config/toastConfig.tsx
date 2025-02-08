@@ -26,6 +26,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     width: '95%',
+    maxWidth: 600,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -34,7 +35,8 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     justifyContent: 'center',
-    width: '95%'
+    width: '95%',
+    maxWidth: 600,
   },
   text: {
     color: '#fff',

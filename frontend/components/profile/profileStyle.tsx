@@ -81,5 +81,8 @@ export const styles = StyleSheet.create({
     padding: 20,
     marginRight: -20,
     marginTop: -20,
-  }
+  },
+  settingIcon: {
+        marginLeft: 20,
+      }
 });

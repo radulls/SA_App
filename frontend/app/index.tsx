@@ -39,7 +39,7 @@ export default function Index() {
       <Link style={linkStyle} href="/register">Регистрация</Link>
       <Link style={linkStyle} href="/verification">Верификация</Link>
       <Link style={linkStyle} href="/home">Профиль</Link>
-      <Link style={linkStyle} href={`/profile/6787bfd597715a6fc67231c9`}>Чужой профиль</Link>
+      <Link style={linkStyle} href={`/profile/${userId}`}>Чужой профиль</Link>
       <Link style={linkStyle} href={`/profileQR/${userId}`}>
         QR профиля
       </Link>

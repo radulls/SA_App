@@ -19,13 +19,14 @@ const BottomSheetMenu: React.FC<BottomSheetMenuProps> = ({ isVisible, onClose, b
   const [reportTopics, setReportTopics] = useState<{ _id: string; name: string }[]>([]);
 
   useEffect(() => {
+    console.log('isVisible:', isVisible, 'type:', type);
     if (isVisible) {
       setIsAnimating(true);
       Animated.parallel([
         Animated.timing(translateY, { toValue: 0, duration: 200, useNativeDriver: true }),
         Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
       ]).start(() => setIsAnimating(false));
-
+  
       if (type === 'report') {
         loadReportTopics();
       }
@@ -40,13 +41,15 @@ const BottomSheetMenu: React.FC<BottomSheetMenuProps> = ({ isVisible, onClose, b
     }
   }, [isVisible]);
 
-  // 📌 Загрузка тем жалоб
+  // Загрузка тем жалоб
   const loadReportTopics = async () => {
     setLoadingTopics(true);
     try {
       const topics = await getReportTopics();
+      console.log('Loaded report topics:', topics); // ✅ Проверяем загруженные данные
       setReportTopics(topics);
     } catch (error) {
+      console.log('Error loading topics:', error);
       Toast.show({ type: 'error', text1: 'Ошибка', text2: 'Не удалось загрузить темы жалоб.', position: 'bottom' });
     } finally {
       setLoadingTopics(false);
@@ -90,27 +93,27 @@ const BottomSheetMenu: React.FC<BottomSheetMenuProps> = ({ isVisible, onClose, b
       <Animated.View style={[styles.overlay, { opacity: fadeAnim }]} />
       <TouchableOpacity style={styles.touchableOverlay} activeOpacity={1} onPress={handleClose}>
         <Animated.View style={[styles.menuContainer, { transform: [{ translateY }] }]}>        
-
           {/* Если это меню жалоб */}
           {type === 'report' ? (
-            <View style={styles.columnButtons}>
-              <Text style={styles.title}>Выберите причину жалобы</Text>
+            <View style={styles.reportButtons}>
+              <Text style={styles.title}>Пожаловаться</Text>
               {loadingTopics ? (
                 <ActivityIndicator size="large" color="#000" />
               ) : (
-                reportTopics.map((topic) => (
-                  <TouchableOpacity 
-                    key={topic._id} 
-                    style={styles.menuButton} 
-                    onPress={() => handleReportSubmit(topic._id)}
-                  >
-                    <Text style={styles.buttonText}>{topic.name}</Text>
-                  </TouchableOpacity>
-                ))
+                reportTopics.length > 0 ? (
+                  reportTopics.map((topic) => (
+                    <TouchableOpacity 
+                      key={topic._id} 
+                      style={styles.reportButton} 
+                      onPress={() => handleReportSubmit(topic._id)}
+                    >
+                      <Text style={styles.reportText}>{topic.name}</Text>
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <Text style={{ textAlign: 'center', padding: 10 }}>Нет доступных тем жалоб.</Text>
+                )
               )}
-              <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
-                <Text style={styles.buttonText}>Отмена</Text>
-              </TouchableOpacity>
             </View>
           ) : (
             <>
@@ -127,7 +130,6 @@ const BottomSheetMenu: React.FC<BottomSheetMenuProps> = ({ isVisible, onClose, b
                   </TouchableOpacity>
                 ))}
               </View>          
-
               {/* Остальные кнопки */}
               <View style={styles.columnButtons}>
                 {buttons.filter(button => !button.isRowButton).map((button, index, arr) => (
@@ -168,11 +170,15 @@ const styles = StyleSheet.create({
   },
   touchableOverlay: { 
     flex: 1, 
-    justifyContent: 'flex-end' 
+    justifyContent: 'flex-end',
+    width: '100%',
+    maxWidth: 600, 
+    alignSelf: 'center',
   },
   menuContainer: { 
     backgroundColor: '#fff', 
     padding: 20, 
+    paddingBottom: 50,
     borderTopLeftRadius: 16, 
     borderTopRightRadius: 16 
   },
@@ -200,6 +206,17 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     padding: 20, 
     borderRadius: 12 
+  },
+  reportButtons: {
+   
+  },
+  reportButton: {
+    backgroundColor: '#fff',
+  },
+  reportText: {
+    fontSize: 14,
+    fontWeight: '400',
+    paddingVertical: 10, 
   },
   cancelButton: { 
     backgroundColor: '#F5F5F5', 
@@ -232,8 +249,8 @@ const styles = StyleSheet.create({
     paddingTop: 10 
   },
   title: { 
-    fontSize: 16, 
-    fontWeight: 'bold', 
+    fontSize: 15, 
+    fontWeight: '700', 
     marginBottom: 10, 
     textAlign: 'center' 
   },

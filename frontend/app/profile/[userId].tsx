@@ -1,12 +1,9 @@
-import UserProfile from '@/components/profile/userProfile/userProfile'
+import UserProfile from '@/components/profile/userProfile/UserProfile'
 import React from 'react'
-import { View } from 'react-native'
 
 const UserProfilePage = () => {
   return (
-   <View>
     <UserProfile/>
-   </View>
   )
 }
 

@@ -1,5 +1,6 @@
 const User = require('../models/User'); // Подключение модели пользователя
 const City = require('../models/City'); // Подключение модели города
+const Subscription = require('../models/Subscription');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken'); // Для создания токенов
 const crypto = require('crypto');
@@ -57,6 +58,111 @@ const generateUserQRCode = async (userId) => {
   } catch (error) {
     console.error('Ошибка при генерации QR-кода:', error.message);
     throw error; // Генерируем ошибку для обработки выше
+  }
+};
+
+//Subscription
+//===================================
+const subscribeUser = async (req, res) => {
+  try {
+    const subscriberId = req.user.id; // ID текущего пользователя
+    const { userId: subscribedToId } = req.params; // ID пользователя, на которого подписываемся
+
+    if (!mongoose.Types.ObjectId.isValid(subscribedToId)) {
+      return res.status(400).json({ message: 'Некорректный ID пользователя.' });
+    }
+
+    if (subscriberId.toString() === subscribedToId.toString()) {
+      return res.status(400).json({ message: 'Нельзя подписаться на самого себя.' });
+    }
+
+    // Проверяем, существует ли подписка
+    const existingSubscription = await Subscription.findOne({ subscriber: subscriberId, subscribedTo: subscribedToId });
+
+    if (existingSubscription) {
+      return res.status(400).json({ message: 'Вы уже подписаны на этого пользователя.' });
+    }
+
+    // Создаем подписку
+    await Subscription.create({ subscriber: subscriberId, subscribedTo: subscribedToId });
+
+    // Увеличиваем количество подписчиков у пользователя
+    await User.findByIdAndUpdate(subscribedToId, { $inc: { subscribers: 1 } });
+
+    res.status(200).json({ message: 'Вы успешно подписались.' });
+  } catch (error) {
+    console.error('Ошибка при подписке:', error.message);
+    res.status(500).json({ message: 'Ошибка сервера.' });
+  }
+};
+
+const unsubscribeUser = async (req, res) => {
+  try {
+    const subscriberId = req.user.id;
+    const { userId: subscribedToId } = req.params;
+
+    // Проверяем, существует ли подписка
+    const deletedSubscription = await Subscription.findOneAndDelete({
+      subscriber: subscriberId,
+      subscribedTo: subscribedToId,
+    });
+
+    if (!deletedSubscription) {
+      return res.status(400).json({ message: 'Вы не были подписаны на этого пользователя.' });
+    }
+
+    // Уменьшаем количество подписчиков
+    await User.findByIdAndUpdate(subscribedToId, { $inc: { subscribers: -1 } });
+
+    res.status(200).json({ message: 'Вы успешно отписались.' });
+  } catch (error) {
+    console.error('Ошибка при отписке:', error.message);
+    res.status(500).json({ message: 'Ошибка сервера.' });
+  }
+};
+
+const checkSubscription = async (req, res) => {
+  try {
+    const subscriberId = req.user.id; // ID текущего пользователя из токена
+    const { userId: subscribedToId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(subscribedToId)) {
+      return res.status(400).json({ message: 'Некорректный ID пользователя.' });
+    }
+
+    // Проверяем подписку
+    const isSubscribed = await Subscription.exists({ subscriber: subscriberId, subscribedTo: subscribedToId });
+
+    res.status(200).json({ isSubscribed: Boolean(isSubscribed) });
+  } catch (error) {
+    console.error('Ошибка при проверке подписки:', error.message);
+    res.status(500).json({ message: 'Ошибка сервера.' });
+  }
+};
+
+const getSubscribers = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const subscribers = await Subscription.find({ subscribedTo: userId }).populate('subscriber', 'username profileImage');
+
+    res.status(200).json({ subscribers });
+  } catch (error) {
+    console.error('Ошибка при получении подписчиков:', error.message);
+    res.status(500).json({ message: 'Ошибка сервера.' });
+  }
+};
+
+const getSubscriptions = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const subscriptions = await Subscription.find({ subscriber: userId }).populate('subscribedTo', 'username profileImage');
+
+    res.status(200).json({ subscriptions });
+  } catch (error) {
+    console.error('Ошибка при получении подписок:', error.message);
+    res.status(500).json({ message: 'Ошибка сервера.' });
   }
 };
 
@@ -304,7 +410,16 @@ const getUserProfile = async (req, res) => {
       return res.status(404).json({ message: 'Пользователь не найден.' });
     }
 
-    res.status(200).json({ message: 'Данные пользователя успешно получены.', user });
+    // Динамический подсчет подписчиков
+    const subscribersCount = await Subscription.countDocuments({ subscribedTo: userId });
+
+    res.status(200).json({ 
+      message: 'Данные пользователя успешно получены.', 
+      user: { 
+        ...user.toObject(), 
+        subscribers: subscribersCount // Добавляем актуальное количество подписчиков
+      } 
+    });
   } catch (error) {
     console.error('Ошибка при получении данных пользователя:', error.message);
     res.status(500).json({ message: 'Ошибка сервера.' });
@@ -831,18 +946,28 @@ const blockUser = async (req, res) => {
 
 const getUserProfileById = async (req, res) => {
   try {
-    const { userId } = req.params; // Получаем ID пользователя из URL
+    const { userId } = req.params;
+    const requesterId = req.user?.id || null; // Запрашивающий пользователь (если есть)
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ message: 'Некорректный ID пользователя.' });
     }
 
     const user = await User.findById(userId)
-      .populate('city', 'name') // Подтягиваем город
-      .select('-password -email'); // Исключаем чувствительные данные
+      .populate('city', 'name')
+      .select('-password -email');
 
     if (!user) {
       return res.status(404).json({ message: 'Пользователь не найден.' });
+    }
+
+    // Подсчет подписчиков
+    const subscribersCount = await Subscription.countDocuments({ subscribedTo: userId });
+
+    // Проверка подписки **только если пользователь авторизован**
+    let isSubscribed = false;
+    if (requesterId && requesterId !== userId) {
+      isSubscribed = await Subscription.exists({ subscriber: requesterId, subscribedTo: userId });
     }
 
     res.status(200).json({
@@ -856,15 +981,15 @@ const getUserProfileById = async (req, res) => {
         backgroundImage: user.backgroundImage,
         rating: user.rating,
         aboutMe: user.aboutMe,
-        subscribers: user.subscribers,
+        subscribers: subscribersCount,
+        isSubscribed: Boolean(isSubscribed), // Будет `false`, если юзер не авторизован
       },
     });
   } catch (error) {
-    console.error('Ошибка при получении профиля пользователя:', error.message);
+    console.error('❌ Ошибка при получении профиля пользователя:', error.message);
     res.status(500).json({ message: 'Ошибка сервера.' });
   }
 };
-
 
 module.exports = {
   refreshAccessToken,
@@ -887,4 +1012,9 @@ module.exports = {
   checkVerificationStatus,
   blockUser,
   getUserProfileById,
+  subscribeUser, 
+  unsubscribeUser, 
+  getSubscribers, 
+  getSubscriptions,
+  checkSubscription 
 };

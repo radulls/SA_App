@@ -18,7 +18,12 @@ const {
   checkPhone,
   checkVerificationStatus,
   blockUser,
-  getUserProfileById 
+  getUserProfileById,
+  subscribeUser, 
+  unsubscribeUser, 
+  getSubscribers, 
+  getSubscriptions,
+  checkSubscription  
 } = require('../controllers/userController');
 const { upload, processUploadedFiles } = require('../middlewares/upload.jsx');
 const { verifyToken } = require('../middlewares/authMiddleware');
@@ -129,6 +134,20 @@ router.patch('/block', verifyToken, blockUser);
 
 // Получение данных пользователя по id
 router.get('/profile/:userId', getUserProfileById);
+
+// Подписаться на пользователя
+router.post('/subscribe/:userId', verifyToken, subscribeUser);
+
+// Отписаться от пользователя
+router.post('/unsubscribe/:userId', verifyToken, unsubscribeUser);
+
+// Получить список подписчиков пользователя
+router.get('/subscribers/:userId', getSubscribers);
+
+// Получить список пользователей, на которых подписан текущий пользователь
+router.get('/subscriptions/:userId', getSubscriptions);
+
+router.get('/is-subscribed/:userId', verifyToken, checkSubscription);
 
 
 module.exports = router;

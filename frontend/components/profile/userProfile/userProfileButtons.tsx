@@ -1,21 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import BottomSheetMenu from '@/components/BottomSheetMenu/BottomSheetMenu';
 import Toast from 'react-native-toast-message';
+import { checkIfSubscribed, subscribeToUser, unsubscribeFromUser } from '@/api/index';
 
-const UserProfileButtons: React.FC = () => {
-  const [isSubscribed, setIsSubscribed] = useState(false);
+interface UserProfileButtonsProps {
+  userId: string;
+  initialSubscribed: boolean; // Передаем начальное состояние подписки
+  onSubscriptionChange: (status: boolean) => void; // ✅ Новый коллбэк
+}
+
+const UserProfileButtons: React.FC<UserProfileButtonsProps> = ({ userId, initialSubscribed, onSubscriptionChange }) => {
+  const [isSubscribed, setIsSubscribed] = useState(initialSubscribed);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
 
-  const handleUnsubscribe = () => {
-    setIsSubscribed(false);
-    setIsMenuVisible(false);
-    Toast.show({
-      type: 'success',
-      text1: 'Вы успешно отписались',
-      position: 'bottom',
-    });
+  useEffect(() => {
+    setIsSubscribed(initialSubscribed); // Обновляем состояние подписки, если оно изменится
+  }, [initialSubscribed]);
+
+  const handleSubscribe = async () => {
+    try {
+      await subscribeToUser(userId);
+      const status = await checkIfSubscribed(userId); // ✅ Повторная проверка подписки
+      setIsSubscribed(status);
+      onSubscriptionChange(status);
+      Toast.show({ type: 'success', text1: 'Вы подписались!', position: 'bottom' });
+    } catch (error) {
+      Toast.show({ type: 'error', text1: 'Ошибка подписки', position: 'bottom' });
+    }
   };
+  
+  const handleUnsubscribe = async () => {
+    try {
+      await unsubscribeFromUser(userId);
+      const status = await checkIfSubscribed(userId); // ✅ Повторная проверка подписки
+      setIsSubscribed(status);
+      onSubscriptionChange(status);
+      setIsMenuVisible(false);
+      Toast.show({ type: 'success', text1: 'Вы отписались!', position: 'bottom' });
+    } catch (error) {
+      Toast.show({ type: 'error', text1: 'Ошибка отписки', position: 'bottom' });
+    }
+  };
+  
 
   return (
     <View>
@@ -25,7 +52,7 @@ const UserProfileButtons: React.FC = () => {
         </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.subscribeButton, isSubscribed && styles.subscribedButton]} 
-          onPress={() => isSubscribed ? setIsMenuVisible(true) : setIsSubscribed(true)}
+          onPress={() => isSubscribed ? setIsMenuVisible(true) : handleSubscribe()}
         >
           <Text style={[styles.buttonText, !isSubscribed && styles.notSubscribedText]}>
             {isSubscribed ? 'Подписан' : 'Подписаться'}
@@ -33,7 +60,7 @@ const UserProfileButtons: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Меню при попытке отписаться */}
+      {/* Меню отписки */}
       <BottomSheetMenu 
         isVisible={isMenuVisible}
         onClose={() => setIsMenuVisible(false)}
@@ -65,7 +92,6 @@ const styles = StyleSheet.create({
   },
   subscribedButton: {
     backgroundColor: '#f1f1f1',
-    color: '#000',
     flex: 1,
     alignItems: 'center'
   },

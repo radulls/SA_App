@@ -1,12 +1,12 @@
-import { IMAGE_URL, UserDataProps, getUserProfileById } from '@/api';
+import { IMAGE_URL, UserDataProps, checkIfSubscribed, getUserProfileById } from '@/api';
 import { getReportTopics, reportUser } from '@/api/reportService';
 import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator, Text, ScrollView, Image, TouchableOpacity, Share } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import ProfileHeader from '../ProfileHeader';
 import { styles } from '../profileStyle';
 import ProfileStats from '../ProfileStats';
-import UserProfileButtons from './userProfileButtons';
+import UserProfileButtons from './UserProfileButtons';
 import IconBack from '@/components/svgConvertedIcons/iconBack';
 import MoreOptionsIcon from '@/components/svgConvertedIcons/MoreOptionsIcon';
 import BottomSheetMenu from '@/components/BottomSheetMenu/BottomSheetMenu';
@@ -19,7 +19,7 @@ import * as Linking from 'expo-linking';
 const UserProfile: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [user, setUser] = useState<UserDataProps | null>(null);
-  const { userId } = useLocalSearchParams();
+  const userId = "6787bfd597715a6fc67231c9";
   const [error, setError] = useState<string | null>(null);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const [isReportMenuVisible, setIsReportMenuVisible] = useState(false);
@@ -27,27 +27,26 @@ const UserProfile: React.FC = () => {
   const router = useRouter();
 
   useEffect(() => {
-    console.log('🔍 Получен userId:', userId);
-    if (!userId) {
-      setError('ID пользователя отсутствует.');
-      return;
-    }
-
     const fetchUserData = async () => {
       try {
         setLoading(true);
-        const userData = await getUserProfileById(userId as string);
+        const userData = await getUserProfileById(userId);
         setUser(userData);
+  
+        // Проверяем подписку отдельно
+        const subscriptionStatus = await checkIfSubscribed(userId);
+        setUser((prevUser) => prevUser ? { ...prevUser, isSubscribed: subscriptionStatus } : prevUser);
       } catch (err: any) {
-        console.error('❌ Ошибка при загрузке данных пользователя:', err.message);
+        console.error('❌ Ошибка загрузки данных пользователя:', err.message);
         setError(err.message || 'Ошибка загрузки.');
       } finally {
         setLoading(false);
       }
     };
-
+  
     fetchUserData();
   }, [userId]);
+  
 
   if (loading) return <ActivityIndicator size="large" color="#000" />;
   if (error) return <Text style={styles.errorText}>Ошибка: {error}</Text>;
@@ -131,10 +130,15 @@ const UserProfile: React.FC = () => {
           </View>
           <ProfileHeader user={user} isOwnProfile={false} />
           <ProfileStats user={user} />
-          <UserProfileButtons />
+          <UserProfileButtons 
+            userId={userId} 
+            initialSubscribed={user?.isSubscribed ?? false} 
+            onSubscriptionChange={(status) => {
+              setUser((prevUser) => prevUser ? { ...prevUser, isSubscribed: status } : prevUser);
+            }} 
+          />
         </View>
       </ScrollView>
-
       {/* Главное меню */}
       <BottomSheetMenu
         isVisible={isMenuVisible}
@@ -151,6 +155,8 @@ const UserProfile: React.FC = () => {
       <BottomSheetMenu
         isVisible={isReportMenuVisible}
         onClose={() => setIsReportMenuVisible(false)}
+        type="report" // ✅ Добавляем тип "report"
+        userId={userId as string} // ✅ Передаём ID пользователя
         buttons={[
           ...reportTopics.map((topic) => ({
             label: topic.name,

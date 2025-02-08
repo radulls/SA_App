@@ -17,6 +17,7 @@ export interface UserDataProps {
   subscribers?: number;
   rating?: number;
   qrCode?: string;
+  isSubscribed?: boolean; // ✅ Добавляем статус подписки
 }
 
 // Создаём экземпляр axios
@@ -414,23 +415,86 @@ export const getUserProfileById = async (userId: string): Promise<UserDataProps>
     const response = await api.get(`/users/profile/${userId}`);
     const userData = response.data.user;
     console.log('Получены данные профиля:', userData);
+
     return {
       id: userData._id,
       firstName: userData.firstName || '',
       lastName: userData.lastName || '',
-      aboutMe: userData.aboutMe || 'Основатель магазина Скейтшоп SK8, в сфободное время фотографирую природу.',
+      aboutMe: userData.aboutMe || '',
       username: userData.username || '',
       city: typeof userData.city === 'string' ? userData.city : userData.city?.name || 'Не указан',
       profileImage: userData.profileImage || '',
       backgroundImage: userData.backgroundImage || '',
-      rating: userData.rating || '',
-      subscribers: userData.subscribers || '',
+      rating: userData.rating || 0,
+      subscribers: userData.subscribers || 0,
+      isSubscribed: userData.isSubscribed || false, // ✅ Добавляем `isSubscribed`
     };
   } catch (error: any) {
     console.error('Ошибка при получении публичного профиля:', error.message);
     throw error;
   }
 };
+
+// Функция подписки на пользователя
+export const subscribeToUser = async (userId: string): Promise<any> => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+    if (!token) {
+      throw new Error('Токен отсутствует. Пожалуйста, авторизуйтесь.');
+    }
+
+    const response = await api.post(`/users/subscribe/${userId}`, {}, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log(`Успешная подписка на пользователя ${userId}:`, response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error(`Ошибка при подписке на пользователя ${userId}:`, error.message);
+    throw error;
+  }
+};
+
+// Функция отписки от пользователя
+export const unsubscribeFromUser = async (userId: string): Promise<any> => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+    if (!token) {
+      throw new Error('Токен отсутствует. Пожалуйста, авторизуйтесь.');
+    }
+
+    const response = await api.post(`/users/unsubscribe/${userId}`, {}, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log(`Успешная отписка от пользователя ${userId}:`, response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error(`Ошибка при отписке от пользователя ${userId}:`, error.message);
+    throw error;
+  }
+};
+
+export const checkIfSubscribed = async (userId: string): Promise<boolean> => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+    if (!token) return false;
+
+    const response = await api.get(`/users/is-subscribed/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return response.data.isSubscribed;
+  } catch (error: any) {
+    console.error('Ошибка при проверке подписки:', error.message);
+    return false; // В случае ошибки считаем, что не подписан
+  }
+};
+
 
 // Обработка ошибок
 export const handleError = (error: any): string | null => {
