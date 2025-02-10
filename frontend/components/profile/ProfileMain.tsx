@@ -114,7 +114,9 @@ const ProfileMain: React.FC = () => {
            <QrIcon width={22} height={22}/>
           </TouchableOpacity>
             <View style={styles.rightIcons}>
-              <SosIcon width={22} height={22}/>
+              <TouchableOpacity onPress={() => { router.push('/sos'); }} style={styles.settingIcon}>
+                <SosIcon width={22} height={22}/>
+              </TouchableOpacity>             
               <TouchableOpacity onPress={() => { router.push('/settings'); }} style={styles.settingIcon}>
                 <SettingsIcon width={22} height={22}/>
               </TouchableOpacity>

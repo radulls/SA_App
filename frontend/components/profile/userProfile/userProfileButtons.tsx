@@ -33,7 +33,7 @@ const UserProfileButtons: React.FC<UserProfileButtonsProps> = ({ userId, initial
   const handleUnsubscribe = async () => {
     try {
       await unsubscribeFromUser(userId);
-      const status = await checkIfSubscribed(userId); // ✅ Повторная проверка подписки
+      const status = await checkIfSubscribed(userId); // Повторная проверка подписки
       setIsSubscribed(status);
       onSubscriptionChange(status);
       setIsMenuVisible(false);
@@ -43,7 +43,6 @@ const UserProfileButtons: React.FC<UserProfileButtonsProps> = ({ userId, initial
     }
   };
   
-
   return (
     <View>
       <View style={styles.buttonContainer}>
