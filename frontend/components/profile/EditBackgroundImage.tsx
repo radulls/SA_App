@@ -161,44 +161,44 @@ const EditBackgroundImage: React.FC<EditBackgroundImageProps> = ({ backgroundIma
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerIcons}>
-        <View style={styles.iconBack}>
-          <IconBack onPress={onClose} fill="black" />
+      <View style={styles.contentContainer}>
+        <View style={styles.headerIcons}>
+          <View style={styles.iconBack}>
+            <IconBack onPress={onClose} fill="black" />
+          </View>
+          <Text style={styles.headerTitle}>{isEditing ? 'Обрезать' : 'Редактировать фон'}</Text>
+          {isEditing && (
+            <TouchableOpacity onPress={handleReset} style={styles.dropButton}>
+              <Text style={styles.buttonDrop}>Сбросить</Text>
+            </TouchableOpacity>
+          )}
         </View>
-        <Text style={styles.headerTitle}>{isEditing ? 'Обрезать' : 'Редактировать фон'}</Text>
-        {isEditing && (
-          <TouchableOpacity onPress={handleReset} style={styles.dropButton}>
-            <Text style={styles.buttonDrop}>Сбросить</Text>
+        <View
+          style={styles.imageWrapper}
+          onLayout={(event) => {
+            const { width, height } = event.nativeEvent.layout;
+            setWrapperDimensions({ width, height });
+          }}
+        >
+          {selectedImage ? (
+            <PanGestureHandler onGestureEvent={handlePanGesture}>
+              <PinchGestureHandler onGestureEvent={handlePinchGesture}>
+                <Animated.Image
+                  source={{ uri: selectedImage }}
+                  style={[styles.fullscreenImage, animatedStyle]}
+                  resizeMode="contain"
+                />
+              </PinchGestureHandler>
+            </PanGestureHandler>
+          ) : (
+            <View style={[styles.fullscreenImage, styles.imagePlaceholder]} />
+          )}
+        </View>
+        <View style={styles.buttonsContainer}>
+          <TouchableOpacity style={styles.button} onPress={isEditing ? handleSave : handleImagePick}>
+            <Text style={styles.buttonText}>{isEditing ? 'Готово' : 'Изменить'}</Text>
           </TouchableOpacity>
-        )}
-      </View>
-
-      <View
-        style={styles.imageWrapper}
-        onLayout={(event) => {
-          const { width, height } = event.nativeEvent.layout;
-          setWrapperDimensions({ width, height });
-        }}
-      >
-        {selectedImage ? (
-          <PanGestureHandler onGestureEvent={handlePanGesture}>
-            <PinchGestureHandler onGestureEvent={handlePinchGesture}>
-              <Animated.Image
-                source={{ uri: selectedImage }}
-                style={[styles.fullscreenImage, animatedStyle]}
-                resizeMode="contain"
-              />
-            </PinchGestureHandler>
-          </PanGestureHandler>
-        ) : (
-          <View style={[styles.fullscreenImage, styles.imagePlaceholder]} />
-        )}
-      </View>
-
-      <View style={styles.buttonsContainer}>
-        <TouchableOpacity style={styles.button} onPress={isEditing ? handleSave : handleImagePick}>
-          <Text style={styles.buttonText}>{isEditing ? 'Готово' : 'Изменить'}</Text>
-        </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -206,13 +206,18 @@ const EditBackgroundImage: React.FC<EditBackgroundImageProps> = ({ backgroundIma
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
-    flexDirection: 'column',
-    justifyContent: 'space-between',
+    backgroundColor: '#fff',  
     alignItems: 'center',
     width: '100%',
     height: '100%',
     paddingHorizontal: 16,
+  },
+  contentContainer: {
+    maxWidth: 600,
+    width: '100%',
+    height: '100%',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
   },
   headerIcons: {
     flexDirection: 'row',

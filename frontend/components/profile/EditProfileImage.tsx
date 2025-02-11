@@ -152,44 +152,44 @@ const EditProfileImage: React.FC<EditProfileImageProps> = ({ profileImage, onClo
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerIcons}>
-        <View style={styles.iconBack}>
-          <IconBack onPress={onClose} fill="black" />
+      <View style={styles.contentContainer}>
+        <View style={styles.headerIcons}>
+          <View style={styles.iconBack}>
+            <IconBack onPress={onClose} fill="black" />
+          </View>
+          <Text style={styles.headerTitle}>{isEditing ? 'Обрезать' : 'Аватар'}</Text>
+          {isEditing && (
+            <TouchableOpacity onPress={handleReset} style={styles.dropButton}>
+              <Text style={styles.buttonDrop}>Сбросить</Text>
+            </TouchableOpacity>
+          )}
         </View>
-        <Text style={styles.headerTitle}>{isEditing ? 'Обрезать' : 'Аватар'}</Text>
-        {isEditing && (
-          <TouchableOpacity onPress={handleReset} style={styles.dropButton}>
-            <Text style={styles.buttonDrop}>Сбросить</Text>
+        <View
+          style={styles.imageWrapper}
+          onLayout={(event) => {
+            const { width, height } = event.nativeEvent.layout;
+            setWrapperDimensions({ width, height });
+          }}
+        >
+          {selectedImage ? (
+            <PanGestureHandler onGestureEvent={handlePanGesture}>
+              <PinchGestureHandler onGestureEvent={handlePinchGesture}>
+                <Animated.Image
+                  source={{ uri: selectedImage }}
+                  style={[styles.fullscreenImage, animatedStyle]}
+                  resizeMode="contain"
+                />
+              </PinchGestureHandler>
+            </PanGestureHandler>
+          ) : (
+            <View style={[styles.fullscreenImage, styles.imagePlaceholder]} />
+          )}
+        </View>
+        <View style={styles.buttonsContainer}>
+          <TouchableOpacity style={styles.button} onPress={isEditing ? handleSave : handleImagePick}>
+            <Text style={styles.buttonText}>{isEditing ? 'Готово' : 'Изменить'}</Text>
           </TouchableOpacity>
-        )}
-      </View>
-
-      <View
-        style={styles.imageWrapper}
-        onLayout={(event) => {
-          const { width, height } = event.nativeEvent.layout;
-          setWrapperDimensions({ width, height });
-        }}
-      >
-        {selectedImage ? (
-          <PanGestureHandler onGestureEvent={handlePanGesture}>
-            <PinchGestureHandler onGestureEvent={handlePinchGesture}>
-              <Animated.Image
-                source={{ uri: selectedImage }}
-                style={[styles.fullscreenImage, animatedStyle]}
-                resizeMode="contain"
-              />
-            </PinchGestureHandler>
-          </PanGestureHandler>
-        ) : (
-          <View style={[styles.fullscreenImage, styles.imagePlaceholder]} />
-        )}
-      </View>
-
-      <View style={styles.buttonsContainer}>
-        <TouchableOpacity style={styles.button} onPress={isEditing ? handleSave : handleImagePick}>
-          <Text style={styles.buttonText}>{isEditing ? 'Готово' : 'Изменить'}</Text>
-        </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -198,12 +198,18 @@ const EditProfileImage: React.FC<EditProfileImageProps> = ({ profileImage, onClo
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#fff',
-    flexDirection: 'column',
-    justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
     height: '100%',
     paddingHorizontal: 16,
+  },
+  contentContainer:{
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    maxWidth: 600,
+    width: '100%',
+    height: '100%',
   },
   headerIcons: {
     flexDirection: 'row',
