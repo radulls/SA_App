@@ -1,64 +1,91 @@
-import React, { useState, useCallback, Suspense, lazy } from 'react';
-import { View, TextInput, FlatList, TouchableOpacity, Text, StyleSheet, Modal, ActivityIndicator } from 'react-native';
+import React, { useState, Suspense, lazy } from 'react';
+import { View, TouchableOpacity, Text, StyleSheet, Modal, ActivityIndicator } from 'react-native';
 import GeoIcon from '@/components/svgConvertedIcons/MapIcons/geoIcon';
+import AddressSearch from './AddressSearch'; // Импортируем компонент
+import SearchIcon from '@/components/svgConvertedIcons/BottomMenuIcons/SearchIcon';
 
-// Загружаем карту лениво, чтобы избежать SSR
 const MapComponent = lazy(() => import('./MapComponent'));
 
+interface Coordinates {
+  latitude: number;
+  longitude: number;
+}
+
 interface MapWebProps {
-  onNext: (location: { latitude: number; longitude: number } | string) => void;
+  onNext: (location: Coordinates | string) => void;
 }
 
 const MapWeb: React.FC<MapWebProps> = ({ onNext }) => {
   const [address, setAddress] = useState('');
-  const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<Coordinates | null>(null);
 
-  // **Функция получения координат по адресу**
-  const fetchCoordinatesFromAddress = async (query: string) => {
-    if (!query) {
-      setSuggestions([]);
-      return;
-    }
-    setLoading(true);
-
+  // Функция получения адреса по координатам
+  const fetchAddressFromCoordinates = async (lat: number, lon: number) => {
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&extratags=1&polygon_geojson=1&limit=5`
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1&extratags=1`
       );
       const data = await response.json();
-      const filtered = data.map((item: any) => ({
-        label: `${item.address.road || ''} ${item.address.house_number || ''}, ${item.address.city || item.address.town || item.address.village || ''}`.trim(),
-        latitude: parseFloat(item.lat),
-        longitude: parseFloat(item.lon),
-      }));
-      setSuggestions(filtered);
+  
+      // 🔥 ЛОГИРУЕМ ВЕСЬ ОТВЕТ ОТ NOMINATIM
+      console.log('🛰️ ОТВЕТ ОТ NOMINATIM:', data);
+  
+      if (data.address) {
+        console.log('📌 РАЗОБРАННЫЕ ДАННЫЕ:', data.address);
+  
+        const {
+          road, // Улица
+          house_number, // Дом
+          suburb,
+          village,
+          town,
+          city_district,
+          city,
+          county,
+          state,
+          country,
+          amenity,
+        } = data.address;
+  
+        // 🔥 ЛОГИРУЕМ КАЖДОЕ ПОЛЕ
+        console.log('🏙 Город:', city || town || village || suburb || city_district || county || state);
+        console.log('🛤 Улица:', road);
+        console.log('🏠 Дом:', house_number);
+  
+        // Определяем город (населённый пункт)
+        const locality = city || town || village || suburb || city_district || county || state || '';
+  
+        // **ЖЁСТКАЯ замена порядка: "Город, Улица, Дом"**
+        let formattedAddress = `${locality}${road ? ', ' + road : ''}${house_number ? ' ' + house_number : ''}`;
+  
+        // Если нет улицы и дома, оставляем только город
+        if (!road && !house_number) {
+          formattedAddress = locality;
+        }
+  
+        // Если вообще ничего не найдено, используем display_name (fallback)
+        if (!formattedAddress) {
+          formattedAddress = data.display_name;
+        }
+  
+        // Добавляем название заведения (если есть)
+        if (amenity) {
+          formattedAddress = `${amenity}, ${formattedAddress}`;
+        }
+  
+        console.log('✅ Итоговый адрес:', formattedAddress);
+        setAddress(formattedAddress);
+      }
     } catch (error) {
-      console.error('Ошибка при получении координат:', error);
+      console.error('❌ Ошибка при получении адреса:', error);
     }
-
-    setLoading(false);
   };
-
-  // **Debounce для ввода адреса**
-  const debounce = (func: Function, delay: number) => {
-    let timer: NodeJS.Timeout;
-    return (...args: any) => {
-      clearTimeout(timer);
-      timer = setTimeout(() => func(...args), delay);
-    };
-  };
-
-  const debouncedFetch = useCallback(debounce(fetchCoordinatesFromAddress, 300), []);
-
-  // **Выбор адреса из списка**
-  const selectAddress = (item: any) => {
-    console.log("📍 Выбран адрес:", item.label, "Координаты:", item.latitude, item.longitude);
+  
+  // ✅ Функция выбора адреса
+  const selectAddress = (item: { label: string; latitude: number; longitude: number }) => {
     setAddress(item.label);
     setSelectedLocation({ latitude: item.latitude, longitude: item.longitude });
-    setSuggestions([]);
     setIsModalOpen(false);
   };
 
@@ -67,10 +94,14 @@ const MapWeb: React.FC<MapWebProps> = ({ onNext }) => {
       <View style={styles.container}>
         {/* Карта */}
         <Suspense fallback={<ActivityIndicator size="large" color="#000" />}>
-          <MapComponent selectedLocation={selectedLocation} />
+          <MapComponent 
+            selectedLocation={selectedLocation} 
+            setSelectedLocation={setSelectedLocation} 
+            setAddress={setAddress} 
+          />
         </Suspense>
 
-        {/* Кнопка "Моя геолокация" */}
+        {/* Кнопка "Моя геопозиция" */}
         <TouchableOpacity
           style={styles.geoButton}
           onPress={() => {
@@ -78,6 +109,11 @@ const MapWeb: React.FC<MapWebProps> = ({ onNext }) => {
               (position) => {
                 const { latitude, longitude } = position.coords;
                 setSelectedLocation({ latitude, longitude });
+
+                // 🔥 Теперь мы сразу получаем адрес для текущих координат
+                fetchAddressFromCoordinates(latitude, longitude);
+
+                setIsModalOpen(false);
               },
               (error) => console.error(error),
               { enableHighAccuracy: true }
@@ -90,6 +126,7 @@ const MapWeb: React.FC<MapWebProps> = ({ onNext }) => {
         <View style={styles.bottomContainer}>
           {/* Поле ввода (открывает модальное окно) */}
           <TouchableOpacity style={styles.inputContainer} onPress={() => setIsModalOpen(true)}>
+            <SearchIcon/>
             <Text style={styles.inputText}>{address || 'Введите адрес...'}</Text>
           </TouchableOpacity>
 
@@ -99,28 +136,11 @@ const MapWeb: React.FC<MapWebProps> = ({ onNext }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Модальное окно поиска адреса */}
+        {/* Модальное окно с `AddressSearch` */}
         <Modal visible={isModalOpen} animationType="slide">
           <View style={styles.modalOpen}>
             <View style={styles.modalContainer}>
-              <TextInput
-                value={address}
-                onChangeText={(text) => {
-                  setAddress(text);
-                  debouncedFetch(text);
-                }}
-                placeholder="Введите адрес"
-                style={styles.input}
-              />
-              <FlatList
-                data={suggestions}
-                keyExtractor={(item, index) => index.toString()}
-                renderItem={({ item }) => (
-                  <TouchableOpacity onPress={() => selectAddress(item)} style={styles.suggestionItem}>
-                    <Text>{item.label}</Text>
-                  </TouchableOpacity>
-                )}
-              />
+              <AddressSearch onSelectAddress={selectAddress} />
               <TouchableOpacity style={styles.button} onPress={() => setIsModalOpen(false)}>
                 <Text style={styles.buttonText}>Закрыть</Text>
               </TouchableOpacity>
@@ -155,6 +175,9 @@ const styles = StyleSheet.create({
     marginBottom: 10 
   },
   inputContainer: { 
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 15,
     backgroundColor: '#f3f3f3', 
     padding: 16, 
     borderRadius: 12, 
@@ -164,21 +187,6 @@ const styles = StyleSheet.create({
     fontSize: 14, 
     fontWeight: '400', 
     color: '#000' 
-  },
-  input: { 
-    fontSize: 14, 
-    fontWeight: '400', 
-    color: '#000', 
-    backgroundColor: '#f3f3f3', 
-    padding: 16,
-    borderRadius: 12, 
-    marginBottom: 30 
-  },
-  suggestionItem: { 
-    padding: 15, 
-    borderBottomWidth: 1, 
-    borderBottomColor: '#ddd', 
-    backgroundColor: 'white' 
   },
   button: { 
     padding: 15, 

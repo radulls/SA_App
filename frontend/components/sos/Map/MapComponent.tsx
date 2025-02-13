@@ -2,14 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { View } from 'react-native';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
 
+// Иконка маркера
 const customIcon = L.icon({
   iconUrl: '/geotagIcon.svg',
   iconSize: [52, 70],
   iconAnchor: [26, 70],
   popupAnchor: [0, -70],
 });
+
+// Компонент для получения инстанса карты
+const MapInitializer = ({ setMapInstance }: { setMapInstance: (map: L.Map) => void }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    setMapInstance(map);
+  }, [map, setMapInstance]);
+
+  return null;
+};
 
 const MapComponent = ({ 
   selectedLocation, 
@@ -21,6 +33,21 @@ const MapComponent = ({
   setAddress: (address: string) => void;
 }) => {
   const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  // Получаем геопозицию при загрузке карты
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({ latitude, longitude });
+        setSelectedLocation({ latitude, longitude });
+        fetchAddressFromCoordinates(latitude, longitude);
+      },
+      (error) => console.error("Ошибка геолокации:", error),
+      { enableHighAccuracy: true }
+    );
+  }, []);
 
   useEffect(() => {
     if (mapInstance && selectedLocation) {
@@ -47,7 +74,7 @@ const MapComponent = ({
   // Обработчик клика по карте
   function MapClickHandler() {
     useMapEvents({
-      click(e) {
+      click: (e: L.LeafletMouseEvent) => {
         const { lat, lng } = e.latlng;
         setSelectedLocation({ latitude: lat, longitude: lng });
         fetchAddressFromCoordinates(lat, lng);
@@ -57,13 +84,13 @@ const MapComponent = ({
   }
 
   return (
-    <View style={{flex: 1}}>
+    <View style={{ flex: 1 }}>
       <MapContainer
-        center={[55.751244, 37.618423]}
+        center={userLocation ? [userLocation.latitude, userLocation.longitude] : [55.751244, 37.618423]}
         zoom={12}
         style={{ width: '100%', height: '100%' }}
-        whenReady={(map) => setMapInstance(map.target)}
       >
+        <MapInitializer setMapInstance={setMapInstance} />
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         {selectedLocation && (
           <Marker position={[selectedLocation.latitude, selectedLocation.longitude]} icon={customIcon} />
