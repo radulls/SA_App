@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
+import { View, StyleSheet, Image, TouchableOpacity, Dimensions, Platform } from 'react-native';
 import { useRouter, usePathname } from 'expo-router'; // Импортируем usePathname
 import HomeIcon from './svgConvertedIcons/BottomMenuIcons/HomeIcon';
 import SearchIcon from './svgConvertedIcons/BottomMenuIcons/SearchIcon';
@@ -58,7 +58,8 @@ const BottomNavigation: React.FC = () => {
   };
 
   return (
-    <View style={[styles.nav, { gap }]}>
+    <View style={styles.container}>
+      <View style={[styles.nav, { gap }]}>
       <TouchableOpacity onPress={() => router.push('/dome')}>
         <HomeIcon fill={isActiveTab('dome') ? '#000000' : '#A2A2A2'} />
       </TouchableOpacity>
@@ -90,22 +91,31 @@ const BottomNavigation: React.FC = () => {
           <View style={styles.profilePlaceholder} />
         )}
       </TouchableOpacity>
+      </View>
     </View>
+   
   );
 };
 
 const styles = StyleSheet.create({
+  container:{
+    alignItems: 'center',
+    height: Platform.select({
+      ios: 83,
+      android: 83,
+      web: 63,
+    }),   
+  },
   nav: {
     position: 'absolute',
-    bottom: 0,
-    height: 83,
-    width: '100%',
-    backgroundColor: '#FDFDFD',
     borderTopColor: '#D8D8D8',
     borderTopWidth: 1,
-    display: 'flex',
+    maxWidth: 600,
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#FDFDFD',
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    // alignItems: 'flex-start',
     justifyContent: 'center',
     paddingTop: 13.5,
   },

@@ -50,7 +50,6 @@ export const styles = StyleSheet.create({
   sosIcon: {
     width: 22,
     height: 22,
-    marginRight: 20,
   },
   settingsIcon: {
     width: 22,

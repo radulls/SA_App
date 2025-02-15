@@ -14,8 +14,8 @@ export interface MapProps {
 
 // Динамически подгружаем нужную версию карты
 const MapComponent = Platform.OS === 'web'
-  ? require('./Map/Map.web').default  // Веб-версия (Leaflet)
-  : require('./Map/Map.expo').default; // Expo-версия (WebView с OSM)
+  ? require('./Map/web/Map.web').default  // Веб-версия (Leaflet) 
+  : require('./Map/expo/Map.expo').default; // Expo-версия (WebView с OSM)
 
 // ✅ Указываем тип пропсов
 const Map: React.FC<MapProps> = (props) => <MapComponent {...props} />;
