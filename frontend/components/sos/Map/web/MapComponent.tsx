@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
 import { fetchAddressFromCoordinates } from '@/utils/locationUtils';
 
-// Иконка маркера
+// ✅ Иконка маркера
 const customIcon = L.icon({
   iconUrl: '/geotagIcon.svg',
   iconSize: [52, 70],
@@ -13,19 +13,17 @@ const customIcon = L.icon({
   popupAnchor: [0, -70],
 });
 
-// Компонент для получения инстанса карты
+// ✅ Компонент для сохранения инстанса карты
 const MapInitializer = ({ setMapInstance }: { setMapInstance: (map: L.Map) => void }) => {
   const map = useMap();
-
   useEffect(() => {
     setMapInstance(map);
   }, [map, setMapInstance]);
-
   return null;
 };
 
 const MapComponent = ({ 
-  selectedLocation, 
+  selectedLocation,  // ✅ Если передано, используем его
   setSelectedLocation, 
   setAddress 
 }: { 
@@ -34,29 +32,32 @@ const MapComponent = ({
   setAddress: (address: string) => void;
 }) => {
   const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
-  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(selectedLocation);
 
-  // Получаем геопозицию при загрузке карты
+  // ✅ Получаем геопозицию пользователя, но ТОЛЬКО если `selectedLocation` нет
   useEffect(() => {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setUserLocation({ latitude, longitude });
-        setSelectedLocation({ latitude, longitude });
-        fetchAddressFromCoordinates(latitude, longitude, setAddress);
-      },
-      (error) => console.error("Ошибка геолокации:", error),
-      { enableHighAccuracy: true }
-    );
-  }, []);
+    if (!selectedLocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setUserLocation({ latitude, longitude });
+          setSelectedLocation({ latitude, longitude });
+          fetchAddressFromCoordinates(latitude, longitude, setAddress);
+        },
+        (error) => console.error("Ошибка геолокации:", error),
+        { enableHighAccuracy: true }
+      );
+    }
+  }, [selectedLocation]);
 
+  // ✅ Если изменился `selectedLocation`, двигаем карту
   useEffect(() => {
     if (mapInstance && selectedLocation) {
       mapInstance.flyTo([selectedLocation.latitude, selectedLocation.longitude], 17, { duration: 1.5 });
     }
   }, [selectedLocation, mapInstance]);
 
-  // Обработчик клика по карте
+  // ✅ Обработчик кликов по карте
   function MapClickHandler() {
     useMapEvents({
       click: (e: L.LeafletMouseEvent) => {
@@ -72,7 +73,7 @@ const MapComponent = ({
     <View style={{ flex: 1 }}>
       <MapContainer
         center={userLocation ? [userLocation.latitude, userLocation.longitude] : [55.751244, 37.618423]}
-        zoom={12}
+        zoom={selectedLocation ? 17 : 12}
         style={{ width: '100%', height: '100%' }}
       >
         <MapInitializer setMapInstance={setMapInstance} />

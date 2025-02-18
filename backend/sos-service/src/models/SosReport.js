@@ -9,7 +9,7 @@ const sosReportSchema = new mongoose.Schema({
   },
   tags: [{ type: mongoose.Schema.Types.ObjectId, ref: 'SosTag' }], // Категории SOS-сигнала
   title: { type: String, required: true },
-  description: { type: String, required: true },
+  description: { type: String, required: false },
   photos: [{ type: String }], // Список URL фотографий
   createdAt: { type: Date, default: Date.now }
 });

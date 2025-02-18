@@ -9,9 +9,11 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Подключение маршрутов
-app.use('/sos', require('./src/routes/sosRoutes'));
+app.use('/api/sos', require('./src/routes/sosRoutes'));
+app.use('/uploads', express.static('uploads'));
 
 // Проверка работы сервера
 app.get('/api', (req, res) => {

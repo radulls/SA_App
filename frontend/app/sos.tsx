@@ -2,26 +2,17 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, Platform } from 'react-native';
 import Map, { LocationData } from '@/components/sos/Map'; 
 import DetailsStep from '@/components/sos/DetailsStep';
-import SosView from '@/components/sos/SosView';
 import CloseIcon from '@/components/svgConvertedIcons/closeIcon';
 import { useRouter } from 'expo-router';
 
-interface DetailsData {
-  title: string;
-  tags: string[];
-  description: string;
-  photos: string[];
-}
-
 const SosPage = () => {
   const [step, setStep] = useState(1);
-  const [location, setLocation] = useState<LocationData | string | null>(null);
-  const [details, setDetails] = useState<DetailsData>({ title: '', tags: [], description: '', photos: [] });
+  const [location, setLocation] = useState<LocationData | null>(null);
   const router = useRouter();
 
   const closeSos = () => {
-    router.push('/home')
-  }
+    router.push('/home');
+  };
 
   return (
     <View style={styles.container}>
@@ -30,21 +21,32 @@ const SosPage = () => {
           <TouchableOpacity style={styles.closeIcon} onPress={closeSos}>
             <CloseIcon fill='#000' />
           </TouchableOpacity>
-          <Text style={styles.title}>
-            Сигнал SOS
-          </Text>
-          <Text style={styles.subtitle}>
-           Используйте, когда вам нужна помощь
-          </Text>
+          <Text style={styles.title}>Сигнал SOS</Text>
+          <Text style={styles.subtitle}>Используйте, когда вам нужна помощь</Text>
         </View>
+
+        {/* Первый шаг: выбор локации */}
         {step === 1 && (
-          <Map onNext={(loc: LocationData | string) => {  // ✅ Добавили тип
-            setLocation(loc);
-            setStep(2);
-          }} />
+          <Map 
+            onNext={(loc: string | LocationData) => {  
+              setLocation(typeof loc === 'string' ? { latitude: 0, longitude: 0, address: loc } : loc);
+              setStep(2);
+            }} 
+            selectedLocation={location}
+          />
         )}
-        {step === 2 && <DetailsStep onNext={(data) => { setDetails({ ...data, photos: [] }); setStep(3); }} />}
-        {step === 3 && <SosView location={location} details={details} />}
+        {/* Второй шаг: заполнение данных SOS-сигнала */}
+        {step === 2 && location && (
+          <DetailsStep
+            onNext={(id) => router.push(`/sos-signal/${id}`)} // 🔥 Теперь сразу переходим на страницу сигнала
+            location={{
+              latitude: location.latitude,
+              longitude: location.longitude,
+              address: location.address || 'Неизвестный адрес',
+            }}
+            goBackToMap={() => setStep(1)}
+          />
+        )}
       </View>    
     </View>
   );
@@ -54,8 +56,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
+    backgroundColor: '#fff',
   },
-  contentContainer:{
+  contentContainer: {
     maxWidth: 600,
     width: '100%',
     height: '100%',
@@ -93,6 +96,6 @@ const styles = StyleSheet.create({
     }),   
     zIndex: 1000
   }
-})
+});
 
 export default SosPage;

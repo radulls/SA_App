@@ -5,11 +5,13 @@ import { Platform } from 'react-native';
 export interface LocationData {
   latitude: number;
   longitude: number;
+  address?: string;
 }
 
 // Интерфейс для пропсов `Map`
 export interface MapProps {
   onNext: (location: LocationData | string) => void;
+  selectedLocation?: LocationData | null;
 }
 
 // Динамически подгружаем нужную версию карты

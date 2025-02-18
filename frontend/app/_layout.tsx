@@ -4,8 +4,6 @@ import { StyleSheet } from "react-native";
 import { toastConfig } from '@/config/toastConfig';
 import Toast from 'react-native-toast-message';
 
-
-
 export default function RootLayout() {
 	return (
 		<GestureHandlerRootView style={styles.container}>

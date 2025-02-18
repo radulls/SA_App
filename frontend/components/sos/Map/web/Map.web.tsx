@@ -1,45 +1,47 @@
 import React, { useState, Suspense, lazy, useEffect } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Modal, ActivityIndicator } from 'react-native';
 import GeoIcon from '@/components/svgConvertedIcons/MapIcons/geoIcon';
-import AddressSearch from '../AddressSearch'; // Импортируем компонент
+import AddressSearch from '../AddressSearch';
 import SearchIcon from '@/components/svgConvertedIcons/BottomMenuIcons/SearchIcon';
 import { fixAddressOrder, fetchAddressFromCoordinates } from '@/utils/locationUtils';
-import { styles } from '../mapStyle'
+import { styles } from '../mapStyle';
 
 const MapComponent = lazy(() => import('./MapComponent'));
 
 interface Coordinates {
   latitude: number;
   longitude: number;
+  address?: string;
 }
 
 interface MapWebProps {
   onNext: (location: Coordinates | string) => void;
+  selectedLocation?: Coordinates | null; // ✅ Теперь можно передавать сохранённое местоположение
 }
 
-const MapWeb: React.FC<MapWebProps> = ({ onNext }) => {
-  const [address, setAddress] = useState('');
+const MapWeb: React.FC<MapWebProps> = ({ onNext, selectedLocation }) => {
+  const [address, setAddress] = useState(selectedLocation?.address || '');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<Coordinates | null>(null);
+  const [currentLocation, setCurrentLocation] = useState<Coordinates | null>(selectedLocation || null);
   
   useEffect(() => {
-    console.log('🔄 Состояние address обновилось:', address);
-  }, [address]);
-  
+    if (!selectedLocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setCurrentLocation({ latitude, longitude });
+          fetchAddressFromCoordinates(latitude, longitude, setAddress);
+        },
+        (error) => console.error('⚠ Ошибка геолокации:', error),
+        { enableHighAccuracy: true }
+      );
+    }
+  }, [selectedLocation]);
+
   // ✅ Функция выбора адреса
   const selectAddress = (item: { label: string; latitude: number; longitude: number }) => {
-    console.log('📌 Выбранный адрес:', item.label);
-  
-    // Берём название города из label
-    const addressParts = item.label.split(', ').map((part) => part.trim());
-    const locality = addressParts.find((part) => part.match(/^[А-ЯЁа-яё-]+$/)); // Город должен быть словом
-  
-    // Если нашли город, фиксируем порядок
-    const fixedLabel = locality ? fixAddressOrder(item.label, locality) : item.label;
-  
-    console.log('🔄 Исправленный порядок в selectAddress:', fixedLabel);
-    setAddress(fixedLabel);
-    setSelectedLocation({ latitude: item.latitude, longitude: item.longitude });
+    setAddress(item.label);
+    setCurrentLocation({ latitude: item.latitude, longitude: item.longitude });
     setIsModalOpen(false);
   };
   
@@ -49,8 +51,8 @@ const MapWeb: React.FC<MapWebProps> = ({ onNext }) => {
         {/* Карта */}
         <Suspense fallback={<ActivityIndicator size="large" color="#000" />}>
           <MapComponent 
-            selectedLocation={selectedLocation} 
-            setSelectedLocation={setSelectedLocation} 
+            selectedLocation={currentLocation} 
+            setSelectedLocation={setCurrentLocation} 
             setAddress={setAddress} 
           />
         </Suspense>
@@ -58,13 +60,10 @@ const MapWeb: React.FC<MapWebProps> = ({ onNext }) => {
         <TouchableOpacity
           style={styles.geoButton}
           onPress={() => {
-            console.log('📍 Кнопка геопозиции нажата!');
             navigator.geolocation.getCurrentPosition(
               (position) => {
                 const { latitude, longitude } = position.coords;
-                console.log('📡 Получена геопозиция:', latitude, longitude);
-                setSelectedLocation({ latitude, longitude });
-
+                setCurrentLocation({ latitude, longitude });
                 fetchAddressFromCoordinates(latitude, longitude, setAddress);
               },
               (error) => console.error('⚠ Ошибка геолокации:', error),
@@ -76,15 +75,27 @@ const MapWeb: React.FC<MapWebProps> = ({ onNext }) => {
         </TouchableOpacity>
         <View style={styles.bottomContainer}>
           <Text style={styles.title}>Локация</Text>
-          {/* Поле ввода (открывает модальное окно) */}
           <TouchableOpacity style={styles.inputContainer} onPress={() => setIsModalOpen(true)}>
             <SearchIcon/>
-            <Text key={address} style={styles.inputText}>{address || 'Введите адрес...'}</Text>
+            <Text style={styles.inputText}>{address || 'Введите адрес...'}</Text>
           </TouchableOpacity>
-          {/* Кнопка "Всё верно" */}
-          <TouchableOpacity style={styles.button} onPress={() => onNext(selectedLocation || address)}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => {
+              if (currentLocation && address) {
+                onNext({
+                  latitude: currentLocation.latitude,
+                  longitude: currentLocation.longitude,
+                  address,
+                });
+              } else {
+                alert("Пожалуйста, выберите местоположение или введите адрес.");
+              }
+            }}
+          >
             <Text style={styles.buttonText}>Всё верно</Text>
           </TouchableOpacity>
+
         </View>
 
         {/* Модальное окно с `AddressSearch` */}

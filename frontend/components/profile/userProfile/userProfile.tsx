@@ -150,7 +150,6 @@ const UserProfile: React.FC = () => {
           { label: 'Заблокировать', onPress: blockUser, icon: null, isRowButton: false },
         ]}
       />
-
       {/* Меню с темами жалоб */}
       <BottomSheetMenu
         isVisible={isReportMenuVisible}

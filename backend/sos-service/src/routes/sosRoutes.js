@@ -5,16 +5,34 @@ const {
   getSosSignalById,
   deleteSosSignal,
   markAsHelper,
-  getSosHelpers
+  getSosHelpers,
+  getSosTags,
 } = require('../controllers/sosController');
-
+const { verifyToken } = require('../middlewares/authMiddleware');
+const { upload, processUploadedFiles } = require('../middlewares/upload.jsx');
 const router = express.Router();
 
-router.post('/create', createSosSignal);
+router.post(
+  '/create',
+  verifyToken,
+  (req, res, next) => {
+    console.log("📩 Content-Type:", req.headers['content-type']);
+    next();
+  },
+  upload.array('photos', 5),
+  (req, res, next) => {
+    console.log("📷 Загруженные файлы (Multer):", req.files);
+    next();
+  },
+  processUploadedFiles,
+  createSosSignal
+);
+
 router.get('/', getSosSignals);
-router.get('/:sosId', getSosSignalById);  // ✅ Получение конкретного SOS-сигнала
-router.delete('/:sosId', deleteSosSignal); // ✅ Удаление SOS-сигнала
-router.post('/help', markAsHelper);
+router.get('/tags', getSosTags);
+router.get('/:sosId', getSosSignalById);
+router.delete('/:sosId', verifyToken, deleteSosSignal);
+router.post('/help', verifyToken, markAsHelper);
 router.get('/helpers/:sosId', getSosHelpers);
 
 module.exports = router;

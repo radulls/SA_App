@@ -242,14 +242,12 @@ export const updateUser = async (
 ): Promise<any> => {
   try {
     const formData = files || new FormData();
-
     // Добавляем текстовые данные в FormData
     for (const key in data) {
       if (data.hasOwnProperty(key)) {
         formData.append(key, data[key]);
       }
     }
-
     const response = await patch('/users/update', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, Text, StyleSheet, Modal, ActivityIndicator } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet, Modal, ActivityIndicator, Alert } from 'react-native';
 import * as Location from 'expo-location';
 import GeoIcon from '@/components/svgConvertedIcons/MapIcons/geoIcon';
 import AddressSearch from '../AddressSearch';
@@ -8,66 +8,67 @@ import { fetchAddressFromCoordinates } from '@/utils/locationUtils';
 import ExpoMapComponent from './ExpoMapComponent';
 import * as FileSystem from 'expo-file-system';
 import { Asset } from 'expo-asset';
-import { styles } from '../mapStyle'
+import { styles } from '../mapStyle';
 
 interface Coordinates {
   latitude: number;
   longitude: number;
+  address?: string;
 }
 
 interface MapExpoProps {
   onNext: (location: Coordinates | string) => void;
+  selectedLocation?: Coordinates | null; // ✅ Добавлен пропс для передачи сохранённого местоположения
 }
 
-const MapExpo: React.FC<MapExpoProps> = ({ onNext }) => {
+const MapExpo: React.FC<MapExpoProps> = ({ onNext, selectedLocation }) => {
   const [address, setAddress] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<Coordinates | null>(null);
+  const [currentLocation, setCurrentLocation] = useState<Coordinates | null>(selectedLocation || null);
   const [loading, setLoading] = useState(true);
   const [iconBase64, setIconBase64] = useState<string>('');
 
   useEffect(() => {
     (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        console.error('❌ Разрешение на геолокацию отклонено');
-        setLoading(false);
-        return;
+      if (selectedLocation) {
+        // ✅ Если уже есть сохранённое место — используем его
+        setAddress(selectedLocation.address || '');
+        setCurrentLocation(selectedLocation);
+      } else {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          console.error('❌ Разрешение на геолокацию отклонено');
+          setLoading(false);
+          return;
+        }
+        let location = await Location.getCurrentPositionAsync({});
+        const { latitude, longitude } = location.coords;
+        setCurrentLocation({ latitude, longitude });
+        fetchAddressFromCoordinates(latitude, longitude, setAddress);
       }
-
-      let location = await Location.getCurrentPositionAsync({});
-      const { latitude, longitude } = location.coords;
-      setSelectedLocation({ latitude, longitude });
-      fetchAddressFromCoordinates(latitude, longitude, setAddress);
       setLoading(false);
     })();
-  }, []);
+  }, [selectedLocation]); // ✅ Следим за изменением `selectedLocation`
 
-  // Загружаем изображение иконки в base64
+  // Загружаем иконку в Base64
   useEffect(() => {
     (async () => {
       try {
-        // 📌 Указываем путь без alias
         const asset = Asset.fromModule(require('../../../../assets/geotagIcom.png'));
-  
-        // 📌 Загружаем файл
         await asset.downloadAsync();
-  
-        // 📌 Читаем как base64
         const base64 = await FileSystem.readAsStringAsync(asset.localUri || '', {
           encoding: FileSystem.EncodingType.Base64,
         });
-  
         setIconBase64(`data:image/png;base64,${base64}`);
       } catch (error) {
         console.error('❌ Ошибка загрузки изображения:', error);
       }
     })();
   }, []);
-  
+
   const selectAddress = (item: { label: string; latitude: number; longitude: number }) => {
     setAddress(item.label);
-    setSelectedLocation({ latitude: item.latitude, longitude: item.longitude });
+    setCurrentLocation({ latitude: item.latitude, longitude: item.longitude });
     setIsModalOpen(false);
   };
 
@@ -82,14 +83,13 @@ const MapExpo: React.FC<MapExpoProps> = ({ onNext }) => {
   return (
     <View style={styles.block}>
       <View style={styles.container}>
-        {/* OSM с кастомным маркером */}
         <ExpoMapComponent 
           onLocationSelect={(loc) => {
-            setSelectedLocation(loc);
+            setCurrentLocation(loc);
             fetchAddressFromCoordinates(loc.latitude, loc.longitude, setAddress);
           }}
           iconBase64={iconBase64}
-          selectedLocation={selectedLocation} // Передаем как пропс, но не вызываем обновление напрямую
+          selectedLocation={currentLocation} // ✅ Используем сохранённое место
         />
         {/* Кнопка "Моя геопозиция" */}
         <TouchableOpacity
@@ -97,7 +97,7 @@ const MapExpo: React.FC<MapExpoProps> = ({ onNext }) => {
           onPress={async () => {
             let location = await Location.getCurrentPositionAsync({});
             const { latitude, longitude } = location.coords;
-            setSelectedLocation({ latitude, longitude });
+            setCurrentLocation({ latitude, longitude });
             fetchAddressFromCoordinates(latitude, longitude, setAddress);
           }}
         >
@@ -105,22 +105,31 @@ const MapExpo: React.FC<MapExpoProps> = ({ onNext }) => {
         </TouchableOpacity>
         <View style={styles.bottomContainer}>
           <Text style={styles.title}>Локация</Text>
-          {/* Поле ввода */}
           <TouchableOpacity style={styles.inputContainer} onPress={() => setIsModalOpen(true)}>
             <SearchIcon />
-            <Text key={address} style={styles.inputText}>{address || 'Введите адрес...'}</Text>
+            <Text style={styles.inputText}>{address || 'Введите адрес...'}</Text>
           </TouchableOpacity>
-
-          {/* Кнопка "Всё верно" */}
-          <TouchableOpacity style={styles.button} onPress={() => onNext(selectedLocation || address)}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => {
+              if (!currentLocation || !address) {
+                Alert.alert("Ошибка", "Не удалось определить адрес. Попробуйте еще раз.");
+                return;
+              }
+              onNext({
+                latitude: currentLocation.latitude,
+                longitude: currentLocation.longitude,
+                address,
+              });
+            }}
+          >
             <Text style={styles.buttonText}>Всё верно</Text>
           </TouchableOpacity>
         </View>
-        {/* Модальное окно с `AddressSearch` */}
         <Modal visible={isModalOpen} animationType="slide">
           <View style={styles.modalOpen}>
             <View style={styles.modalContainer}>
-              <AddressSearch onSelectAddress={selectAddress} initialAddress={address}/>
+              <AddressSearch onSelectAddress={selectAddress} initialAddress={address} />
               <TouchableOpacity style={styles.button} onPress={() => setIsModalOpen(false)}>
                 <Text style={styles.buttonText}>Закрыть</Text>
               </TouchableOpacity>
