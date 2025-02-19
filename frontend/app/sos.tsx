@@ -1,15 +1,56 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, Platform } from 'react-native';
 import Map, { LocationData } from '@/components/sos/Map'; 
-import DetailsStep from '@/components/sos/DetailsStep';
+import DetailsStep from '@/components/sos/DetailStep/DetailsStep';
 import CloseIcon from '@/components/svgConvertedIcons/closeIcon';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 const SosPage = () => {
-  const [step, setStep] = useState(1);
-  const [location, setLocation] = useState<LocationData | null>(null);
   const router = useRouter();
+  const params = useLocalSearchParams();
 
+  const isEditing = params.editMode === "true"; // Проверяем, редактируем ли мы сигнал
+
+  // Функция для извлечения строки из параметра (если массив, берём первый элемент)
+  const getString = (value: string | string[] | undefined): string => {
+    return Array.isArray(value) ? value[0] : value || '';
+  };
+
+  // Функция для извлечения массива (если параметр в JSON, парсим)
+  const parseArray = (value: string | string[] | undefined): string[] => {
+    if (!value) return [];
+    try {
+      return Array.isArray(value) ? JSON.parse(value[0]) : JSON.parse(value);
+    } catch {
+      return [];
+    }
+  };
+
+  // Если редактируем, ставим второй шаг, иначе первый
+  const [step, setStep] = useState(isEditing ? 2 : 1);
+
+  // Устанавливаем локацию из параметров (если редактируем)
+  const [location, setLocation] = useState<LocationData | null>(
+    isEditing
+      ? {
+          latitude: Number(getString(params.latitude)),
+          longitude: Number(getString(params.longitude)),
+          address: getString(params.address) || 'Неизвестный адрес',
+        }
+      : null
+  );
+
+  // Если редактируем, загружаем переданные данные
+  const initialData = isEditing
+    ? {
+        title: getString(params.title),
+        description: getString(params.description),
+        tags: parseArray(params.tags),
+        photos: parseArray(params.photos),
+      }
+    : undefined;
+
+  // Функция для выхода
   const closeSos = () => {
     router.push('/home');
   };
@@ -35,16 +76,20 @@ const SosPage = () => {
             selectedLocation={location}
           />
         )}
+
         {/* Второй шаг: заполнение данных SOS-сигнала */}
         {step === 2 && location && (
           <DetailsStep
-            onNext={(id) => router.push(`/sos-signal/${id}`)} // 🔥 Теперь сразу переходим на страницу сигнала
+            onNext={(id) => router.push(`/sos-signal/${id}`)}
             location={{
               latitude: location.latitude,
               longitude: location.longitude,
               address: location.address || 'Неизвестный адрес',
             }}
             goBackToMap={() => setStep(1)}
+            initialData={initialData}
+            sosId={getString(params.sosId)} // Преобразуем в строку
+            isEditing={isEditing} // Говорим, что редактируем
           />
         )}
       </View>    

@@ -8,7 +8,7 @@ import Post from './Post';
 import BottomNavigation from '../BottomNavigation';
 import EditBackgroundImage from './EditBackgroundImage';
 import SettingsIcon from '../svgConvertedIcons/SettingsIcon';
-import SosIcon from '../svgConvertedIcons/SosIcon';
+import SosIcon from '../svgConvertedIcons/sosIcons/SosIcon';
 import QrIcon from '../svgConvertedIcons/qrIcon';
 import { styles } from './profileStyle';
 

@@ -6,6 +6,7 @@ import { getUserProfile } from "@/api/index"; // Импортируем API
 export default function Index() {
   const linkStyle = {fontSize: 24, marginBottom: 16}
   const [userId, setUserId] = useState<string | null>(null);
+  const sosId = "67b4f6e6215a6893702e34a7";
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,6 +43,9 @@ export default function Index() {
       <Link style={linkStyle} href={`/profile/${userId}`}>Чужой профиль</Link>
       <Link style={linkStyle} href={`/profileQR/${userId}`}>
         QR профиля
+      </Link>
+      <Link style={linkStyle} href={`/sos-signal/${sosId}`}>
+        Сос сигнал
       </Link>
       <Link style={linkStyle} href="/eventCreation">Создать пост</Link>
       <Link style={linkStyle} href="/search">Поиск</Link>

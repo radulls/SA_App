@@ -59,7 +59,7 @@ const ExpoMapComponent: React.FC<ExpoMapComponentProps> = ({ onLocationSelect, i
         <div id="map"></div>
         <script>
           document.addEventListener("DOMContentLoaded", function() {
-            var map = L.map('map').setView([${initialLocation.latitude}, ${initialLocation.longitude}], 16);
+            var map = L.map('map', { zoomControl: false }).setView([${initialLocation.latitude}, ${initialLocation.longitude}], 16);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
             var customIcon = L.icon({

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import SosView from '@/components/sos/SosView';
+import SosView from '@/components/sos/SosView/SosView';
 
 const SosSignalPage = () => {
   const { id } = useLocalSearchParams(); // 🔥 Получаем ID из URL

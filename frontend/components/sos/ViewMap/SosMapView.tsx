@@ -13,5 +13,4 @@ const SosMapComponent = Platform.OS === 'web'
 
 // ✅ Оборачиваем компонент в типизацию
 const SosMapView: React.FC<SosMapViewProps> = (props) => <SosMapComponent {...props} />;
-
 export default SosMapView;

@@ -3,6 +3,7 @@ const SosHelper = require('../models/SosHelper');
 const SosTags = require('../models/SosTag');
 const mongoose = require('mongoose');
 const axios = require('axios');
+const CancellationReasons = require('../models/SosCancellationReason')
 
 // 📌 Создание SOS-сигнала
 exports.createSosSignal = async (req, res) => {
@@ -38,6 +39,52 @@ exports.createSosSignal = async (req, res) => {
   }
 };
 
+// 📌 Обновление SOS-сигнала
+exports.updateSosSignal = async (req, res) => {
+  try {
+    const { sosId } = req.params;
+    const userId = req.user.id;
+    const { title, description, location, tags, existingPhotos } = req.body;
+
+    console.log("📩 Данные для обновления:", req.body);
+
+    if (!mongoose.Types.ObjectId.isValid(sosId)) {
+      return res.status(400).json({ error: "Неверный формат ID" });
+    }
+
+    const sosSignal = await SosReport.findById(sosId);
+    if (!sosSignal) {
+      return res.status(404).json({ error: "SOS-сигнал не найден" });
+    }
+
+    if (sosSignal.userId.toString() !== userId) {
+      return res.status(403).json({ error: "Вы не можете редактировать этот сигнал" });
+    }
+
+    // Обновляем данные
+    sosSignal.title = title || sosSignal.title;
+    sosSignal.description = description || sosSignal.description;
+    sosSignal.location = location || sosSignal.location;
+    sosSignal.tags = tags || sosSignal.tags;
+
+    // 1️⃣ **Обрабатываем фото**
+    let finalPhotos = existingPhotos ? JSON.parse(existingPhotos) : sosSignal.photos;
+
+    // 2️⃣ **Добавляем новые фото**
+    if (req.files && req.files.length > 0) {
+      const newPhotos = req.files.map(file => file.path);
+      finalPhotos = [...finalPhotos, ...newPhotos];
+    }
+    sosSignal.photos = finalPhotos;
+    await sosSignal.save();
+    console.log("✅ SOS-сигнал обновлен:", sosSignal);
+    res.json({ message: "SOS-сигнал обновлен", sos: sosSignal });
+  } catch (error) {
+    console.error("❌ Ошибка при обновлении SOS-сигнала:", error.message);
+    res.status(500).json({ error: "Ошибка при обновлении SOS-сигнала" });
+  }
+};
+
 // 📌 Получение всех SOS-сигналов
 exports.getSosSignals = async (req, res) => {
   try {
@@ -54,6 +101,15 @@ exports.getSosTags = async (req, res) => {
     res.json(sosTags)
   } catch (error) {
     res.status(500).json({ error: 'Ошибка при получении SOS-тэгов' })
+  }
+};
+
+exports.getCancellationReasons = async (req, res) => {
+  try {
+    const cancellationReasons = await CancellationReasons.find();
+    res.json(cancellationReasons)
+  } catch (error){
+    res.status(500).json({ error: 'Ошибка при получении причин отмены' })
   }
 };
 
@@ -92,26 +148,34 @@ exports.getSosSignalById = async (req, res) => {
 };
 
 // 📌 Удаление SOS-сигнала (Только автор)
-exports.deleteSosSignal = async (req, res) => {
+exports.cancelSosSignal = async (req, res) => {
   try {
     const { sosId } = req.params;
-    const userId = req.user.id; // ✅ ID из токена
+    const { reasonId } = req.body;
+    const userId = req.user.id;
 
+    if (!mongoose.Types.ObjectId.isValid(sosId) || !mongoose.Types.ObjectId.isValid(reasonId)) {
+      return res.status(400).json({ error: "Неверный формат ID" });
+    }
     const sosReport = await SosReport.findById(sosId);
     if (!sosReport) {
-      return res.status(404).json({ error: 'SOS-сигнал не найден' });
+      return res.status(404).json({ error: "SOS-сигнал не найден" });
     }
-
     if (sosReport.userId.toString() !== userId) {
-      return res.status(403).json({ error: 'Вы не можете удалить этот сигнал' });
+      return res.status(403).json({ error: "Вы не можете отменить этот сигнал" });
     }
-
-    await SosHelper.deleteMany({ sosId });
-    await sosReport.deleteOne();
-
-    res.json({ message: 'SOS-сигнал удалён' });
+    const reason = await CancellationReasons.findById(reasonId);
+    if (!reason) {
+      return res.status(400).json({ error: "Причина отмены не найдена" });
+    }
+    sosReport.status = 'canceled';
+    sosReport.cancellationReason = reasonId;
+    sosReport.updatedAt = Date.now();
+    await sosReport.save();
+    res.json({ message: "SOS-сигнал отменён", sos: sosReport });
   } catch (error) {
-    res.status(500).json({ error: 'Ошибка при удалении SOS-сигнала' });
+    console.error("❌ Ошибка при отмене SOS-сигнала:", error.message);
+    res.status(500).json({ error: "Ошибка при отмене SOS-сигнала" });
   }
 };
 
@@ -144,3 +208,4 @@ exports.getSosHelpers = async (req, res) => {
     res.status(500).json({ error: 'Ошибка загрузки помощников' });
   }
 };
+

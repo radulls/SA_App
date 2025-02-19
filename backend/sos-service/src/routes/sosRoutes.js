@@ -1,9 +1,11 @@
 const express = require('express');
 const {
   createSosSignal,
+  updateSosSignal,
   getSosSignals,
+  getCancellationReasons,
   getSosSignalById,
-  deleteSosSignal,
+  cancelSosSignal,
   markAsHelper,
   getSosHelpers,
   getSosTags,
@@ -29,9 +31,17 @@ router.post(
 );
 
 router.get('/', getSosSignals);
+router.get('/cancellation-reasons', getCancellationReasons);
 router.get('/tags', getSosTags);
+router.post('/cancel/:sosId', verifyToken, cancelSosSignal);
+router.put(
+  '/:sosId',
+  verifyToken,
+  upload.array('photos', 5),
+  processUploadedFiles,
+  updateSosSignal
+);
 router.get('/:sosId', getSosSignalById);
-router.delete('/:sosId', verifyToken, deleteSosSignal);
 router.post('/help', verifyToken, markAsHelper);
 router.get('/helpers/:sosId', getSosHelpers);
 

@@ -47,7 +47,7 @@ const SosMapView: React.FC<SosMapViewProps> = ({ location }) => {
         <div id="map"></div>
         <script>
           document.addEventListener("DOMContentLoaded", function () {
-            var map = L.map('map').setView([${location.latitude}, ${location.longitude}], 16);
+            var map = L.map('map', { zoomControl: false }).setView([${location.latitude}, ${location.longitude}], 16);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
             // ✅ Используем кастомную иконку

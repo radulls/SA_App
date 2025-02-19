@@ -29,7 +29,9 @@ const SosMapViewWeb = ({ location }: { location: { latitude: number; longitude: 
 
     if (!mapInstance.current) {
       // ✅ Создаём карту
-      mapInstance.current = map(mapRef.current).setView([location.latitude, location.longitude], 16);
+      mapInstance.current = map(mapRef.current,{
+        zoomControl: false,
+      }).setView([location.latitude, location.longitude], 16);
       tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance.current);
       markerRef.current = marker([location.latitude, location.longitude], { icon: customIcon }).addTo(mapInstance.current);
     } else {
@@ -42,7 +44,7 @@ const SosMapViewWeb = ({ location }: { location: { latitude: number; longitude: 
   }, [location]);
 
   return isBrowser ? (
-    <View style={{ flex: 1, height: '100%', borderRadius: 10, overflow: 'hidden', marginTop: 10 }}>
+    <View style={{ flex: 1 }}>
       <div ref={mapRef} id="map" style={{ width: '100%', height: '100%' }} />
     </View>
   ) : (

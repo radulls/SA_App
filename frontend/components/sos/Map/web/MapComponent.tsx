@@ -75,6 +75,7 @@ const MapComponent = ({
         center={userLocation ? [userLocation.latitude, userLocation.longitude] : [55.751244, 37.618423]}
         zoom={selectedLocation ? 17 : 12}
         style={{ width: '100%', height: '100%' }}
+        zoomControl={false} 
       >
         <MapInitializer setMapInstance={setMapInstance} />
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />

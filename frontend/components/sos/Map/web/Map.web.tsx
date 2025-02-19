@@ -1,9 +1,9 @@
 import React, { useState, Suspense, lazy, useEffect } from 'react';
-import { View, TouchableOpacity, Text, StyleSheet, Modal, ActivityIndicator } from 'react-native';
+import { View, TouchableOpacity, Text, Modal, ActivityIndicator } from 'react-native';
 import GeoIcon from '@/components/svgConvertedIcons/MapIcons/geoIcon';
 import AddressSearch from '../AddressSearch';
 import SearchIcon from '@/components/svgConvertedIcons/BottomMenuIcons/SearchIcon';
-import { fixAddressOrder, fetchAddressFromCoordinates } from '@/utils/locationUtils';
+import { fetchAddressFromCoordinates } from '@/utils/locationUtils';
 import { styles } from '../mapStyle';
 
 const MapComponent = lazy(() => import('./MapComponent'));
@@ -95,9 +95,7 @@ const MapWeb: React.FC<MapWebProps> = ({ onNext, selectedLocation }) => {
           >
             <Text style={styles.buttonText}>Всё верно</Text>
           </TouchableOpacity>
-
         </View>
-
         {/* Модальное окно с `AddressSearch` */}
         <Modal visible={isModalOpen} animationType="slide">
           <View style={styles.modalOpen}>

@@ -45,7 +45,6 @@ export const getAuthHeaders = async (): Promise<{ Authorization: string; userId:
   }
 };
 
-
 // 📌 Создать SOS-сигнал
 export const createSosSignal = async (sosData: FormData) => {
   const headers = await getAuthHeaders(); // Убедись, что `Authorization` есть
@@ -54,6 +53,18 @@ export const createSosSignal = async (sosData: FormData) => {
     headers: {
       ...headers, 
       'Content-Type': 'multipart/form-data', // ❌ Не ставь `application/json`
+    },
+  });
+};
+
+// 📌 Обновить SOS-сигнал
+export const updateSosSignal = async (sosId: string, sosData: FormData) => {
+  const headers = await getAuthHeaders();
+
+  return api.put(`/${sosId}`, sosData, {
+    headers: {
+      ...headers,
+      'Content-Type': 'multipart/form-data',
     },
   });
 };
@@ -69,9 +80,15 @@ export const getSosSignalById = async (sosId: string) => {
 };
 
 // 📌 Удалить SOS-сигнал
-export const deleteSosSignal = async (sosId: string) => {
+export const cancelSosSignal = async (sosId: string, reasonId: string) => {
   const headers = await getAuthHeaders();
-  return api.delete(`/${sosId}`, { headers });
+  try {
+    const response = await api.post(`/cancel/${sosId}`, { reasonId }, { headers });
+    return response.data;
+  } catch (error) {
+    console.error("❌ Ошибка отмены SOS-сигнала:", error);
+    throw new Error("Не удалось отменить SOS-сигнал");
+  }
 };
 
 // 📌 Отметить помощь
@@ -95,5 +112,17 @@ export const getSosTags = async (): Promise<SosTag[]> => {
     throw new Error('Не удалось загрузить SOS-тэги');
   }
 };
+
+// 📌 Получить список причин отмены SOS-сигнала
+export const getCancellationReasons = async () => {
+  try {
+    const response = await api.get('/cancellation-reasons');
+    return response.data;
+  } catch (error) {
+    console.error('❌ Ошибка загрузки причин отмены:', error);
+    throw new Error('Не удалось загрузить причины отмены');
+  }
+};
+
 
 export default api;
