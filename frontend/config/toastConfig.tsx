@@ -22,6 +22,7 @@ export const toastConfig: ToastConfig = {
 
 const styles = StyleSheet.create({
   success: {
+    position: 'relative',
     backgroundColor: '#000',
     padding: 15,
     borderRadius: 10,
@@ -29,14 +30,17 @@ const styles = StyleSheet.create({
     maxWidth: 600,
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 20,
   },
   error: {
+    position: 'relative',
     backgroundColor: 'red',
     padding: 15,
     borderRadius: 10,
     justifyContent: 'center',
     width: '95%',
     maxWidth: 600,
+    marginTop: 20,
   },
   text: {
     color: '#fff',

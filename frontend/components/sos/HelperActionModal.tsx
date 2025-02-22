@@ -7,8 +7,8 @@ import {
   Modal,
   TouchableWithoutFeedback,
   Animated,
-  Alert,
-  Share
+  Share,
+  PanResponder
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import * as Clipboard from 'expo-clipboard';
@@ -21,8 +21,8 @@ interface HelperActionModalProps {
   visible: boolean;
   onClose: () => void;
   sosId: string;
-  mode: "leave" | "options"; // 🔥 Для разных кнопок
-  onLeave?: () => void; // 🔥 Используется только в "leave"
+  mode: "leave" | "options"; 
+  onLeave?: () => void;
 }
 
 const HelperActionModal: React.FC<HelperActionModalProps> = ({
@@ -52,7 +52,6 @@ const HelperActionModal: React.FC<HelperActionModalProps> = ({
     }
   }, [visible]);
 
-  // 📌 Плавное закрытие
   const closeWithAnimation = (callback?: () => void) => {
     Animated.parallel([
       Animated.timing(slideAnim, {
@@ -72,6 +71,29 @@ const HelperActionModal: React.FC<HelperActionModalProps> = ({
     });
   };
 
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dy > 0) {
+          slideAnim.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 100) {
+          closeWithAnimation();
+        } else {
+          Animated.timing(slideAnim, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true,
+          }).start();
+        }
+      }
+    })
+  ).current;
+
   // 📌 Выйти из участия
   const handleLeave = async () => {
     try {
@@ -85,20 +107,28 @@ const HelperActionModal: React.FC<HelperActionModalProps> = ({
         });
       });
     } catch (error) {
-      Alert.alert("Ошибка", "Не удалось выйти из SOS-сигнала.");
-    }
-  };
+      Toast.show({ 
+        type: 'error', 
+        text1: 'Не удалось выйти из SOS-сигнала.', position: 'bottom' });
+      }
+    };
 
   // 📌 Копировать ссылку
   const copyToClipboard = async () => {
     try {
       const deepLink = Linking.createURL(`/sos-signal/${sosId}`);
       await Clipboard.setStringAsync(deepLink);
-      Alert.alert("Ссылка скопирована!", "Теперь вы можете вставить её в любое приложение.");
+      Toast.show({
+        type: 'success',
+        text1: 'Ссылка скопирована!',
+        position: 'bottom',
+      });
       closeWithAnimation();
-    } catch (err) {
-      Alert.alert("Ошибка", "Не удалось скопировать ссылку.");
-    }
+    } catch (error) {
+      Toast.show({ 
+        type: 'error', 
+        text1: 'Не удалось скопировать ссылку.', position: 'bottom' });
+      }
   };
 
   // 📌 Поделиться ссылкой
@@ -111,13 +141,20 @@ const HelperActionModal: React.FC<HelperActionModalProps> = ({
       });
       closeWithAnimation();
     } catch (err) {
-      Alert.alert("Ошибка", "Не удалось поделиться ссылкой.");
+      Toast.show({ 
+        type: 'error', 
+        text1: 'Не удалось поделиться ссылкой.', position: 'bottom',
+       });
     }
   };
 
   // 📌 Пожаловаться
   const reportSos = () => {
-    Alert.alert("Жалоба отправлена", "Спасибо, что сообщили нам об этом.");
+    Toast.show({
+      type: 'success',
+      text1: 'Жалоба отправлена',
+      position: 'bottom',
+    });
     closeWithAnimation();
   };
 
@@ -126,8 +163,11 @@ const HelperActionModal: React.FC<HelperActionModalProps> = ({
       <TouchableWithoutFeedback onPress={() => closeWithAnimation()}>
         <Animated.View style={[styles.modalContainer, { opacity: fadeAnim }]}>
           <TouchableWithoutFeedback>
-            <Animated.View style={[styles.modalContentContainer, { transform: [{ translateY: slideAnim }] }]}>
+            <Animated.View style={[styles.modalContentContainer, { transform: [{ translateY: slideAnim }] }]}>             
               <View style={styles.modalContent}>
+              <View style={styles.dragHandleContainer} {...panResponder.panHandlers}>
+                <View style={styles.dragHandle} />
+              </View>
                 {mode === "leave" ? (
                   <>
                     <TouchableOpacity style={styles.optionButton} onPress={handleLeave}>
@@ -157,8 +197,8 @@ const HelperActionModal: React.FC<HelperActionModalProps> = ({
                     </TouchableOpacity>
                   </>
                 )}
-
               </View>
+
             </Animated.View>
           </TouchableWithoutFeedback>
         </Animated.View>
@@ -184,7 +224,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     paddingHorizontal: 16,
-    paddingTop: 30,
     paddingBottom: 50,
     gap: 12,
   },
@@ -221,6 +260,17 @@ const styles = StyleSheet.create({
     fontWeight: '500', 
     paddingTop: 10 
   },
+  dragHandleContainer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: 10, 
+  },
+  dragHandle: {
+    width: 50,
+    height: 5,
+    backgroundColor: '#DADBDA',
+    borderRadius: 3,
+  },  
 });
 
 export default HelperActionModal;

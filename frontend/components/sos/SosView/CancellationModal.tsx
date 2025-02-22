@@ -8,13 +8,14 @@ import {
   FlatList,
   TouchableWithoutFeedback,
   Animated,
-  Alert
+  PanResponder
 } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
 
 interface CancellationModalProps {
   visible: boolean;
-  sosId: string; // ✅ Добавляем sosId в пропсы
+  sosId: string;
   reasons: { _id: string; reason: string }[];
   selectedReason: string | null;
   onSelectReason: (id: string) => void;
@@ -31,13 +32,12 @@ const CancellationModal: React.FC<CancellationModalProps> = ({
   onConfirm,
   sosId, 
 }) => {
-  const slideAnim = useRef(new Animated.Value(300)).current; // Начинаем ниже экрана
-  const fadeAnim = useRef(new Animated.Value(0)).current; // Фон сначала прозрачный
+  const slideAnim = useRef(new Animated.Value(300)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
   const router = useRouter();
 
   useEffect(() => {
     if (visible) {
-      // Анимация появления
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -51,52 +51,87 @@ const CancellationModal: React.FC<CancellationModalProps> = ({
         }),
       ]).start();
     } else {
-      // Анимация исчезновения (меню уезжает вниз, затем исчезает фон)
-      Animated.parallel([
-        Animated.timing(slideAnim, {
-          toValue: 300,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 200,
-          delay: 100, // Ждём пока меню уедет, затем исчезает фон
-          useNativeDriver: true,
-        }),
-      ]).start(() => onClose()); // Закрываем модалку после завершения анимации
+      closeWithAnimation();
     }
   }, [visible]);
 
+  const closeWithAnimation = () => {
+    Animated.parallel([
+      Animated.timing(slideAnim, {
+        toValue: 300,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onClose();
+    });
+  };
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dy > 0) {
+          slideAnim.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 100) {
+          closeWithAnimation();
+        } else {
+          Animated.timing(slideAnim, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true,
+          }).start();
+        }
+      }
+    })
+  ).current;
+
   const handleConfirm = () => {
     if (!selectedReason) {
-      Alert.alert("Ошибка", "Выберите причину отмены.");
+      Toast.show({ 
+        type: 'error', 
+        text1: 'Выберите причину отмены.',
+        position: 'top',
+       });
       return;
     }
-    if (selectedReason === "67b601cb172f6e3aeb95cd8e") { // "Участники помогли"
+    if (selectedReason === "67b601cb172f6e3aeb95cd8e") {
       if (!sosId) {
         console.error("❌ Ошибка: sosId отсутствует!");
-        Alert.alert("Ошибка", "Некорректный ID сигнала.");
+        Toast.show({ 
+          type: 'error', 
+          text1: 'Некорректный ID сигнала.',
+          position: 'top',
+         });
         return;
       }
       console.log("📡 Переход на выбор помощников, sosId:", sosId);
-      onClose(); // Закрываем модалку
-      router.push({ pathname: "/select-helpers", params: { sosId } }); // ✅ Передаём sosId
+      closeWithAnimation();
+      router.push({ pathname: "/select-helpers", params: { sosId } });
       return;
-    }
-  
+    }  
     onConfirm();
   };
   
   return (
-    <Modal transparent visible={visible} animationType="none" onRequestClose={onClose}>
-      {/* Фон, который исчезает и появляется */}
-      <TouchableWithoutFeedback onPress={onClose}>
+    <Modal transparent visible={visible} animationType="none" onRequestClose={closeWithAnimation}>
+      <TouchableWithoutFeedback onPress={closeWithAnimation}>
         <Animated.View style={[styles.modalContainer, { opacity: fadeAnim }]}>
-          {/* Контейнер для меню, который двигается вверх/вниз */}
           <TouchableWithoutFeedback>
-            <Animated.View style={[styles.modalContentContainer, { transform: [{ translateY: slideAnim }] }]}>
+            <Animated.View style={[styles.modalContentContainer, { transform: [{ translateY: slideAnim }] }]}>                         
               <View style={styles.modalContent}>
+                <View style={styles.dragHandleContainer} {...panResponder.panHandlers}>
+                  <View style={styles.dragHandle} />
+                </View>
                 <Text style={styles.modalTitle}>Причина отмены</Text>
                 <FlatList
                   data={reasons}
@@ -142,15 +177,16 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '100%',
     backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 40,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 50,
+    gap: 12,
   },
   modalTitle: {
     fontSize: 15,
+    marginBottom: 13,
     fontWeight: '700',
-    marginBottom: 30,
     textAlign: 'center',
   },
   reasonItem: {
@@ -183,7 +219,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   confirmButton: {
-    marginTop: 30,
+    marginTop: 15,
     backgroundColor: '#000',
     padding: 15,
     borderRadius: 8,
@@ -194,6 +230,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
+  dragHandleContainer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  dragHandle: {
+    width: 50,
+    height: 5,
+    backgroundColor: '#DADBDA',
+    borderRadius: 3,
+  },  
 });
 
 export default CancellationModal;

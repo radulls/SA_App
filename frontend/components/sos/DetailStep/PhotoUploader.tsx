@@ -15,19 +15,40 @@ const PhotoUploader: React.FC<PhotoUploaderProps> = ({ photos, setPhotos }) => {
   
   // 📌 Открываем галерею и выбираем фото
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync();
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
+  
     if (!result.canceled) {
-      const fileUri = result.assets[0].uri;
+      let fileUri = result.assets[0].uri;
+      console.log("📸 Выбрано изображение:", fileUri);
+  
       if (Platform.OS === 'web') {
         setPhotos((prevPhotos) => [...prevPhotos, fileUri]);
       } else {
-        const newUri = `${FileSystem.cacheDirectory}${fileUri.split('/').pop()}`;
-        await FileSystem.copyAsync({ from: fileUri, to: newUri });
-        setPhotos((prevPhotos) => [...prevPhotos, newUri]);
+        try {
+          const fileName = fileUri.split('/').pop();
+          const newUri = `${FileSystem.cacheDirectory}${fileName}`;
+  
+          console.log("📂 Копируем в кэш:", newUri);
+          await FileSystem.copyAsync({ from: fileUri, to: newUri });
+  
+          // Проверяем, существует ли файл
+          const fileInfo = await FileSystem.getInfoAsync(newUri);
+          if (fileInfo.exists) {
+            console.log("✅ Файл существует:", newUri);
+            setPhotos((prevPhotos) => [...prevPhotos, newUri]);
+          } else {
+            console.error("❌ Файл не найден после копирования:", newUri);
+          }
+        } catch (error) {
+          console.error("❌ Ошибка копирования файла:", error);
+        }
       }
     }
   };
-
+  
   // 📌 Удаляем фото
   const removePhoto = (index: number) => {
     setPhotos((prevPhotos: string[]) => prevPhotos.filter((_, i: number) => i !== index));
@@ -45,15 +66,21 @@ const PhotoUploader: React.FC<PhotoUploaderProps> = ({ photos, setPhotos }) => {
         data={photos}
         keyExtractor={(_, index) => index.toString()}
         renderItem={({ item, index }) => {
-          let imageUrl = item;
-
-          if (!item.startsWith('data:image') && !item.startsWith('http')) {
+          let imageUrl = decodeURIComponent(item); // Декодируем на всякий случай
+        
+          if (!imageUrl.startsWith('data:image') && !imageUrl.startsWith('http') && !imageUrl.startsWith('file://')) {
             imageUrl = `${SOS_IMAGE_URL}${item}`;
           }
-
+        
+          console.log("🖼️ Отображаем изображение:", imageUrl);
+        
           return (
             <View style={styles.imageContainer}>
-              <Image source={{ uri: imageUrl }} style={styles.image} />
+              <Image 
+                source={{ uri: imageUrl }} 
+                style={styles.image} 
+                onError={(e) => console.error("❌ Ошибка загрузки изображения:", imageUrl, e.nativeEvent)}
+              />
               <TouchableOpacity onPress={() => removePhoto(index)} style={styles.removePhoto}>
                 <DeleteIcon />
               </TouchableOpacity>
