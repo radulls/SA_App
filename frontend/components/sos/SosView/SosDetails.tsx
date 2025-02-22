@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import SosMapView from '../ViewMap/SosMapView';
 import { IMAGE_URL } from '@/api';
@@ -19,6 +19,25 @@ interface SosDetailsProps {
 }
 
 const SosDetails: React.FC<SosDetailsProps> = ({ user, location, tags, title, description, onOpenMap }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showReadMore, setShowReadMore] = useState(false);
+  const [measured, setMeasured] = useState(false);
+  const descriptionRef = useRef<Text>(null);
+
+  const handleTextLayout = (event: any) => {
+    if (measured) return; // Избегаем повторных измерений
+    const { height } = event.nativeEvent.layout;
+    const lineHeight = 20; // Ориентировочная высота строки
+    const maxLines = 4;
+    
+    setTimeout(() => {
+      if (height > lineHeight * maxLines) {
+        setShowReadMore(true);
+      }
+      setMeasured(true);
+    }, 0);
+  };
+
   return (
     <View style={styles.contentContainer}>
       <View style={styles.userContainer}>
@@ -63,7 +82,21 @@ const SosDetails: React.FC<SosDetailsProps> = ({ user, location, tags, title, de
         )}
       </View>
       <Text style={styles.title}>{title}</Text>
-      <Text style={styles.info}>{description}</Text>
+      
+      <Text
+        ref={descriptionRef}
+        style={styles.info}
+        numberOfLines={measured && !isExpanded ? 4 : undefined}
+        onLayout={handleTextLayout}
+      >
+        {description}
+      </Text>
+
+      {showReadMore && (
+        <TouchableOpacity onPress={() => setIsExpanded(!isExpanded)}>
+          <Text style={styles.readMore}>{isExpanded ? 'Скрыть' : 'Читать полностью'}</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -187,6 +220,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '400',
     marginBottom: 5,
+    lineHeight: 20,
+  },
+  readMore: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#000',
   },
 });
 
