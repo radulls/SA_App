@@ -83,5 +83,19 @@ export const styles = StyleSheet.create({
   },
   settingIcon: {
     marginLeft: 20,
-  }
+  },
+  sosActiveContainer:{
+    backgroundColor: '#F00',
+    borderRadius: 16,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sosActiveText:{
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#fff'
+  },
 });

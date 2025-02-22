@@ -6,7 +6,7 @@ import { getUserProfile } from "@/api/index"; // Импортируем API
 export default function Index() {
   const linkStyle = {fontSize: 24, marginBottom: 16}
   const [userId, setUserId] = useState<string | null>(null);
-  const sosId = "67b4f6e6215a6893702e34a7";
+  const sosId = "67b9aa7c8356b717e4f93b48";
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { IMAGE_URL, UserDataProps, getUserProfile } from '@/api/index'; // Импортируем интерфейс и функцию API
-import { View, ScrollView, StyleSheet, Image, TouchableOpacity, ActivityIndicator, Text, Modal } from 'react-native';
+import { IMAGE_URL, UserDataProps, getUserProfile } from '@/api/index'; 
+import { getSosSignalById, getSosSignalByUserId } from '@/api/sos/sosApi';
+import { View, ScrollView, Image, TouchableOpacity, ActivityIndicator, Text, Modal, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import ProfileHeader from './ProfileHeader';
 import ProfileStats from './ProfileStats';
@@ -11,6 +12,7 @@ import SettingsIcon from '../svgConvertedIcons/SettingsIcon';
 import SosIcon from '../svgConvertedIcons/sosIcons/SosIcon';
 import QrIcon from '../svgConvertedIcons/qrIcon';
 import { styles } from './profileStyle';
+import ProfileSosIcon from '../svgConvertedIcons/sosIcons/profileSosIcon';
 
 const ProfileMain: React.FC = () => {
   const [user, setUser] = useState<UserDataProps | null>(null); // Состояние для данных пользователя
@@ -40,21 +42,43 @@ const ProfileMain: React.FC = () => {
     }
   }, [user]);
   
-
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        console.log('Запуск загрузки данных профиля...');
+        console.log("Запуск загрузки данных профиля...");
         setLoading(true);
         const userData = await getUserProfile();
-        console.log('Данные пользователя получены:', userData);
-        setUser(userData);
+        console.log("✅ Данные пользователя получены:", userData);
+  
+        let activeSosId = null;
+  
+        if (userData.id) {
+          console.log(`📡 Ищем активный SOS-сигнал для userId: ${userData.id}`);
+          
+          // ✅ Теперь вызываем API для поиска активного SOS
+          const sosResponse = await getSosSignalByUserId(userData.id);
+  
+          console.log("🎯 Ответ от getSosSignalByUserId:", sosResponse);
+  
+          if (sosResponse && sosResponse.status === "active") {
+            activeSosId = sosResponse._id;
+            console.log(`✅ Найден активный SOS: ${activeSosId}`);
+          } else {
+            console.warn("⚠️ У пользователя нет активного SOS-сигнала.");
+          }
+        }
+  
+        setUser({
+          ...userData,
+          sosSignalActive: !!activeSosId,
+          sosSignalId: activeSosId,
+        });
       } catch (err: any) {
-        console.error('Ошибка при загрузке данных пользователя:', err.message);
-        setError(err.message || 'Ошибка при загрузке данных пользователя.');
+        console.error("❌ Ошибка при загрузке данных пользователя:", err.message);
+        setError(err.message || "Ошибка при загрузке данных пользователя.");
       } finally {
-        console.log('✅ Загрузка завершена, устанавливаем setLoading(false)');
-        setLoading(false); // Убеждаемся, что setLoading(false) вызывается
+        console.log("✅ Загрузка завершена, setLoading(false)");
+        setLoading(false);
       }
     };
   
@@ -95,30 +119,50 @@ const ProfileMain: React.FC = () => {
     );
   }
 
+  const fetchSosSignal = async (sosId: string) => {
+    try {
+      const response = await getSosSignalById(sosId);
+    } catch (error){
+      console.error("❌ Ошибка загрузки SOS-сигнала:", error)
+    } 
+  };
+
   // Отображение профиля
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.contentContainer}>
           <View style={styles.headerButtons}>
-          <TouchableOpacity
-            onPress={() => {
-              if (user && user.id) {
-                console.log(`Navigating to: /profileQR/${user.id}`);
-                router.push(`/profileQR/${user.id}`);
-              } else {
-                console.error('Данные пользователя не загружены или ID отсутствует.');
-              }
-            }}
-          >
-           <QrIcon width={22} height={22}/>
-          </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                if (user && user.id) {
+                  console.log(`Navigating to: /profileQR/${user.id}`);
+                  router.push(`/profileQR/${user.id}`);
+                } else {
+                  console.error("Данные пользователя не загружены или ID отсутствует.");
+                }
+              }}
+            >
+              <QrIcon width={22} height={22} />
+            </TouchableOpacity>
+            {user.sosSignalActive ? (
+              <Pressable onPress={() => router.push(`/sos-signal/${user.sosSignalId}`)} style={styles.sosActiveContainer}>
+                <ProfileSosIcon/>
+                <Text style={styles.sosActiveText}>Cигнал SOS активирован</Text>
+              </Pressable>
+            ) : (
+              ''
+            )}
             <View style={styles.rightIcons}>
-              <TouchableOpacity onPress={() => { router.push('/sos'); }} style={styles.sosIcon}>
-                <SosIcon width={22} height={22}/>
-              </TouchableOpacity>             
-              <TouchableOpacity onPress={() => { router.push('/settings'); }} style={styles.settingIcon}>
-                <SettingsIcon width={22} height={22}/>
+              {user.sosSignalActive ? (
+                ''
+              ) : (
+                <TouchableOpacity onPress={() => router.push("/sos")} style={styles.sosIcon}>
+                  <SosIcon width={22} height={22} />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity onPress={() => router.push("/settings")} style={styles.settingIcon}>
+                <SettingsIcon width={22} height={22} />
               </TouchableOpacity>
             </View>
           </View>

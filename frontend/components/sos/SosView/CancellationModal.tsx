@@ -8,10 +8,13 @@ import {
   FlatList,
   TouchableWithoutFeedback,
   Animated,
+  Alert
 } from 'react-native';
+import { useRouter } from 'expo-router';
 
 interface CancellationModalProps {
   visible: boolean;
+  sosId: string; // ✅ Добавляем sosId в пропсы
   reasons: { _id: string; reason: string }[];
   selectedReason: string | null;
   onSelectReason: (id: string) => void;
@@ -26,9 +29,11 @@ const CancellationModal: React.FC<CancellationModalProps> = ({
   onSelectReason,
   onClose,
   onConfirm,
+  sosId, 
 }) => {
   const slideAnim = useRef(new Animated.Value(300)).current; // Начинаем ниже экрана
   const fadeAnim = useRef(new Animated.Value(0)).current; // Фон сначала прозрачный
+  const router = useRouter();
 
   useEffect(() => {
     if (visible) {
@@ -63,26 +68,30 @@ const CancellationModal: React.FC<CancellationModalProps> = ({
     }
   }, [visible]);
 
-  const handleClose = () => {
-    Animated.parallel([
-      Animated.timing(slideAnim, {
-        toValue: 300,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 200,
-        delay: 100,
-        useNativeDriver: true,
-      }),
-    ]).start(() => onClose());
+  const handleConfirm = () => {
+    if (!selectedReason) {
+      Alert.alert("Ошибка", "Выберите причину отмены.");
+      return;
+    }
+    if (selectedReason === "67b601cb172f6e3aeb95cd8e") { // "Участники помогли"
+      if (!sosId) {
+        console.error("❌ Ошибка: sosId отсутствует!");
+        Alert.alert("Ошибка", "Некорректный ID сигнала.");
+        return;
+      }
+      console.log("📡 Переход на выбор помощников, sosId:", sosId);
+      onClose(); // Закрываем модалку
+      router.push({ pathname: "/select-helpers", params: { sosId } }); // ✅ Передаём sosId
+      return;
+    }
+  
+    onConfirm();
   };
-
+  
   return (
-    <Modal transparent visible={visible} animationType="none" onRequestClose={handleClose}>
+    <Modal transparent visible={visible} animationType="none" onRequestClose={onClose}>
       {/* Фон, который исчезает и появляется */}
-      <TouchableWithoutFeedback onPress={handleClose}>
+      <TouchableWithoutFeedback onPress={onClose}>
         <Animated.View style={[styles.modalContainer, { opacity: fadeAnim }]}>
           {/* Контейнер для меню, который двигается вверх/вниз */}
           <TouchableWithoutFeedback>
@@ -99,17 +108,15 @@ const CancellationModal: React.FC<CancellationModalProps> = ({
                     >
                       <Text style={styles.reasonText}>{item.reason}</Text>
                       <View
-                        style={[
-                          styles.radioCircle,
-                          { borderColor: selectedReason === item._id ? '#000' : '#ccc' },
-                        ]}
+                        style={[styles.radioCircle, selectedReason === item._id ? styles.activeCircle : '' 
+                      ]}
                       >
                         {selectedReason === item._id && <View style={styles.radioInnerCircle} />}
                       </View>
                     </TouchableOpacity>
                   )}
                 />
-                <TouchableOpacity style={styles.confirmButton} onPress={onConfirm}>
+                <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
                   <Text style={styles.confirmButtonText}>Отменить сигнал</Text>
                 </TouchableOpacity>
               </View>
@@ -166,11 +173,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  activeCircle:{
+    borderColor: '#000',
+    borderWidth: 6,
+  },
   radioInnerCircle: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#000',
   },
   confirmButton: {
     marginTop: 30,

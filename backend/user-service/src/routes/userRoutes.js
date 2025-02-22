@@ -23,7 +23,8 @@ const {
   unsubscribeUser, 
   getSubscribers, 
   getSubscriptions,
-  checkSubscription  
+  checkSubscription,
+  getUsersByIds  
 } = require('../controllers/userController');
 const { upload, processUploadedFiles } = require('../middlewares/upload.jsx');
 const { verifyToken } = require('../middlewares/authMiddleware');
@@ -92,6 +93,8 @@ router.post('/change-password', changePassword);
 
 // Валидация активационного кода
 router.post('/validate-code', validateActivationCode);
+
+router.post('/profiles-by-ids', getUsersByIds);
 
 // Проверка доступности username, email, phone
 router.post('/check-username', checkUsername);

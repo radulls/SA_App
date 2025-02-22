@@ -9,6 +9,12 @@ const {
   markAsHelper,
   getSosHelpers,
   getSosTags,
+  isUserHelper,
+  confirmHelpers,
+  getConfirmedHelpers,
+  getActiveSosByUserId,
+  leaveSosSignal,
+  checkSosAccess
 } = require('../controllers/sosController');
 const { verifyToken } = require('../middlewares/authMiddleware');
 const { upload, processUploadedFiles } = require('../middlewares/upload.jsx');
@@ -34,6 +40,10 @@ router.get('/', getSosSignals);
 router.get('/cancellation-reasons', getCancellationReasons);
 router.get('/tags', getSosTags);
 router.post('/cancel/:sosId', verifyToken, cancelSosSignal);
+router.get("/active", getActiveSosByUserId);
+router.get('/check-access', verifyToken, 
+checkSosAccess);
+router.post('/help', verifyToken, markAsHelper);
 router.put(
   '/:sosId',
   verifyToken,
@@ -42,7 +52,10 @@ router.put(
   updateSosSignal
 );
 router.get('/:sosId', getSosSignalById);
-router.post('/help', verifyToken, markAsHelper);
+router.get('/helpers/check/:sosId', verifyToken, isUserHelper);
 router.get('/helpers/:sosId', getSosHelpers);
+router.post('/confirm-helpers', verifyToken, confirmHelpers);
+router.get('/confirmed-helpers/:sosId', getConfirmedHelpers);
+router.post('/leave', verifyToken, leaveSosSignal);
 
 module.exports = router;

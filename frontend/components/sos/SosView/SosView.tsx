@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import CancellationModal from './CancellationModal'; 
-import { cancelSosSignal, getCancellationReasons, getSosSignalById, SOS_IMAGE_URL } from '@/api/sos/sosApi';
+import { cancelSosSignal, getCancellationReasons, getSosSignalById, SOS_IMAGE_URL, markAsHelper, isUserHelper } from '@/api/sos/sosApi';
 import { getUserProfile } from '@/api';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,7 +9,7 @@ import Toast from 'react-native-toast-message';
 import PhotoCarousel from '@/components/PhotoCarousel/PhotoCarousel';
 import SosDetails from './SosDetails';
 import SosHeader from './SosHeader';
-
+import HelperActionModal from '../HelperActionModal';
 
 interface SosViewProps {
   sosId: string; // 🔥 Теперь получаем ID
@@ -43,11 +43,20 @@ const SosView: React.FC<SosViewProps> = ({ sosId }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
   const [cancellationReasons, setCancellationReasons] = useState<CancellationReason[]>([]);
+  const [isHelper, setIsHelper] = useState(false); // ✅ Проверка: участвует ли пользователь
+  const [helperModalVisible, setHelperModalVisible] = useState(false);
 
-  
+
   useEffect(() => {
-    fetchSosData(sosId);
-  }, [sosId]);
+    fetchCurrentUser();
+  }, []);
+
+  useEffect(() => {
+    if (currentUser) {
+      fetchSosData(sosId);
+      checkIfUserIsHelper(sosId);
+    }
+  }, [currentUser, sosId]);
 
   const fetchSosData = async (sosId: string) => {
     try {
@@ -65,6 +74,30 @@ const SosView: React.FC<SosViewProps> = ({ sosId }) => {
       setLoading(false);
     }
   };  
+
+  // 📌 Получаем текущего пользователя
+  const fetchCurrentUser = async () => {
+    try {
+      const userProfile = await getUserProfile();
+      if (userProfile.id) {
+        setCurrentUser(userProfile.id.toString());
+      } else {
+        console.error("❌ Ошибка: userProfile.id отсутствует");
+      }
+    } catch (error) {
+      console.error("Ошибка загрузки текущего пользователя:", error);
+    }
+  };
+
+  // 📌 Проверяем, является ли пользователь помощником
+  const checkIfUserIsHelper = async (sosId: string) => {
+    try {
+      const userIsHelper = await isUserHelper(sosId);
+      setIsHelper(userIsHelper);
+    } catch (error) {
+      console.error("❌ Ошибка проверки помощника:", error);
+    }
+  };
   
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -102,6 +135,25 @@ const SosView: React.FC<SosViewProps> = ({ sosId }) => {
   if (!sosData) {
     return <Text style={styles.error}>❌ SOS-сигнал не найден</Text>;
   }
+
+  const handleJoinSos = async () => {
+    if (!currentUser) {
+      Alert.alert("Ошибка", "Не удалось определить пользователя. Авторизуйтесь.");
+      return;
+    }
+    try {
+      await markAsHelper(sosId);
+      Toast.show({
+        type: 'success',
+        text1: 'Вы присоединились к SOS-сигналу!',
+        position: 'bottom',
+      });
+
+      setIsHelper(true);
+    } catch (error) {
+      Alert.alert("Ошибка", "Не удалось присоединиться к SOS-сигналу.");
+    }
+  };
 
   const closeSos = () => {
     router.push('/home');
@@ -175,7 +227,7 @@ const SosView: React.FC<SosViewProps> = ({ sosId }) => {
   return (
     <ScrollView contentContainerStyle={styles.block}>
       <View style={styles.container}>
-        <SosHeader onClose={closeSos} />
+      <SosHeader onClose={closeSos} sosId={sosId} />
         <SosDetails
           user={sosData.user}
           location={sosData.location}
@@ -195,20 +247,40 @@ const SosView: React.FC<SosViewProps> = ({ sosId }) => {
                 <Text style={[styles.buttonText, styles.buttomTextCancel]}>Отменить сигнал</Text>
               </TouchableOpacity>
             </>
+          ) : isHelper ? (
+            <TouchableOpacity
+              style={[styles.buttonItem, styles.helperButton]}
+              onPress={() => setHelperModalVisible(true)}
+            >
+              <Text style={styles.buttonText}>Вы участник</Text>
+            </TouchableOpacity>
+
           ) : (
-            <TouchableOpacity style={[styles.buttonItem, styles.buttonItemCancel]}>
-            <Text style={[styles.buttonText, styles.buttomTextCancel]}>Присоединиться</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={[styles.buttonItem, styles.buttonItemCancel]} onPress={handleJoinSos}>
+              <Text style={[styles.buttonText, styles.buttomTextCancel]}>Присоединиться</Text>
+            </TouchableOpacity>
           )}
-        </View>  
+        </View>
         <CancellationModal
           visible={modalVisible}
+          sosId={sosId} // ✅ Передаём sosId из SosView
           reasons={cancellationReasons}
           selectedReason={selectedReason}
           onSelectReason={setSelectedReason}
           onClose={() => setModalVisible(false)}
           onConfirm={handleCancelSos}
         />
+       <HelperActionModal
+        visible={helperModalVisible}
+        onClose={() => setHelperModalVisible(false)}
+        sosId={sosId}
+        mode="leave" // 🔥 Только кнопки "Не участвовать" и "Отмена"
+        onLeave={() => {
+          console.log("🚨 Покидаем SOS-сигнал");
+          setIsHelper(false); // ✅ Убираем участника
+          setHelperModalVisible(false);
+        }}
+      />
       </View>
     </ScrollView>
   );
@@ -246,6 +318,9 @@ const styles = StyleSheet.create({
   },
   buttonItemCancel:{
     backgroundColor: '#000',
+  },
+  helperButton:{
+    backgroundColor: '#F1F1F1',
   },
   buttonText:{
     fontSize: 12,

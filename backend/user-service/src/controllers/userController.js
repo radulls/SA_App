@@ -404,7 +404,7 @@ const getUserProfile = async (req, res) => {
     }
 
     // Ищем пользователя в базе данных
-    const user = await User.findById(userId).select('-password'); // Исключаем пароль из выборки
+    const user = await User.findById(userId).select('-password'); // Исключаем пароль
 
     if (!user) {
       return res.status(404).json({ message: 'Пользователь не найден.' });
@@ -413,11 +413,15 @@ const getUserProfile = async (req, res) => {
     // Динамический подсчет подписчиков
     const subscribersCount = await Subscription.countDocuments({ subscribedTo: userId });
 
+    // Округляем рейтинг до двух знаков перед отправкой
+    const roundedRating = parseFloat((user.rating || 0).toFixed(2));
+
     res.status(200).json({ 
       message: 'Данные пользователя успешно получены.', 
       user: { 
         ...user.toObject(), 
-        subscribers: subscribersCount // Добавляем актуальное количество подписчиков
+        subscribers: subscribersCount, // Обновляем количество подписчиков
+        rating: roundedRating // Возвращаем округленный рейтинг
       } 
     });
   } catch (error) {
@@ -983,11 +987,31 @@ const getUserProfileById = async (req, res) => {
         aboutMe: user.aboutMe,
         subscribers: subscribersCount,
         isSubscribed: Boolean(isSubscribed), // Будет `false`, если юзер не авторизован
+        createdAt: user.createdAt,
       },
     });
   } catch (error) {
     console.error('❌ Ошибка при получении профиля пользователя:', error.message);
     res.status(500).json({ message: 'Ошибка сервера.' });
+  }
+};
+
+const getUsersByIds = async (req, res) => {
+  try {
+    const { userIds } = req.body; // Получаем массив ID
+
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+      return res.status(400).json({ message: 'userIds должен быть массивом' });
+    }
+
+    // Получаем пользователей по ID
+    const users = await User.find({ _id: { $in: userIds } })
+      .select('id firstName lastName username profileImage'); // Выбираем только нужные поля
+
+    res.status(200).json(users);
+  } catch (error) {
+    console.error('❌ Ошибка при получении пользователей по ID:', error.message);
+    res.status(500).json({ message: 'Ошибка сервера' });
   }
 };
 
@@ -1016,5 +1040,6 @@ module.exports = {
   unsubscribeUser, 
   getSubscribers, 
   getSubscriptions,
-  checkSubscription 
+  checkSubscription,
+  getUsersByIds
 };

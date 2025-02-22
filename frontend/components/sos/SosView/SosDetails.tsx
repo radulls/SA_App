@@ -40,7 +40,6 @@ const SosDetails: React.FC<SosDetailsProps> = ({ user, location, tags, title, de
           </>
         )}
       </View>
-      
       <Text style={styles.label}>Локация</Text>
       <Text style={styles.address}>{location.address}</Text>
       <TouchableOpacity onPress={onOpenMap} activeOpacity={1}>
@@ -51,7 +50,6 @@ const SosDetails: React.FC<SosDetailsProps> = ({ user, location, tags, title, de
           </View>
         </View>
       </TouchableOpacity>
-
       <Text style={styles.label}>Теги</Text>
       <View style={styles.tagsContainer}>
         {tags.length > 0 ? (
@@ -64,7 +62,6 @@ const SosDetails: React.FC<SosDetailsProps> = ({ user, location, tags, title, de
           <Text style={styles.noTags}>Нет тегов</Text>
         )}
       </View>
-
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.info}>{description}</Text>
     </View>
@@ -114,6 +111,7 @@ const styles = StyleSheet.create({
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 3,
   },
   locationIcon: {
     backgroundColor: '#000000',

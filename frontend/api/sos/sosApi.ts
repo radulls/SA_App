@@ -79,6 +79,25 @@ export const getSosSignalById = async (sosId: string) => {
   return api.get(`/${sosId}`);
 };
 
+export const getSosSignalByUserId = async (userId: string) => {
+  try {
+    console.log(`📡 Отправляем запрос на активный SOS-сигнал: ${API_BASE_URL}/active?userId=${userId}`);
+    
+    const response = await api.get(`/active?userId=${userId}`);
+
+    console.log("✅ Ответ API (active SOS):", response.data);
+    
+    return response.data; 
+  } catch (error: any) {
+    if (error.response && error.response.status === 404) {
+      console.warn(`⚠️ У пользователя ${userId} нет активного SOS-сигнала.`);
+      return null;
+    }
+    console.error("❌ Ошибка при получении активного SOS-сигнала:", error);
+    throw error;
+  }
+};
+
 // 📌 Удалить SOS-сигнал
 export const cancelSosSignal = async (sosId: string, reasonId: string) => {
   const headers = await getAuthHeaders();
@@ -98,8 +117,20 @@ export const markAsHelper = async (sosId: string) => {
 };
 
 // 📌 Получить помощников для SOS-сигнала
-export const getSosHelpers = async (sosId: string) => {
+export const getSosHelpers = async (sosId: string): Promise<any> => {
   return api.get(`/helpers/${sosId}`);
+};
+
+// 📌 Проверить, является ли текущий пользователь помощником SOS-сигнала
+export const isUserHelper = async (sosId: string): Promise<boolean> => {
+  const headers = await getAuthHeaders();
+  try {
+    const response = await api.get(`/helpers/check/${sosId}`, { headers });
+    return response.data.isHelper; // ✅ true/false
+  } catch (error) {
+    console.error("❌ Ошибка проверки помощника:", error);
+    return false;
+  }
 };
 
 // 📌 Получить теги SOS
@@ -121,6 +152,42 @@ export const getCancellationReasons = async () => {
   } catch (error) {
     console.error('❌ Ошибка загрузки причин отмены:', error);
     throw new Error('Не удалось загрузить причины отмены');
+  }
+};
+
+export const confirmHelpers = async (sosId: string, helpers: string[]) => {
+  const headers = await getAuthHeaders();
+  return api.post('/confirm-helpers', { sosId, helpers }, { headers });
+};
+
+// 📌 Отмена участия в SOS-сигнале
+export const leaveSosSignal = async (sosId: string) => {
+  const headers = await getAuthHeaders();
+  try {
+    const response = await api.post('/leave', { sosId }, { headers });
+    return response.data;
+  } catch (error) {
+    console.error("❌ Ошибка выхода из SOS-сигнала:", error);
+    throw new Error("Не удалось выйти из SOS-сигнала");
+  }
+};
+
+// 📌 Проверка доступа к созданию SOS-сигнала
+export const checkSosAccess = async () => {
+  const headers = await getAuthHeaders();
+  try {
+    const response = await api.get('/check-access', { headers });
+    console.log("📡 ✅ Ответ сервера:", response.data);
+    return response.data;
+  } catch (error: any) {
+    // console.error("❌ Ошибка при проверке доступа к SOS:", error);
+
+    // Если сервер вернул 403, но в `response.data` есть информация, возвращаем её
+    if (error.response && error.response.status === 403) {
+      console.log("🔄 Обрабатываем 403:", error.response.data);
+      return error.response.data;
+    }
+    return { access: false, message: "Ошибка загрузки доступа" };
   }
 };
 

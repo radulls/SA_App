@@ -92,7 +92,6 @@ const ProfileQRCard: React.FC = () => {
     }
   };
   
-
   const shareOptions = [
     { icon: <CopyLink />, text: 'Копировать ссылку', action: copyToClipboard },
     { icon: <ShareIcon />, text: 'Поделиться через…', action: shareLink },

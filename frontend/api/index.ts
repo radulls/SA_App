@@ -18,6 +18,8 @@ export interface UserDataProps {
   rating?: number;
   qrCode?: string;
   isSubscribed?: boolean; // ✅ Добавляем статус подписки
+  sosSignalActive?: boolean; // ✅ Добавляем флаг активного SOS
+  sosSignalId?: string;
 }
 
 // Создаём экземпляр axios
@@ -354,31 +356,41 @@ export const getUserProfile = async (): Promise<UserDataProps> => {
     if (!token) {
       throw new Error('Токен отсутствует. Пожалуйста, авторизуйтесь.');
     }
-
     const response = await api.get('/users/profile', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-
     const userData = response.data.user;
-
-    // Логируем полученные данные
-    console.log('Получены данные пользователя из API:', userData);
-
+    // Логируем API-ответ
+    console.log('✅ API ответ getUserProfile:', userData);
+    // Проверяем подписчиков
+    if (typeof userData.subscribers === 'undefined') {
+      console.warn('⚠️ В API-ответе нет subscribers! Возможно, сервер не отправляет это поле.');
+    } else {
+      console.log('📊 Количество подписчиков:', userData.subscribers);
+    }
+    // Проверяем рейтинг
+    if (typeof userData.rating === 'undefined') {
+      console.warn('⚠️ В API-ответе нет rating! Возможно, сервер не отправляет это поле.');
+    } else {
+      console.log('⭐ Рейтинг пользователя:', userData.rating);
+    }
     return {
-      id: userData._id, // Убедимся, что это поле возвращается
+      id: userData._id, 
       firstName: userData.firstName || '',
       lastName: userData.lastName || '',
       aboutMe: userData.aboutMe || 'Всем привет, меня зовут Катя, катаюсь на скейте и сноуборде, люблю вкусную еду)',
       username: userData.username || '',
-      city: typeof userData.city === 'string' ? userData.city : userData.city?.name || 'Не указан', // Проверяем, строка или объект
+      city: typeof userData.city === 'string' ? userData.city : userData.city?.name || 'Не указан',
       profileImage: userData.profileImage || '',
       backgroundImage: userData.backgroundImage || '',
       qrCode: userData.qrCode || '',
+      subscribers: userData.subscribers ?? 0, // Проверяем наличие подписчиков
+      rating: userData.rating ?? 0, // Проверяем наличие рейтинга
     };
   } catch (error: any) {
-    console.error('Ошибка при получении данных пользователя:', error.message);
+    console.error('❌ Ошибка при получении данных пользователя:', error.message);
     throw error;
   }
 };

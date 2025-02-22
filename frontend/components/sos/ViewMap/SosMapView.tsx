@@ -8,9 +8,8 @@ export interface SosMapViewProps {
 
 // Динамически подгружаем нужную версию карты
 const SosMapComponent = Platform.OS === 'web'
-  ? require('./SosMapView.web').default  // Веб-версия (Leaflet) 
-  : require('./SosMapView.expo').default; // Expo-версия (заглушка или карта на другой технологии)
-
+  ? require('./SosMapView.web').default
+  : require('./SosMapView.expo').default; 
 // ✅ Оборачиваем компонент в типизацию
 const SosMapView: React.FC<SosMapViewProps> = (props) => <SosMapComponent {...props} />;
 export default SosMapView;

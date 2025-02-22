@@ -2,7 +2,7 @@ import { IMAGE_URL, UserDataProps, checkIfSubscribed, getUserProfileById } from 
 import { getReportTopics, reportUser } from '@/api/reportService';
 import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator, Text, ScrollView, Image, TouchableOpacity, Share } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useSegments } from 'expo-router';
 import ProfileHeader from '../ProfileHeader';
 import { styles } from '../profileStyle';
 import ProfileStats from '../ProfileStats';
@@ -19,34 +19,54 @@ import * as Linking from 'expo-linking';
 const UserProfile: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [user, setUser] = useState<UserDataProps | null>(null);
-  const userId = "6787bfd597715a6fc67231c9";
   const [error, setError] = useState<string | null>(null);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const [isReportMenuVisible, setIsReportMenuVisible] = useState(false);
   const [reportTopics, setReportTopics] = useState<{ _id: string; name: string }[]>([]);
   const router = useRouter();
 
+  // 🛠️ Получаем `userId` из `useLocalSearchParams()` или `useSegments()`
+  const params = useLocalSearchParams();
+  const segments = useSegments();
+
+  let userId = Array.isArray(params.userId) ? params.userId[0] : params.userId;
+  if (!userId && segments.length > 1) {
+    userId = segments[segments.length - 1]; // Берём ID из URL
+  }
+
+  console.log("📡 useLocalSearchParams():", params);
+  console.log("📌 Полученный userId:", userId);
+
   useEffect(() => {
+    if (!userId) {
+      console.error("❌ Ошибка: userId отсутствует, запрос не отправлен");
+      setError("Ошибка: отсутствует идентификатор пользователя");
+      setLoading(false);
+      return;
+    }
+
     const fetchUserData = async () => {
       try {
         setLoading(true);
+        console.log("📡 Запрос к API с userId:", userId);
+
         const userData = await getUserProfileById(userId);
+        console.log("✅ Данные пользователя:", userData);
+
         setUser(userData);
-  
-        // Проверяем подписку отдельно
+
         const subscriptionStatus = await checkIfSubscribed(userId);
         setUser((prevUser) => prevUser ? { ...prevUser, isSubscribed: subscriptionStatus } : prevUser);
       } catch (err: any) {
-        console.error('❌ Ошибка загрузки данных пользователя:', err.message);
-        setError(err.message || 'Ошибка загрузки.');
+        console.error("❌ Ошибка загрузки данных пользователя:", err.message);
+        setError(err.message || "Ошибка загрузки.");
       } finally {
         setLoading(false);
       }
     };
-  
+
     fetchUserData();
   }, [userId]);
-  
 
   if (loading) return <ActivityIndicator size="large" color="#000" />;
   if (error) return <Text style={styles.errorText}>Ошибка: {error}</Text>;
@@ -54,8 +74,9 @@ const UserProfile: React.FC = () => {
 
   // 📌 Копирование ссылки
   const copyToClipboard = async () => {
-    if (!userId) {
-      Toast.show({ type: 'error', text1: 'Ошибка', text2: 'ID отсутствует.', position: 'bottom' });
+    if (!userId || typeof userId !== "string") {
+      console.error("❌ Ошибка: userId имеет неверный формат:", userId);
+      setError("Некорректный идентификатор пользователя");
       return;
     }
     try {
@@ -104,11 +125,6 @@ const UserProfile: React.FC = () => {
     }
   };
 
-  // 📌 Блокировка пользователя
-  const blockUser = () => {
-    Toast.show({ type: 'success', text1: 'Пользователь заблокирован', position: 'bottom' });
-  };
-
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
@@ -139,7 +155,6 @@ const UserProfile: React.FC = () => {
           />
         </View>
       </ScrollView>
-      {/* Главное меню */}
       <BottomSheetMenu
         isVisible={isMenuVisible}
         onClose={() => setIsMenuVisible(false)}
@@ -147,24 +162,19 @@ const UserProfile: React.FC = () => {
           { label: 'Копировать ссылку', onPress: copyToClipboard, icon: <CopyLink fill={'#000'} />, isRowButton: true },
           { label: 'Поделиться через…', onPress: shareLink, icon: <ShareIcon fill={'#000'} />, isRowButton: true },
           { label: 'Пожаловаться', onPress: openReportMenu, icon: null, isRowButton: false },
-          { label: 'Заблокировать', onPress: blockUser, icon: null, isRowButton: false },
         ]}
       />
-      {/* Меню с темами жалоб */}
       <BottomSheetMenu
         isVisible={isReportMenuVisible}
         onClose={() => setIsReportMenuVisible(false)}
-        type="report" // ✅ Добавляем тип "report"
-        userId={userId as string} // ✅ Передаём ID пользователя
-        buttons={[
-          ...reportTopics.map((topic) => ({
-            label: topic.name,
-            onPress: () => handleReportSubmit(topic._id),
-            icon: null,
-            isRowButton: false,
-          })),
-          { label: 'Назад', onPress: () => setIsReportMenuVisible(false), icon: null, isRowButton: false },
-        ]}
+        type="report"
+        userId={userId as string}
+        buttons={reportTopics.map((topic) => ({
+          label: topic.name,
+          onPress: () => handleReportSubmit(topic._id),
+          icon: null,
+          isRowButton: false,
+        }))}
       />
     </View>
   );

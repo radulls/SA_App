@@ -16,7 +16,12 @@ const userSchema = new mongoose.Schema({
   phone: { type: String, unique: true, default: null },
   city: { type: mongoose.Schema.Types.ObjectId, ref: 'City', required: false },
   role: { type: String, enum: ['user', 'admin', 'creator'], default: 'user' },
-  rating: { type: Number, default: 0, min: 0 }, 
+  rating: { 
+    type: Number, 
+    default: 0, 
+    min: 0,
+    set: (val) => parseFloat(val.toFixed(2)), // Округляем до 2 знаков после запятой
+  }, 
   subscribers: { type: Number, default: 0, min: 0 }, // Количество подписчиков, минимальное значение 0
   subscriptionActive: { type: Boolean, default: false },
   subscriptionStart: { type: Date },
