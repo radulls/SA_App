@@ -6,7 +6,8 @@ const axios = require('axios');
 const CancellationReasons = require('../models/SosCancellationReason')
 const SosConfirmedHelper = require('../models/SosConfirmedHelper')
 
-const USER_SERVICE_URL = 'http://localhost:5001/api/users/profile';
+const USER_SERVICE_URL = 'http://89.108.118.249:5001/api/users/profile';
+
 
   // 📌 Создание SOS-сигнала
   exports.createSosSignal = async (req, res) => {
@@ -135,7 +136,7 @@ const USER_SERVICE_URL = 'http://localhost:5001/api/users/profile';
       // 2️⃣ Запрашиваем данные о пользователе из `user-service`
       let userData = null;
       try {
-        const userResponse = await axios.get(`http://localhost:5001/api/users/profile/${sosReport.userId}`);
+        const userResponse = await axios.get(`http://89.108.118.249:5001/api/users/profile/${sosReport.userId}`);
         console.log("✅ Данные пользователя:", userResponse.data); // <--- ЛОГИРУЕМ ОТВЕТ
         userData = userResponse.data;
       } catch (err) {

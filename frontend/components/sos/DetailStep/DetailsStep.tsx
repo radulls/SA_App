@@ -258,17 +258,20 @@ const DetailsStep: React.FC<Props> = ({ onNext, location, initialData, goBackToM
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    paddingTop: 15,
   },
   startButton:{
     alignItems: 'center',
     marginTop: 30,
-    marginBottom: 18
+    marginBottom: 14,
   },
   buttonText:{
-    fontWeight: '500',
-    fontSize: 12,
-    textAlign: 'center'
+    fontFamily: "SFUIDisplay-medium",
+    fontSize: 14,
+    textAlign: 'center',
+    color: '#000',
   }
 });
 

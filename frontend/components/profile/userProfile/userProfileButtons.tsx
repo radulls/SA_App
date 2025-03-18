@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
-import BottomSheetMenu from '@/components/BottomSheetMenu/BottomSheetMenu';
+import BottomSheetMenu from '@/components/Menu/BottomSheetMenu';
 import Toast from 'react-native-toast-message';
 import { checkIfSubscribed, subscribeToUser, unsubscribeFromUser } from '@/api/index';
+import UnsubscribeMenu from '@/components/Menu/UnsubscribeMenu';
 
 interface UserProfileButtonsProps {
   userId: string;
   initialSubscribed: boolean; // Передаем начальное состояние подписки
-  onSubscriptionChange: (status: boolean) => void; // ✅ Новый коллбэк
+  onSubscriptionChange: (status: boolean) => void; //  Новый коллбэк
 }
 
 const UserProfileButtons: React.FC<UserProfileButtonsProps> = ({ userId, initialSubscribed, onSubscriptionChange }) => {
@@ -30,19 +31,6 @@ const UserProfileButtons: React.FC<UserProfileButtonsProps> = ({ userId, initial
     }
   };
   
-  const handleUnsubscribe = async () => {
-    try {
-      await unsubscribeFromUser(userId);
-      const status = await checkIfSubscribed(userId); // Повторная проверка подписки
-      setIsSubscribed(status);
-      onSubscriptionChange(status);
-      setIsMenuVisible(false);
-      Toast.show({ type: 'success', text1: 'Вы отписались!', position: 'bottom' });
-    } catch (error) {
-      Toast.show({ type: 'error', text1: 'Ошибка отписки', position: 'bottom' });
-    }
-  };
-  
   return (
     <View>
       <View style={styles.buttonContainer}>
@@ -58,14 +46,15 @@ const UserProfileButtons: React.FC<UserProfileButtonsProps> = ({ userId, initial
           </Text>
         </TouchableOpacity>
       </View>
-
       {/* Меню отписки */}
-      <BottomSheetMenu 
+      <UnsubscribeMenu 
         isVisible={isMenuVisible}
         onClose={() => setIsMenuVisible(false)}
-        buttons={[
-          { label: 'Отписаться', onPress: handleUnsubscribe, icon: null, isRowButton: false }, 
-        ]}
+        userId={userId}
+        onUnsubscribe={() => {
+          setIsSubscribed(false);
+          onSubscriptionChange(false); // ✅ Теперь обновляет подписку
+        }}
       />
     </View>
   );
@@ -105,7 +94,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#000',
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: "SFUIDisplay-bold",
   },
   notSubscribedText: {
     color: '#fff'

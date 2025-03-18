@@ -19,23 +19,27 @@ const SosFullMap = () => {
     <View style={styles.container}>
       <View style={styles.contentContainer}>
         <SosMapView location={{ latitude: Number(lat), longitude: Number(lng) }} />
-        <TouchableOpacity style={styles.geoButton}>
-          <GeoIcon/>
-        </TouchableOpacity>
-        <View style={styles.bottomContainer}>
-          <TouchableOpacity style={styles.blockContainer} onPress={closeMap}>
-            <View style={styles.text}>
-              <Text style={styles.title}>Информация</Text>
-              <Text style={styles.subtitle}>Перейти к информации</Text>
+        <View style={styles.bottomContent}>
+          <View style={styles.bottomContentContainer}>
+            <TouchableOpacity style={styles.geoButton}>
+              <GeoIcon/>
+            </TouchableOpacity>
+            <View style={styles.bottomContainer}>
+              <TouchableOpacity style={styles.blockContainer} onPress={closeMap}>
+                <View style={styles.text}>
+                  <Text style={styles.title}>Информация</Text>
+                  <Text style={styles.subtitle}>Перейти к информации</Text>
+                </View>
+                <DetailsIcon/>
+              </TouchableOpacity>
+              <View style={[styles.blockContainer, styles.chatBlock]}>
+                <View style={styles.text}>
+                  <Text style={styles.title}>Чат сигнала</Text>
+                  <Text style={styles.subtitle}>Перейти в чат</Text>
+                </View>
+                <SosChatIcon/>
+              </View>
             </View>
-            <DetailsIcon/>
-          </TouchableOpacity>
-          <View style={[styles.blockContainer, styles.chatBlock]}>
-            <View style={styles.text}>
-              <Text style={styles.title}>Чат сигнала</Text>
-              <Text style={styles.subtitle}>Перейти в чат</Text>
-            </View>
-            <SosChatIcon/>
           </View>
         </View>
       </View>
@@ -70,23 +74,28 @@ const styles = StyleSheet.create({
     position: 'absolute', 
     zIndex: 400, 
     right: 16, 
-    bottom: Platform.select({
-      ios: '30%',
-      android: '30%',
-      web: '35%',
-    }),    
+    top: -78,   
+  },
+  bottomContent:{
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+  },
+  bottomContentContainer:{
+    position: 'relative',
   },
   bottomContainer:{
-    position: 'absolute',
     flexDirection: 'row',
     gap: 10,
     backgroundColor: '#fff', 
-    bottom: 0,
-    width: '100%',
     paddingHorizontal: 16,
     paddingVertical: 20,
-    borderRadius: 16,
-    paddingBottom: 40
+    paddingBottom: 40,
+    borderTopRightRadius: 16, 
+    borderTopLeftRadius: 16,
+    borderBottomRightRadius: 16, 
+    borderBottomLeftRadius: 16,
+    height: '100%',
   },
   blockContainer:{
     flex: 1,  
@@ -96,18 +105,19 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   chatBlock:{
-    backgroundColor: '#EFEFEF'
+    backgroundColor: '#EFEFEF',
+    justifyContent: 'space-between'
   },
   text:{
     paddingBottom: 40
   },
   title:{
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: "SFUIDisplay-bold",
   },
   subtitle:{
     fontSize: 14,
-    fontWeight: '400',
+    fontFamily: "SFUIDisplay-regular",
     paddingVertical: 5,
   },
 });

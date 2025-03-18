@@ -6,6 +6,7 @@ import { IMAGE_URL } from '@/api/index';
 import IconBack from '@/components/svgConvertedIcons/iconBack';
 import SosChatIcon from '@/components/svgConvertedIcons/sosIcons/sosChat';
 import { getUserProfile } from '@/api';
+import { getFullName } from '@/utils/getFullName';
 
 interface User {
   _id: string;
@@ -121,71 +122,85 @@ const SosHelpersScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.contentContainer}>
-        <View style={styles.header}>
-          <View style={styles.backIconWrapper}>
-            <IconBack fill='#000' onPress={handleGoBack} />
-          </View>
-          <Text style={styles.title}>{`(${helpers.length}) Участники`}</Text>
-          <SosChatIcon />
-        </View>
-        <Text style={styles.label}>Создатель сигнала</Text>
-        {creator && (
-          <TouchableOpacity onPress={() => handleProfilePress(creator._id)}>
-            <View style={styles.card}>
-              <Image
-                source={{
-                  uri: creator.profileImage
-                    ? `${IMAGE_URL}${creator.profileImage}`
-                    : 'https://via.placeholder.com/50',
-                }}
-                style={styles.profileImage}
-              />
-              <View>
-                <Text style={styles.label}>{creator.username}</Text>
-                <Text style={styles.name}>{`${creator.firstName} ${creator.lastName}`}</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        )}
-        <View style={styles.divider} />
-        <Text style={styles.label}>Участники</Text>
-        {helpers.length === 0 ? (
-          <Text style={styles.noHelpersText}>Пока никто не откликнулся.</Text>
-        ) : (
-          <FlatList
-            data={helpers}
-            keyExtractor={(item) => item._id}
-            renderItem={({ item }) => {
-              const user = item.user;
-              if (!user || !user._id) {
-                console.error("❌ Ошибка: Отсутствует user или его ID", user);
-                return null;
-              }
+  <View style={styles.contentContainer}>
+    {/* Контейнер для хэдера */}
+    <View style={styles.headerContainer}>
+      {/* Левый контейнер для кнопки назад */}
+      <View style={styles.leftHeaderContainer}>
+        <TouchableOpacity style={styles.backButton}>
+          <IconBack fill='#000' onPress={handleGoBack}/>
+        </TouchableOpacity>
+      </View>
 
-              return (
-                <TouchableOpacity onPress={() => handleProfilePress(user._id)}>
-                  <View style={styles.card}>
-                    <Image
-                      source={{
-                        uri: user.profileImage
-                          ? `${IMAGE_URL}${user.profileImage}`
-                          : 'https://via.placeholder.com/50',
-                      }}
-                      style={styles.profileImage}
-                    />
-                    <View>
-                      <Text style={styles.label}>{user.username}</Text>
-                      <Text style={styles.name}>{`${user.firstName} ${user.lastName}`}</Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              );
-            }}
-          />
-        )}
+      {/* Центральный контейнер для заголовка */}
+      <View style={styles.centerHeaderContainer}>
+        <Text style={styles.title}>{`(${helpers.length}) Участники`}</Text>
+      </View>
+
+      {/* Правый контейнер для иконки чата */}
+      <View style={styles.rightHeaderContainer}>
+        <SosChatIcon />
       </View>
     </View>
+
+    {/* Остальной контент */}
+    <Text style={styles.labelTitle}>Создатель сигнала</Text>
+    {creator && (
+      <TouchableOpacity onPress={() => handleProfilePress(creator._id)}>
+        <View style={styles.card}>
+          <Image
+            source={{
+              uri: creator.profileImage
+                ? `${IMAGE_URL}${creator.profileImage}`
+                : 'https://via.placeholder.com/50',
+            }}
+            style={styles.profileImage}
+          />
+          <View>
+            <Text style={styles.label}>{creator.username}</Text>
+            <Text style={styles.name}>{getFullName(creator)}</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    )}
+    <View style={styles.divider} />
+    <Text style={styles.labelTitle}>Участники</Text>
+    {helpers.length === 0 ? (
+      <Text style={styles.noHelpersText}>Пока никто не откликнулся.</Text>
+    ) : (
+      <FlatList
+        data={helpers}
+        keyExtractor={(item) => item._id}
+        renderItem={({ item }) => {
+          const user = item.user;
+          if (!user || !user._id) {
+            console.error("❌ Ошибка: Отсутствует user или его ID", user);
+            return null;
+          }
+
+          return (
+            <TouchableOpacity onPress={() => handleProfilePress(user._id)}>
+              <View style={styles.card}>
+                <Image
+                  source={{
+                    uri: user.profileImage
+                      ? `${IMAGE_URL}${user.profileImage}`
+                      : 'https://via.placeholder.com/50',
+                  }}
+                  style={styles.profileImage}
+                />
+                <View>
+                  <Text style={styles.label}>{user.username}</Text>
+                  <Text style={styles.name}>{getFullName(user)}</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          );
+        }}
+      />
+    )}
+  </View>
+</View>
   );
 };
 
@@ -201,48 +216,66 @@ const styles = StyleSheet.create({
     height: '100%',
     paddingHorizontal: 16,
   },
-  header: {
+  headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 40,
-    paddingHorizontal: 6,
+    paddingTop: 55,
+    paddingBottom: 42,
   },
-  backIconWrapper: {
-    marginLeft: -20,
+  leftHeaderContainer: {
+    width: 50, // Ширина 50 пикселей
+    alignItems: 'flex-start', // Выравнивание по левому краю
+  },
+  centerHeaderContainer: {
+    flex: 1, // Занимает всё доступное пространство между левым и правым контейнерами
+    alignItems: 'center', // Выравнивание заголовка по центру
+  },
+  rightHeaderContainer: {
+    width: 50, // Ширина 50 пикселей
+    alignItems: 'flex-end', // Выравнивание по правому краю
+  },
+  backButton: {
+    alignItems: 'flex-start', // Выравнивание кнопки назад по левому краю
   },
   title: {
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: "SFUIDisplay-bold",
     textAlign: 'center',
   },
   label: {
     fontSize: 14,
-    fontWeight: '700',
-    paddingBottom: 5,
+    fontFamily: "SFUIDisplay-bold",
+    paddingBottom: 4,
+  },
+  labelTitle: {
+    fontSize: 14,
+    fontFamily: "SFUIDisplay-bold",
+    paddingBottom: 18,  
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 8,
-    paddingVertical: 10,
+    paddingBottom: 20,
   },
   profileImage: {
     width: 38,
     height: 38,
     borderRadius: 25,
     marginRight: 12,
+    backgroundColor: '#ECECEC',
   },
   name: {
     fontSize: 12,
-    fontWeight: '400',
+    fontFamily: "SFUIDisplay-regular",
     color: '#000',
   },
   divider: {
     height: 0.5,
     backgroundColor: '#ECECEC',
-    marginTop: 10,
-    marginBottom: 20,
+    marginTop: 6,
+    marginBottom: 26,
   },
   noHelpersText: {
     fontSize: 14,

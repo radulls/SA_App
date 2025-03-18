@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
   button: {
     borderRadius: 8,
     backgroundColor: '#007AFF',
-    padding: 16,
+    padding: 15,
     alignItems: 'center',
   },
   disabledButton: {
@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 12,
     color: '#fff',
-    fontWeight: '700',
+    fontFamily: "SFUIDisplay-Bold",
   },
   disabledButtonText: {
     color: '#aaa', // Тусклый цвет текста для заблокированной кнопки

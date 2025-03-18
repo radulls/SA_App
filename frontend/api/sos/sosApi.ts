@@ -1,8 +1,8 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'http://192.168.3.16:5002/api/sos';
-export const SOS_IMAGE_URL = 'http://192.168.3.16:5002/';
+const API_BASE_URL = 'http://89.108.118.249:5002/api/sos';
+export const SOS_IMAGE_URL = 'http://89.108.118.249:5002/';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -81,22 +81,22 @@ export const getSosSignalById = async (sosId: string) => {
 
 export const getSosSignalByUserId = async (userId: string) => {
   try {
-    console.log(`📡 Отправляем запрос на активный SOS-сигнал: ${API_BASE_URL}/active?userId=${userId}`);
+    console.log(`📡 Отправляем запрос в SOS-сервис: ${API_BASE_URL}/active?userId=${userId}`);
     
     const response = await api.get(`/active?userId=${userId}`);
 
-    console.log("✅ Ответ API (active SOS):", response.data);
-    
-    return response.data; 
+    console.log("✅ Получен активный SOS-сигнал:", response.data);
+    return response.data;
   } catch (error: any) {
-    if (error.response && error.response.status === 404) {
-      console.warn(`⚠️ У пользователя ${userId} нет активного SOS-сигнала.`);
-      return null;
+    if (error.response?.status === 404) {
+      console.warn(`У пользователя ${userId} нет активного SOS-сигнала.`);
+      return null; // <== Возвращаем null, а не кидаем ошибку!
     }
-    console.error("❌ Ошибка при получении активного SOS-сигнала:", error);
+    console.error("Ошибка при получении активного SOS-сигнала:", error);
     throw error;
   }
 };
+
 
 // 📌 Удалить SOS-сигнал
 export const cancelSosSignal = async (sosId: string, reasonId: string) => {

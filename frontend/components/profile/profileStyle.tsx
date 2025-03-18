@@ -57,7 +57,7 @@ export const styles = StyleSheet.create({
   },
   coverImageContainer: {
     width: '100%',
-    aspectRatio: 16 / 9,  // Устанавливаем соотношение сторон 16:9, но можно адаптировать под нужное
+    aspectRatio: 414 / 210, // Рассчитанное соотношение 414:210 = 1.971:1
   },
   coverImage: {
     width: '100%',
@@ -84,10 +84,13 @@ export const styles = StyleSheet.create({
   settingIcon: {
     marginLeft: 20,
   },
+  settingIconSos:{
+    marginLeft: 0,
+  },
   sosActiveContainer:{
     backgroundColor: '#F00',
     borderRadius: 16,
-    paddingVertical: 9,
+    paddingVertical: 4,
     paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
@@ -95,7 +98,7 @@ export const styles = StyleSheet.create({
   },
   sosActiveText:{
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: "SFUIDisplay-semiBold",
     color: '#fff'
   },
 });

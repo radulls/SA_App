@@ -39,71 +39,99 @@ const SosHeader: React.FC<SosHeaderProps> = ({ onClose, sosId }) => {
   };
 
   return (
-    <View style={styles.topItems}>
-      <TouchableOpacity style={styles.closeIcon} onPress={onClose}>
-        <CloseIcon fill="#000" />
-      </TouchableOpacity>
-      <Text style={styles.sosTitle}>Сигнал SOS</Text>
-      <View style={styles.options}>
-        <TouchableOpacity style={[styles.closeIcon, styles.helpers]} onPress={navigateToHelpers}>
-          <SosHelpersIcon />
-          {helperCount > 0 && <Text style={styles.helperCount}>{helperCount}</Text>}
-        </TouchableOpacity>
+<View style={styles.topItems}>
+  {/* Первый контейнер (закрыть) */}
+  <View style={styles.leftContainer}>
+    <TouchableOpacity style={styles.closeIcon} onPress={onClose}>
+      <CloseIcon fill="#000" />
+    </TouchableOpacity>
+  </View>
 
-        {/* 🔥 Открываем меню при нажатии */}
-        <TouchableOpacity style={[styles.closeIcon, styles.moreOptions]} onPress={() => setIsModalVisible(true)}>
-          <MoreOptionsIcon fill="#000" />
+  {/* Заголовок */}
+  <View style={styles.titleContainer}>
+    <Text style={styles.sosTitle}>Сигнал SOS</Text>
+  </View>
+
+  {/* Третий контейнер (хелперс, хелперкаунт, опшнс) */}
+  <View style={styles.rightContainer}>
+    <View style={styles.options}>
+      <View style={styles.helpers}>
+        <TouchableOpacity style={styles.closeIcon} onPress={navigateToHelpers}>
+          <SosHelpersIcon />
         </TouchableOpacity>
+        {helperCount > 0 && <Text style={styles.helperCount}>{helperCount}</Text>}
       </View>
 
-      {/* 🔥 Добавляем модалку */}
-      <HelperActionModal
-        visible={isModalVisible}
-        onClose={() => setIsModalVisible(false)}
-        sosId={sosId}
-        mode="options" // 🔥 Обычное меню с "Копировать", "Поделиться", "Пожаловаться"
-      />
+      <TouchableOpacity style={[styles.closeIcon, styles.moreOptions]} onPress={() => setIsModalVisible(true)}>
+        <MoreOptionsIcon fill="#000" />
+      </TouchableOpacity>
     </View>
+  </View>
+
+  {/* Модалка */}
+  <HelperActionModal
+    visible={isModalVisible}
+    onClose={() => setIsModalVisible(false)}
+    sosId={sosId}
+    mode="options" // Меню с "Копировать", "Поделиться", "Пожаловаться"
+  />
+</View>
   );
 };
 
 const styles = StyleSheet.create({
   topItems: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 40,
     paddingHorizontal: 16,
-    height: 124,
+    paddingTop: 55,
+    paddingBottom: 56,
+    width: '100%',
+    maxWidth: 600,
+    flexDirection: 'row', // Горизонтальное расположение
+    justifyContent: 'space-between', // Пространство между контейнерами
+    alignItems: 'center', // Выравнивание по центру по вертикали
+  },
+  leftContainer: {
+    width: 110, // Фиксированная ширина для первого контейнера
+    justifyContent: 'center',
   },
   closeIcon: {
-    padding: 20,
-    zIndex: 1000,
-    flexDirection: 'row',
-    alignContent: 'center',
-    marginLeft: -20,
+    zIndex: 20,
+  },
+  titleContainer: {
+    flex: 1, // Заголовок занимает всё оставшееся пространство
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   sosTitle: {
+    textAlign: 'center',
     fontSize: 15,
-    fontWeight: '700',
-    marginLeft: 50,
+    fontFamily: 'SFUIDisplay-bold',
+  },
+  rightContainer: {
+    width: 110, // Фиксированная ширина для третьего контейнера
+    justifyContent: 'center',
+    alignItems: 'flex-end', // Элементы выравниваются по правому краю
   },
   options: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'row', // Горизонтальное расположение для helper и more options
+    alignItems: 'center', // Выравнивание по центру по вертикали
   },
   helperCount: {
     color: '#000',
     fontSize: 14,
-    fontWeight: '700',
-    paddingLeft: 6,
+    fontFamily: 'SFUIDisplay-bold',
+    paddingLeft: 6, // Немного отступа от иконки
   },
-  helpers:{
-    paddingVertical: 10,
+  helpers: {
+    flexDirection: 'row', // Элементы выстраиваются в ряд
+    alignItems: 'center', // Иконка и счетчик выравниваются по вертикали
   },
-  moreOptions:{
-    marginRight: -20,
+  moreOptions: {
+    marginLeft: 20, // Отступ между иконками
   }
 });
+
+
+
 
 export default SosHeader;

@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 100)',
     flexGrow: 1,
     paddingHorizontal: 16,
-    paddingTop: 59,
+    paddingTop: 58,
     maxWidth: 600,
     width: '100%',
   },
@@ -143,7 +143,6 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   logo: {
-    marginTop: 30,
     backgroundColor: 'rgba(67, 67, 67, 1)',
     width: 186,
     height: 240,

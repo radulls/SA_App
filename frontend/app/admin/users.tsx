@@ -1,170 +1,106 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, Text, ScrollView, TouchableOpacity } from 'react-native';
-import ParticipantItem from '../../components/ParticipantItem';
-import Helper from '../../components/Helper';
-import { router } from 'expo-router';
+import React, { useState } from 'react';
+import { View, StyleSheet, Text, TouchableOpacity, ScrollView } from 'react-native';
+import PendingParticipants from '@/components/admin/participants/PendingParticipants';
+import VerifiedParticipants from '@/components/admin/participants/VerifiedParticipants';
+import IconBack from '@/components/svgConvertedIcons/iconBack';
 
 const ParticipantList = () => {
-  const [users, setUsers] = useState([]);
-	useEffect(() => {
-		const dbUser = Helper.get('users').catch(console.error).then(dbUsers => {
-			console.log('dbUsers', dbUsers);
-      dbUsers = dbUsers.filter(u => u.status == 'active')
-			setUsers(dbUsers)
-		})
-		// setUser(dbUser) 
-	}, []);
+  const [activeTab, setActiveTab] = useState<'pending' | 'verified'>('pending');
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Image
-          resizeMode="contain"
-          source={{ uri: "https://cdn.builder.io/api/v1/image/assets/TEMP/1646d5036ca5573616a871e9171f0f1bc565b7b86fedd3682cfb80a1f4f3afe0?placeholderIfAbsent=true&apiKey=f739d4c470a340468bd500c2bd45e954" }}
-          style={styles.backIcon}
-        />
-        <Text style={styles.headerTitle}>Участники</Text>
-        <Image
-          resizeMode="contain"
-          source={{ uri: "https://cdn.builder.io/api/v1/image/assets/TEMP/98b40a73d7d7a9073b8e92330ed21da52b2dab34ee7555b406a03467dd094ba0?placeholderIfAbsent=true&apiKey=f739d4c470a340468bd500c2bd45e954" }}
-          style={styles.menuIcon}
-        />
-      </View>
-      <View style={styles.tabContainer}>
-        <View style={styles.activeTab}>
-          <Text style={styles.activeTabText}>Участники</Text>
+      {/* Заголовок */}
+      <ScrollView style={styles.scrollView}>
+        <View style={styles.header}>
+          <IconBack fill='#000' />
+          <Text style={styles.headerTitle}>Участники</Text>
+          <View style={styles.menuIconPlaceholder} />
         </View>
-        <TouchableOpacity onPress={() => { router.push('/admin/usersver') }} style={styles.inactiveTab}>
-          <Text style={styles.inactiveTabText}>Завявки</Text>
-        </TouchableOpacity>
-      </View>
-      <View style={styles.tabIndicator} />
-      <View style={styles.divider} />
-      <View style={styles.searchContainer}>
-        <Image
-          resizeMode="contain"
-          source={{ uri: "https://cdn.builder.io/api/v1/image/assets/TEMP/6264eba7a4fd6e43dd93d5f5121a378b1c6c1bc514b795d6e175bfc5fc82815a?placeholderIfAbsent=true&apiKey=f739d4c470a340468bd500c2bd45e954" }}
-          style={styles.searchIcon}
-        />
-      </View>
-      <ScrollView style={styles.participantList}>
-        {users.map((participant, index) => (
-          <ParticipantItem key={index} user={participant} />
-        ))}
+
+        {/* Переключение вкладок */}
+        <View style={styles.buttonRow}>
+          <View style={styles.buttonRowItem}>
+            <TouchableOpacity
+              onPress={() => setActiveTab('verified')}
+              style={[styles.typeButton, activeTab === 'verified' && styles.activeTypeButton]}
+            >
+              <Text style={[styles.buttonRowText, activeTab === 'verified' && styles.buttonRowTextSelected]}>
+                Участники
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.buttonRowItem}>
+            <TouchableOpacity
+              onPress={() => setActiveTab('pending')}
+              style={[styles.typeButton, activeTab === 'pending' && styles.activeTypeButton]}
+            >
+              <Text style={[styles.buttonRowText, activeTab === 'pending' && styles.buttonRowTextSelected]}>
+                Завявки
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        {activeTab === 'pending' ? <PendingParticipants /> : <VerifiedParticipants />}
       </ScrollView>
-      <View style={styles.bottomIndicator} />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "rgba(255, 255, 255, 1)",
-    display: "flex",
-    maxWidth: 480,
-    width: "100%",
-    flexDirection: "column",
-    overflow: "hidden",
-    alignItems: "stretch",
-    marginHorizontal: "auto",
+    flex: 1,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+  },
+  scrollView: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 600,
+    overflowX:'visible',
+    overflowY:'visible',
   },
   header: {
-    alignSelf: "center",
-    display: "flex",
-    width: "100%",
-    maxWidth: 382,
-    alignItems: "center",
-    justifyContent: "space-between",
-    flexDirection: "row",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingTop: 55,
     paddingBottom: 25,
   },
-  backIcon: {
-    width: 8,
-    aspectRatio: 0.57,
-  },
   headerTitle: {
-    color: "rgba(0, 0, 0, 1)",
-    fontWeight: "700",
+    fontWeight: '700',
     fontSize: 15,
-    //fontFamily: "SF UI Display, sans-serif",
+    color: '#000',
   },
-  menuIcon: {
+  menuIconPlaceholder: {
     width: 22,
-    aspectRatio: 1,
+    height: 22,
   },
-  tabContainer: {
-    alignSelf: "center",
-    display: "flex",
-    marginTop: 25,
-    width: 262,
-    maxWidth: "100%",
-    alignItems: "stretch",
-    justifyContent: "space-between",
-    flexDirection: "row",
+  buttonRow:{ 
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: 40,
   },
-  activeTab: {
-    color: "rgba(0, 0, 0, 1)",
+  buttonRowItem:{
+    justifyContent: 'center',
+    flex: 1
   },
-  activeTabText: {
-    fontWeight: "700",
+  typeButton:{
+    borderBottomWidth: 0.5,
+    borderColor: '#ECECEC',
+  },
+  activeTypeButton:{
+    borderBottomWidth: 2,
+    borderColor: '#000',
+  },
+  buttonRowText:{
+    textAlign: 'center',
     fontSize: 12,
-    //fontFamily: "SF UI Display, sans-serif",
+    fontWeight: '700',
+    color:'#ECECEC',
+    paddingBottom: 12
   },
-  inactiveTab: {
-    color: "rgba(153, 153, 153, 1)",
-  },
-  inactiveTabText: {
-    fontWeight: "700",
-    fontSize: 12,
-    //fontFamily: "SF UI Display, sans-serif",
-  },
-  tabIndicator: {
-    borderRadius: 1,
-    backgroundColor: "rgba(0, 0, 0, 1)",
-    zIndex: 10,
-    display: "flex",
-    marginTop: 18,
-    width: 207,
-    height: 2,
-    alignSelf: "flex-start",
-    marginLeft: 16,
-  },
-  divider: {
-    borderRadius: 1,
-    backgroundColor: "rgba(236, 236, 236, 1)",
-    display: "flex",
-    minHeight: 1,
-    width: "100%",
-  },
-  searchContainer: {
-    borderRadius: 12,
-    backgroundColor: "rgba(243, 243, 243, 1)",
-    alignSelf: "stretch",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-start",
-    justifyContent: "center",
-    padding: 11,
-    marginTop: 25,
-    marginHorizontal: 16,
-  },
-  searchIcon: {
-    width: 18,
-    aspectRatio: 1,
-  },
-  participantList: {
-    marginTop: 25,
-    paddingHorizontal: 16,
-  },
-  bottomIndicator: {
-    borderRadius: 3,
-    backgroundColor: "rgba(38, 38, 38, 1)",
-    alignSelf: "center",
-    display: "flex",
-    marginTop: 20,
-    marginBottom: 8,
-    width: 148,
-    height: 5,
+  buttonRowTextSelected:{
+    color:'#000'
   },
 });
 

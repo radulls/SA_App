@@ -98,15 +98,20 @@ const RegistrationScreen: React.FC = () => {
       } else if (step === 3) {
         await updateUser({ phone: formData.phone });
       }if (step === 4 && emailFormRef.current) {
-        await emailFormRef.current.validateInput();
-  
-        // Отправляем код подтверждения
-        console.log('Отправка кода подтверждения...');
-        await sendVerificationCode(formData.email);
-        setIsCodeSent(true); // Устанавливаем флаг для подтверждения
+        await emailFormRef.current.validateInput();     
+        // Отправляем код подтверждения, только если он еще не был отправлен
+        if (!isCodeSent) {
+          console.log('Отправка кода подтверждения...');
+          await sendVerificationCode(formData.email);
+          setIsCodeSent(true);
+        }
       } else if (step === 5) {
         console.log('Проверка кода подтверждения...');
-        await verifyEmailCode(formData.email, formData.verificationCode);
+        // Если код уже проверен, не отправляем повторный запрос
+        if (!isCodeSent) {
+          await verifyEmailCode(formData.email, formData.verificationCode);
+          setIsCodeSent(true); // После успешной проверки устанавливаем флаг
+        }     
       } else if (step === 6) {
         await updateUser({ city: formData.city });
         await AsyncStorage.setItem('userId', formData.userId);
@@ -239,21 +244,22 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 100)',
     flexGrow: 1,
     paddingHorizontal: 16,
-    paddingTop: 59,
+    paddingTop: 58,
     maxWidth: 600,
     width: '100%',
   },
   logoContainer: {
     alignItems: 'center',
     position: 'relative',
+    width: '100%',
   },
   backIconWrapper: {
     position: 'absolute',
-    left: -30,
+    left: 0,
+    top: 0, 
     zIndex: 1,
   },
   logo: {
-    marginTop: 30,
     backgroundColor: 'rgba(67, 67, 67, 1)',
     width: 186,
     height: 240,
@@ -269,12 +275,13 @@ const styles = StyleSheet.create({
   regularText: {
     fontSize: 12,
     color: 'rgba(139, 139, 139, 1)',
-    fontWeight: '500',
+    fontFamily: "SFUIDisplay-medium",
+    marginRight: 3,
   },
   highlightText: {
     fontSize: 12,
-    fontWeight: '700',
     color: 'rgba(148,179,255,1)',
+    fontFamily: "SFUIDisplay-bold",
   },
 });
 

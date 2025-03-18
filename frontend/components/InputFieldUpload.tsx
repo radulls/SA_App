@@ -21,12 +21,12 @@ const InputFieldUpload: React.FC<Props> = ({ label, sublabel = '', onPress, isUp
         {sublabel.length > 0 && <Text style={styles.sublabel}>{sublabel}</Text>}
       </View>
       <Pressable onPress={onPress} style={styles.back}>
-        {isUploaded ? '' : <Icon />}
-        <View style={styles.addContainer}>
-          <Text style={styles.label}>{isUploaded ? "Добавлено" : label}</Text>
-        </View>
-        {isUploaded ? <CheckMarkIcon /> : ''}
-      </Pressable>
+  {isUploaded ? '' : <Icon />}
+  <View style={styles.addContainer}>
+    <Text style={styles.label}>{isUploaded ? "Добавлено" : label}</Text>
+  </View>
+  {isUploaded && <CheckMarkIcon style={styles.checkmarkIcon}/>}
+</Pressable>
     </View>
   );
 };
@@ -43,13 +43,13 @@ const styles = StyleSheet.create({
   label: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: "SFUIDisplay-bold",
     marginBottom: 0,
   },
   sublabel: {
     color: '#fff',
     fontSize: 12,
-    fontWeight: '400',
+    fontFamily: "SFUIDisplay-regular",
     paddingLeft: 3,
   },
   back: {
@@ -60,14 +60,14 @@ const styles = StyleSheet.create({
     gap: 10,
     backgroundColor: '#1E1E1E',
     paddingHorizontal: 16,
-    paddingRight:40,
     height: 48,
+    justifyContent: 'space-between', 
+  },
+  checkmarkIcon: {
+    marginLeft: 'auto', 
   },
   addContainer: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flex: 1, 
   },
 });
 

@@ -1,22 +1,17 @@
 import React from "react";
 import { View, StyleSheet, Image, Text, TouchableOpacity } from "react-native";
+import SubsIcon from "../svgConvertedIcons/Verification/subsIcon";
 
 interface VerificationPageSubProps {
   onStart: (value: string) => void;
 }
-
 
 const VerificationPageSub: React.FC<VerificationPageSubProps> = ({onStart}) => {
 	return (
 		<View style={styles.container}>
 			<View style={styles.contentWrapper}>
 				<View style={styles.card}>
-					<Image
-						resizeMode="contain"
-						source={require('../../assets/images/sub_noti.png')}
-						style={styles.verificationImage}
-						accessibilityLabel="Verification illustration"
-					/>
+					<SubsIcon/>
 					<Text style={styles.title}>Подписка</Text>
 					<Text style={styles.description}>
 					В объединении предусмотрена платная подписка, это необходимо для работы объединения и создания бюджета, из которого финансируются добрые дела.
@@ -33,18 +28,16 @@ const VerificationPageSub: React.FC<VerificationPageSubProps> = ({onStart}) => {
 
 const styles = StyleSheet.create({
 	container: {
-		backgroundColor: "rgba(255, 255, 255, 0.1)",
 		flex: 1,
-		maxWidth: 480,
-		width: "100%",
-		alignItems: "stretch",
-	},
-	contentWrapper: {
-		backgroundColor: "rgba(0, 0, 0, 0.85)",
-		flex: 1,
+		alignItems: "center",
+	  },
+	  contentWrapper: {
+		maxWidth: 600,
+		width: '100%',
+		height: '100%',
 		justifyContent: "center",
 		padding: 30,
-	},
+	  },
 	card: {
 		borderRadius: 16,
 		backgroundColor: "#FFD200",
@@ -60,18 +53,19 @@ const styles = StyleSheet.create({
 		marginBottom: 21,
 	},
    title: {
-      fontSize: 18,
-      // fontFamily: "SFUIDisplay-Bold",
-      color: "rgba(255, 255, 255, 1)",
-      textAlign: "center",
-      marginBottom: 14,
+    fontSize: 18,
+    fontFamily: "SFUIDisplay-Bold",
+    color: "rgba(255, 255, 255, 1)",
+    textAlign: "center",
+    marginTop: 20,
+    marginBottom: 8,
   },
    description: {
-      // fontFamily: "SFUIDisplay-Regular",
-      color: "rgba(255, 255, 255, 1)",
-      textAlign: "center",
-      fontSize: 12,
-      marginBottom: 32,
+   fontFamily: "SFUIDisplay-Regular",
+    color: "rgba(255, 255, 255, 1)",
+    textAlign: "center",
+    marginBottom: 32,
+    fontSize: 12,
   },
 	verifyButton: {
       borderRadius: 8,
@@ -85,7 +79,7 @@ const styles = StyleSheet.create({
 		color: "rgba(255, 255, 255, 1)",
 		fontWeight: "700",
 		fontSize: 12,
-		// fontFamily: "SF UI Display, sans-serif",
+		fontFamily: "SFUIDisplay-Bold",
 	},
 });
 

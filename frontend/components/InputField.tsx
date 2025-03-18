@@ -20,7 +20,7 @@ const InputField: React.FC<InputFieldProps> = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, { whiteSpace: 'normal' } as any]}>{label}</Text>
       <TextInput
         style={[styles.input, isFocused && styles.inputFocused]}
         secureTextEntry={secureTextEntry}
@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 1)',
     fontSize: 14,
     marginBottom: 6,
-    fontWeight: '700',
+    fontFamily: "SFUIDisplay-Bold",
   },
   input: {
     borderRadius: 12,
@@ -56,9 +56,10 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 1)',
     textAlignVertical: 'center',
     height: 48,
+    fontFamily: "SFUIDisplay-regular",
   },
   inputFocused: {
-    borderWidth: 1,
+    borderWidth: 0,
     borderColor: 'rgba(66, 66, 66, 100)',
   },
 });

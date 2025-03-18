@@ -61,11 +61,11 @@ const PasswordStep = forwardRef<PasswordStepRef, Props>(({ value, onDataChange }
 
 const styles = StyleSheet.create({
   form: {
-    marginTop: 30,
+    marginTop: 28,
   },
   title: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: "SFUIDisplay-bold",
     color: 'white',
     marginBottom: 10,
   },
@@ -74,6 +74,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 12,
     marginBottom: 30, 
+    fontFamily: "SFUIDisplay-medium",
   },
 });
 

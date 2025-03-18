@@ -81,35 +81,38 @@ const CityForm: React.FC<ValueProps> = ({ value, onDataChange }) => {
         transparent={false} // Окно на весь экран
         onRequestClose={() => setIsModalVisible(false)}
       >
-        <View style={styles.fullscreenModal}>
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={() => {
-            setIsModalVisible(false);
-          }}
-        >
-          <CloseIcon />
-        </TouchableOpacity>
-
-          <Text style={styles.titleSearch}>Выбор города</Text>
-          <TextInput
-            style={[styles.inputSearch, isFocused && styles.inputFocused]}            
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
-          <FlatList
-            data={filteredCities}
-            keyExtractor={(item) => item._id}
-            renderItem={({ item }) => (
+        <View style={styles.modalContainer}>
+          <View style={styles.fullscreenModal}>
+            <View style={styles.topContainer}>
               <TouchableOpacity
-                style={styles.cityItem}
-                onPress={() => handleCitySelect(item._id)}
+                style={styles.closeButton}
+                onPress={() => {
+                  setIsModalVisible(false);
+                }}
               >
-                <Text style={styles.cityName}>{item.name}</Text>
+                <CloseIcon/>
               </TouchableOpacity>
-            )}
-          />
-        </View>
+              <Text style={styles.titleSearch}>Выбор города</Text>
+            </View>         
+            <TextInput
+              style={[styles.inputSearch, isFocused && styles.inputFocused]}            
+              value={searchQuery}
+              onChangeText={handleSearch}
+            />
+            <FlatList
+              data={filteredCities}
+              keyExtractor={(item) => item._id}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.cityItem}
+                  onPress={() => handleCitySelect(item._id)}
+                >
+                  <Text style={styles.cityName}>{item.name}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </View>   
       </Modal>
     </View>
   );
@@ -122,25 +125,37 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     color: '#fff',
+    fontFamily: "SFUIDisplay-Bold",
     fontWeight: '700',
   },
   label: {
     color: 'rgba(255, 255, 255, 1)',
     fontSize: 14,
     marginBottom: 6,
-    fontWeight: '700'
+    fontWeight: '700',
+    fontFamily: "SFUIDisplay-Bold",
   },
   description: {
     marginTop: 10,
     color: '#fff',
     fontSize: 12,
     marginBottom: 30, 
+    fontFamily: "SFUIDisplay-medium",
   },
-  fullscreenModal: {
+  modalContainer:{
     flex: 1,
     backgroundColor: '#000',
-    padding: 20,
-    position: 'relative'
+    alignItems: 'center'
+  },
+  fullscreenModal: {    
+    paddingHorizontal: 16,
+    paddingTop: 58,
+    width: '100%',
+    height: '100%',
+    maxWidth: 600,
+  },
+  topContainer:{
+    position: 'relative',
   },
   inputSearch: {
     height: 48,
@@ -158,9 +173,9 @@ const styles = StyleSheet.create({
     height: 48,
     backgroundColor: '#1E1E1E',
     borderRadius: 12,
-    paddingHorizontal: 10,
+    paddingRight: 10,
     width: '100%',
-    marginBottom: 10,
+    marginBottom: 18,
     paddingLeft: 12, 
     paddingTop: 14,
     textAlignVertical: 'center',
@@ -168,7 +183,8 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   inputText: {
-    fontSize: 16,
+    fontSize: 14,
+    fontFamily: "SFUIDisplay-regular",
     color: '#fff',
   },
   inputFocused: {
@@ -177,19 +193,18 @@ const styles = StyleSheet.create({
   },
   titleSearch: {
     color: '#fff',
-    marginTop: 40,
-    paddingVertical: 20,
+    paddingBottom: 40,
     textAlign: 'center',
     fontWeight: '700',
-    fontSize: 15
+    fontSize: 15,
+    fontFamily: "SFUIDisplay-bold",
   },
   closeButton: {
-   position: 'absolute',
-   top: 65,
-   left: 0,
-   zIndex: 20,
-   padding: 20
-  },
+    position: 'absolute',
+    top: 3,
+    left: 0,
+    zIndex: 20,
+  },  
   cityItem: {
     paddingVertical: 10,
   },

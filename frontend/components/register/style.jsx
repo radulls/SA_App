@@ -6,12 +6,12 @@ const styles = StyleSheet.create({
     },
     title: {
       fontSize: 18,
-     // fontFamily: "SFUIDisplay-Bold",
+      fontFamily: "SFUIDisplay-Bold",
       color: 'white',
       fontWeight: '700',
     },
     description: {
-      // fontFamily: "SFUIDisplay-medium",
+      fontFamily: "SFUIDisplay-medium",
       marginTop: 10,
       color: 'white',
       fontSize: 12,
@@ -22,7 +22,7 @@ const styles = StyleSheet.create({
     },
     label: {
       fontSize: 14,
-      // fontFamily: "SFUIDisplay-Bold",
+      fontFamily: "SFUIDisplay-Bold",
       color: 'white',
       marginBottom: 7, 
     },
@@ -39,11 +39,11 @@ const styles = StyleSheet.create({
     termsRegular: {
       fontSize: 12,
       color: 'rgba(139, 139, 139, 1)',
-      // fontFamily: "SFUIDisplay-regular",
+      fontFamily: "SFUIDisplay-regular",
     },
     termsHighlight: {
       fontSize: 12,
-      // fontFamily: "SFUIDisplay-Bold",
+      fontFamily: "SFUIDisplay-Bold",
       color: 'rgba(148,179,255,1)',
     },
     agreementContainer: {

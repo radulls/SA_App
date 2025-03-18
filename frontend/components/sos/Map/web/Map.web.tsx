@@ -5,6 +5,7 @@ import AddressSearch from '../AddressSearch';
 import SearchIcon from '@/components/svgConvertedIcons/BottomMenuIcons/SearchIcon';
 import { fetchAddressFromCoordinates } from '@/utils/locationUtils';
 import { styles } from '../mapStyle';
+import IconBack from '@/components/svgConvertedIcons/iconBack';
 
 const MapComponent = lazy(() => import('./MapComponent'));
 
@@ -56,54 +57,66 @@ const MapWeb: React.FC<MapWebProps> = ({ onNext, selectedLocation }) => {
             setAddress={setAddress} 
           />
         </Suspense>
-        {/* Кнопка "Моя геопозиция" */}
-        <TouchableOpacity
-          style={styles.geoButton}
-          onPress={() => {
-            navigator.geolocation.getCurrentPosition(
-              (position) => {
-                const { latitude, longitude } = position.coords;
-                setCurrentLocation({ latitude, longitude });
-                fetchAddressFromCoordinates(latitude, longitude, setAddress);
-              },
-              (error) => console.error('⚠ Ошибка геолокации:', error),
-              { enableHighAccuracy: true }
-            );
-          }}
-        >
-          <GeoIcon />
-        </TouchableOpacity>
-        <View style={styles.bottomContainer}>
-          <Text style={styles.title}>Локация</Text>
-          <TouchableOpacity style={styles.inputContainer} onPress={() => setIsModalOpen(true)}>
-            <SearchIcon/>
-            <Text style={styles.inputText}>{address || 'Введите адрес...'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.button}
+        <View style={styles.bottomContent}>
+          <View style={styles.bottomContentContainer}>
+            {/* Кнопка "Моя геопозиция" */}
+            <TouchableOpacity
+            style={styles.geoButton}
             onPress={() => {
-              if (currentLocation && address) {
-                onNext({
-                  latitude: currentLocation.latitude,
-                  longitude: currentLocation.longitude,
-                  address,
-                });
-              } else {
-                alert("Пожалуйста, выберите местоположение или введите адрес.");
-              }
+              navigator.geolocation.getCurrentPosition(
+                (position) => {
+                  const { latitude, longitude } = position.coords;
+                  setCurrentLocation({ latitude, longitude });
+                  fetchAddressFromCoordinates(latitude, longitude, setAddress);
+                },
+                (error) => console.error('⚠ Ошибка геолокации:', error),
+                { enableHighAccuracy: true }
+              );
             }}
           >
-            <Text style={styles.buttonText}>Всё верно</Text>
-          </TouchableOpacity>
+            <GeoIcon />
+            </TouchableOpacity>
+            <View style={styles.bottomContainer}>
+              <Text style={styles.title}>Локация</Text>
+              <TouchableOpacity style={styles.inputContainer} onPress={() => setIsModalOpen(true)}>
+                <SearchIcon/>
+                <Text style={styles.inputText}>{address || 'Введите адрес...'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => {
+                  if (currentLocation && address) {
+                    onNext({
+                      latitude: currentLocation.latitude,
+                      longitude: currentLocation.longitude,
+                      address,
+                    });
+                  } else {
+                    alert("Пожалуйста, выберите местоположение или введите адрес.");
+                  }
+                }}
+              >
+                <Text style={styles.buttonText}>Всё верно</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
         {/* Модальное окно с `AddressSearch` */}
         <Modal visible={isModalOpen} animationType="slide">
           <View style={styles.modalOpen}>
             <View style={styles.modalContainer}>
-              <AddressSearch onSelectAddress={selectAddress} initialAddress={address}/>
-              <TouchableOpacity style={styles.button} onPress={() => setIsModalOpen(false)}>
-                <Text style={styles.buttonText}>Закрыть</Text>
-              </TouchableOpacity>
+              <View style={styles.modalTopContainer}>
+                <IconBack onPress={() => setIsModalOpen(false)} fill='#000'/>
+                <Text style={styles.modalTitle}>Введите адрес</Text>
+                <TouchableOpacity onPress={() => setIsModalOpen(false)}>
+                  <Text style={styles.addButton}>Готово</Text>
+                </TouchableOpacity>
+              </View>
+              <AddressSearch 
+                key={address} // 🔥 Форсируем обновление при изменении адреса
+                onSelectAddress={selectAddress} 
+                initialAddress={address} 
+              />
             </View>
           </View>
         </Modal>

@@ -1,5 +1,6 @@
 import React from "react";
-import { View, StyleSheet, Image, Text, TouchableOpacity } from "react-native";
+import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
+import IconStartVerification from "../svgConvertedIcons/Verification/iconStartVerification";
 
 interface VerificationPageProgressProps {
   onStart: (value: string) => void;
@@ -10,12 +11,7 @@ const VerificationPageProgress: React.FC<VerificationPageProgressProps> = ({onSt
     <View style={styles.container}>
       <View style={styles.contentWrapper}>
         <View style={styles.card}>
-          <Image
-            resizeMode="contain"
-            source={require('../../assets/images/Group 6.png')}
-            style={styles.verificationImage}
-            accessibilityLabel="Verification illustration"
-          /> 
+          <IconStartVerification/>
           <Text style={styles.title}>Проверка</Text>
           <Text style={styles.description}>
           Ваш запрос на верификацию и активацию аккаунта находится на проверке, обычно проверка занимает до 60 минут.
@@ -31,15 +27,13 @@ const VerificationPageProgress: React.FC<VerificationPageProgressProps> = ({onSt
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
     flex: 1,
-    maxWidth: 480,
-    width: "100%",
-    alignItems: "stretch",
+    alignItems: "center",
   },
   contentWrapper: {
-    backgroundColor: "rgba(0, 0, 0, 0.85)",
-    flex: 1,
+    maxWidth: 600,
+    width: '100%',
+    height: '100%',
     justifyContent: "center",
     padding: 30,
   },
@@ -58,14 +52,15 @@ const styles = StyleSheet.create({
     marginBottom: 21,
   },
  title: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "rgba(255, 255, 255, 1)",
-    textAlign: "center",
-    marginBottom: 14,
+  fontSize: 18,
+  fontFamily: "SFUIDisplay-Bold",
+  color: "rgba(255, 255, 255, 1)",
+  textAlign: "center",
+  marginTop: 20,
+  marginBottom: 8,
   },
   description: {
-    // fontFamily: "SFUIDisplay-Regular",
+   fontFamily: "SFUIDisplay-Regular",
     color: "rgba(255, 255, 255, 1)",
     textAlign: "center",
     marginBottom: 32,
@@ -83,7 +78,7 @@ const styles = StyleSheet.create({
     color: "rgba(255, 255, 255, 1)",
     fontWeight: "700",
     fontSize: 12,
-    // fontFamily: "SFUIDisplay-Bold",
+    fontFamily: "SFUIDisplay-Bold",
   },
 });
 

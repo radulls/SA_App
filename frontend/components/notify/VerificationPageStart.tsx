@@ -1,5 +1,6 @@
 import React from "react";
 import { View, StyleSheet, Image, Text, TouchableOpacity } from "react-native";
+import IconStartVerification from "../svgConvertedIcons/Verification/iconStartVerification";
 
 interface VerificationPageStartProps {
   onStart: (value: string) => void;
@@ -10,24 +11,18 @@ const VerificationPageStart: React.FC<VerificationPageStartProps> = ({ onStart }
     <View style={styles.container}>
       <View style={styles.contentWrapper}>
         <View style={styles.card}>
-          <Image
-            resizeMode="contain"
-            source={require('../../assets/images/Group 6.png')}
-            style={styles.verificationImage}
-            accessibilityLabel="Verification illustration"
-          />
+          <IconStartVerification/>
           <Text style={styles.title}>Верификация страницы</Text>
           <Text style={styles.description}>
             Благодаря верификации мы создаём безопасную среду добрососедства. Пройдите верификацию, чтобы открыть все разделы объединения.
           </Text>
           <TouchableOpacity
-  style={styles.verifyButton}
-  onPress={() => onStart('verification')} // Вызов обработчика
-  accessibilityRole="button"
->
-  <Text style={styles.buttonText}>Пройти</Text>
-</TouchableOpacity>
-
+            style={styles.verifyButton}
+            onPress={() => onStart('verification')} // Вызов обработчика
+            accessibilityRole="button"
+          >
+            <Text style={styles.buttonText}>Пройти</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -36,14 +31,13 @@ const VerificationPageStart: React.FC<VerificationPageStartProps> = ({ onStart }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
     flex: 1,
-    width: "100%",
-    alignItems: "stretch",
+    alignItems: "center",
   },
   contentWrapper: {
-    backgroundColor: "rgba(0, 0, 0, 0.85)",
-    flex: 1,
+    maxWidth: 600,
+    width: '100%',
+    height: '100%',
     justifyContent: "center",
     padding: 30,
   },
@@ -63,13 +57,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    // fontFamily: "SFUIDisplay-Bold",
+    fontFamily: "SFUIDisplay-Bold",
     color: "rgba(255, 255, 255, 1)",
     textAlign: "center",
-    marginBottom: 14,
+    marginTop: 20,
+    marginBottom: 8,
   },
   description: {
-    // fontFamily: "SFUIDisplay-Regular",
+    fontFamily: "SFUIDisplay-Regular",
     color: "rgba(255, 255, 255, 1)",
     textAlign: "center",
     marginBottom: 32,
@@ -87,7 +82,7 @@ const styles = StyleSheet.create({
     color: "rgba(255, 255, 255, 1)",
     fontWeight: "700",
     fontSize: 12,
-    // fontFamily: "SFUIDisplay-Bold",
+    fontFamily: "SFUIDisplay-Bold",
   },
 });
 

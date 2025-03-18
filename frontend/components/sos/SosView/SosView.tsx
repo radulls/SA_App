@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
   },
   buttonText:{
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: "SFUIDisplay-bold",
     color: '#000',
     textAlign: 'center'
   },

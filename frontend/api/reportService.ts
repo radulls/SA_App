@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'http://192.168.3.16:5001/api';
+const API_BASE_URL = 'http://89.108.118.249:5001/api';
 
 // Создаём экземпляр axios
 const api: AxiosInstance = axios.create({
@@ -14,13 +14,16 @@ const api: AxiosInstance = axios.create({
 // Получение списка тем жалоб
 export const getReportTopics = async (): Promise<{ _id: string; name: string }[]> => {
   try {
+    console.log("📡 Отправка запроса к API для получения тем жалоб...");
     const response = await api.get('/reports/topics');
+    console.log("✅ Полученные темы жалоб:", response.data);
     return response.data;
   } catch (error: any) {
-    console.error('Ошибка при получении тем жалоб:', error.message);
+    console.error('❌ Ошибка при получении тем жалоб:', error.message, error.response?.data);
     throw new Error('Не удалось загрузить темы жалоб.');
   }
 };
+
 
 // Отправка жалобы
 export const reportUser = async (reportedUserId: string, topicId: string): Promise<any> => {
@@ -30,18 +33,22 @@ export const reportUser = async (reportedUserId: string, topicId: string): Promi
       throw new Error('Необходимо авторизоваться.');
     }
 
+    console.log(`📡 Отправка жалобы: reportedUserId=${reportedUserId}, topicId=${topicId}`);
+
     const response = await api.post(
       '/reports/submit',
       { reportedUserId, topicId },
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
+    console.log("✅ Жалоба отправлена", response.data);
     return response.data;
   } catch (error: any) {
-    console.error('Ошибка при отправке жалобы:', error.message);
+    console.error('❌ Ошибка при отправке жалобы:', error.message);
     throw new Error('Не удалось отправить жалобу. Попробуйте позже.');
   }
 };
+
 
 // Получение списка жалоб (для админов)
 export const getUserReports = async (): Promise<any[]> => {

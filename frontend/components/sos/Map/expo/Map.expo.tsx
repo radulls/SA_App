@@ -91,40 +91,44 @@ const MapExpo: React.FC<MapExpoProps> = ({ onNext, selectedLocation }) => {
           iconBase64={iconBase64}
           selectedLocation={currentLocation} // ✅ Используем сохранённое место
         />
-        {/* Кнопка "Моя геопозиция" */}
-        <TouchableOpacity
-          style={styles.geoButton}
-          onPress={async () => {
-            let location = await Location.getCurrentPositionAsync({});
-            const { latitude, longitude } = location.coords;
-            setCurrentLocation({ latitude, longitude });
-            fetchAddressFromCoordinates(latitude, longitude, setAddress);
-          }}
-        >
-          <GeoIcon />
-        </TouchableOpacity>
-        <View style={styles.bottomContainer}>
-          <Text style={styles.title}>Локация</Text>
-          <TouchableOpacity style={styles.inputContainer} onPress={() => setIsModalOpen(true)}>
-            <SearchIcon />
-            <Text style={styles.inputText}>{address || 'Введите адрес...'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => {
-              if (!currentLocation || !address) {
-                Alert.alert("Ошибка", "Не удалось определить адрес. Попробуйте еще раз.");
-                return;
-              }
-              onNext({
-                latitude: currentLocation.latitude,
-                longitude: currentLocation.longitude,
-                address,
-              });
-            }}
-          >
-            <Text style={styles.buttonText}>Всё верно</Text>
-          </TouchableOpacity>
+         <View style={styles.bottomContent}>
+          <View style={styles.bottomContentContainer}>
+             {/* Кнопка "Моя геопозиция" */}
+            <TouchableOpacity
+              style={styles.geoButton}
+              onPress={async () => {
+                let location = await Location.getCurrentPositionAsync({});
+                const { latitude, longitude } = location.coords;
+                setCurrentLocation({ latitude, longitude });
+                fetchAddressFromCoordinates(latitude, longitude, setAddress);
+              }}
+            >
+              <GeoIcon />
+            </TouchableOpacity>
+            <View style={styles.bottomContainer}>
+              <Text style={styles.title}>Локация</Text>
+              <TouchableOpacity style={styles.inputContainer} onPress={() => setIsModalOpen(true)}>
+                <SearchIcon />
+                <Text style={styles.inputText}>{address || 'Введите адрес...'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => {
+                  if (!currentLocation || !address) {
+                    Alert.alert("Ошибка", "Не удалось определить адрес. Попробуйте еще раз.");
+                    return;
+                  }
+                  onNext({
+                    latitude: currentLocation.latitude,
+                    longitude: currentLocation.longitude,
+                    address,
+                  });
+                }}
+              >
+                <Text style={styles.buttonText}>Всё верно</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
         <Modal visible={isModalOpen} animationType="slide">
           <View style={styles.modalOpen}>

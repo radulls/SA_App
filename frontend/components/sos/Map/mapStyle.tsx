@@ -15,43 +15,47 @@ export const styles = StyleSheet.create({
     position: 'absolute', 
     zIndex: 400, 
     right: 16, 
-    bottom: Platform.select({
-      ios: '30%',
-      android: '30%',
-      web: '35%',
-    }),    
+    top: -78,   
   },
-  bottomContainer: { 
+  bottomContent:{
     position: 'absolute',
-    backgroundColor: '#fff',
-    borderRadius: 16, 
-    paddingHorizontal: 16,
-    paddingBottom: Platform.select({
-      ios: 40,
-      android: 40,
-      web: 20,
-    }),    
     bottom: 0,
     width: '100%',
   },
+  bottomContentContainer:{
+    position: 'relative',
+  },
+  bottomContainer:{
+    gap: 10,
+    backgroundColor: '#fff', 
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    paddingBottom: 40,
+    borderTopRightRadius: 16, 
+    borderTopLeftRadius: 16,
+    borderBottomRightRadius: 16, 
+    borderBottomLeftRadius: 16,
+  },
   title: {
     fontSize: 14,
-    fontWeight: 700,
+    fontFamily: "SFUIDisplay-bold",
     paddingBottom: 7,
     paddingTop: 20,
   },
   inputContainer: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    gap: 15, 
+    gap: 14, 
     backgroundColor: '#f3f3f3', 
-    padding: 16, 
+    height: 48,
+    paddingLeft: 14,
+    paddingRight: 14,
     borderRadius: 12, 
-    marginBottom: 30 
+    marginBottom: 30, 
   },
   inputText: { 
     fontSize: 14, 
-    fontWeight: '400', 
+    fontFamily: "SFUIDisplay-regular",
     color: '#000' 
   },
   button: { 
@@ -74,7 +78,7 @@ export const styles = StyleSheet.create({
   },
   buttonText: { 
     color: '#fff', 
-    fontWeight: '700', 
+    fontFamily: "SFUIDisplay-bold",
     textAlign: 'center', 
     fontSize: 12 
   },
@@ -83,4 +87,17 @@ export const styles = StyleSheet.create({
     justifyContent: 'center', 
     alignItems: 'center' 
   },
+  modalTopContainer:{
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: 37,
+  },
+  modalTitle:{
+    fontFamily: "SFUIDisplay-regular",
+    fontSize: 15,
+  },
+  addButton:{
+    fontFamily: "SFUIDisplay-regular",
+    fontSize: 14,
+  }
 });

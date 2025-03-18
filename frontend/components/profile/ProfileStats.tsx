@@ -27,8 +27,8 @@ const ProfileStats: React.FC<UserProps> = ({ user }) => {
         <Text style={[styles.value, styles.ratingBackground]}>
           {Number(user.rating ?? 0).toFixed(1)}
         </Text>
-
       </View>
+      
     </View>
   );
 };
@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 13,
+    marginTop: 14,
     paddingLeft: 16,
     paddingRight: 16,
     gap: 18,
@@ -47,15 +47,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   label: {
-    // fontFamily: "SFUIDisplay-regular",
+    fontFamily: "SFUIDisplay-regular",
     fontSize: 12,
     color: "rgba(153, 153, 153, 1)",
-    fontWeight: '400'
   },
   value: {
-    // fontFamily: "SFUIDisplay-bold",
+    fontFamily: "SFUIDisplay-bold",
     fontSize: 12,
-    fontWeight: "700",
     color: "#000",
     paddingVertical: 3,
     paddingHorizontal: 3,

@@ -1,15 +1,16 @@
 import React from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet, Text, ViewStyle } from 'react-native';
 import CloseIcon from './svgConvertedIcons/closeIcon';
 
 interface ErrorMessageProps {
   message: string;
+  style?: ViewStyle; // ✅ Добавили необязательный стиль
 }
 
-const ErrorMessage: React.FC<ErrorMessageProps> = ({ message }) => {
+const ErrorMessage: React.FC<ErrorMessageProps> = ({ message, style }) => {
   return (
-    <View style={styles.errorContainer}>
-      <CloseIcon/>
+    <View style={[styles.errorContainer, style]}>
+      <CloseIcon />
       <View style={styles.messageContainer}>
         <Text style={styles.errorText}>{message}</Text>
       </View>
@@ -31,11 +32,6 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 600,
   },
-  errorIcon: {
-    alignSelf: "flex-start",
-    width: 10,
-    aspectRatio: 1,
-  },
   messageContainer: {
     flexGrow: 1,
     flexShrink: 1,
@@ -49,7 +45,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 1,
   },
-  
 });
 
 export default ErrorMessage;

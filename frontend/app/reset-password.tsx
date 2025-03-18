@@ -8,6 +8,7 @@ import { sendResetPasswordCode, verifyEmailCode, changePassword } from '@/api';
 import { useRouter } from 'expo-router';
 import IconBack from '@/components/svgConvertedIcons/iconBack';
 import SuccessMessage from '@/components/SuccessMessage';
+import CloseIcon from '@/components/svgConvertedIcons/closeIcon';
 
 const ResetPasswordScreen: React.FC = () => {
   const [step, setStep] = useState<number>(0);
@@ -89,6 +90,10 @@ const ResetPasswordScreen: React.FC = () => {
     setSuccessMessage(null); // Сбрасываем сообщение при возврате
   };
 
+  const handleClose = () => {
+    router.push('/auth/login')
+  };
+
   const renderStep = () => {
     if (step === 0) {
       return (
@@ -127,9 +132,14 @@ const ResetPasswordScreen: React.FC = () => {
       <View style={styles.wrapper}>
         <View style={styles.content}>
           <View style={styles.logoContainer}>
+          {step === 0 && (
+              <Pressable style={styles.backIconWrapper} onPress={handleClose}>
+                <CloseIcon/>
+              </Pressable>
+            )}
             {step > 0 && (
               <Pressable style={styles.backIconWrapper}>
-                <IconBack onPress={handleBack} />
+                <IconBack onPress={handleBack}/>
               </Pressable>
             )}
             <View style={styles.logo} />
@@ -162,7 +172,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     flexGrow: 1,
     paddingHorizontal: 16,
-    paddingTop: 59,
+    paddingTop: 58,
     maxWidth: 600,
     width: '100%',
   },
@@ -172,11 +182,10 @@ const styles = StyleSheet.create({
   },
   backIconWrapper: {
     position: 'absolute',
-    left: -30,
-    zIndex: 1,
+    zIndex: 100,
+    left: 0,
   },
   logo: {
-    marginTop: 30,
     backgroundColor: '#444',
     width: 186,
     height: 240,
