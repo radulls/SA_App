@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { IMAGE_URL, UserDataProps, getUserProfile } from '@/api/index'; 
-import { getSosSignalById, getSosSignalByUserId } from '@/api/sos/sosApi';
-import { View, ScrollView, Image, TouchableOpacity, ActivityIndicator, Text, Modal, Pressable } from 'react-native';
+import {  getSosSignalByUserId } from '@/api/sos/sosApi';
+import { View, ScrollView, Image, TouchableOpacity, ActivityIndicator, Text, Modal, Pressable, Platform, Alert } from 'react-native';
 import { router } from 'expo-router';
 import ProfileHeader from './ProfileHeader';
 import ProfileStats from './ProfileStats';
 import Post from './Post';
+import * as ImagePicker from 'expo-image-picker';
 import BottomNavigation from '../BottomNavigation';
 import EditBackgroundImage from './EditBackgroundImage';
 import SettingsIcon from '../svgConvertedIcons/SettingsIcon';
@@ -13,6 +14,8 @@ import SosIcon from '../svgConvertedIcons/sosIcons/SosIcon';
 import QrIcon from '../svgConvertedIcons/qrIcon';
 import { styles } from './profileStyle';
 import ProfileSosIcon from '../svgConvertedIcons/sosIcons/profileSosIcon';
+import { updateUser } from '@/api'; 
+import Toast from 'react-native-toast-message';
 
 const ProfileMain: React.FC = () => {
   const [user, setUser] = useState<UserDataProps | null>(null); // Состояние для данных пользователя
@@ -21,63 +24,127 @@ const ProfileMain: React.FC = () => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [imageKey, setImageKey] = useState(Date.now());
   const [backgroundImage, setBackgroundImage] = useState(user?.backgroundImage);
-
-  const updateUserBackgroundProfile = (updatedBackgroundImage: string) => {
-    if (user) {
-      setUser({ ...user, backgroundImage: updatedBackgroundImage });
-    }
-  };
-
-  const handleSave = (newImage: string) => {
-    setBackgroundImage(newImage);
-    setImageKey(Date.now()); // Обновляем ключ для сброса кэша
-    updateUserBackgroundProfile(newImage); // Передаем новое изображение в родительский компонент
-    setModalVisible(false);
-    console.log('ProfileHeader props:', { backgroundImage, user });
-  };  
+  const [isEditing, setEditing] = useState<boolean>(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [sosSignal, setSosSignal] = useState<any | null>(null);
 
   useEffect(() => {
     if (user?.backgroundImage) {
-      setBackgroundImage(user.backgroundImage);
+      let fixedUrl = user.backgroundImage;
+      if (!user.backgroundImage.startsWith('http')) {
+        fixedUrl = `${IMAGE_URL}${user.backgroundImage}`;
+      }
+      console.log(' Устанавливаем фото профиля:', fixedUrl); //  Логируем, что реально устанавливается
+      setBackgroundImage(fixedUrl);
     }
   }, [user]);
+  
+  const handleImagePick = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false,
+      quality: 1,
+    });
+  
+    if (!result.canceled && result.assets) {
+      const selectedImageUri = result.assets[0].uri;
+      setSelectedImage(selectedImageUri);
+      setModalVisible(true);
+      setTimeout(() => setEditing(true), 100);
+    }
+  };
+  
+  const handleSave = async (newImage: string | null) => {
+    try {
+      if (!newImage) {
+        // Если `newImage` пустое, просто обновляем состояние без загрузки файла
+        setBackgroundImage(undefined);
+        setUser(prev => prev ? { ...prev, backgroundImage: undefined } : prev);
+        return;
+      }
+  
+      let fileUri = newImage;
+      let fileType = 'image/jpeg';
+      let fileName = `background-${Date.now()}.jpg`;
+      let fileBlob = null;
+  
+      if (Platform.OS === 'web') {
+        const response = await fetch(fileUri);
+        fileBlob = await response.blob();
+        fileBlob = new File([fileBlob], fileName, { type: fileType });
+      } else {
+        fileBlob = {
+          uri: fileUri,
+          type: fileType,
+          name: fileName,
+        } as any;
+      }
+  
+      const formData = new FormData();
+      formData.append('backgroundImage', fileBlob);
+  
+      console.log('📤 Отправляем изображение:', formData);
+  
+      const response = await updateUser({}, formData);
+  
+      if (response?.user?.backgroundImage) {
+        console.log("✅ Фон успешно обновлён на сервере:", response.user.backgroundImage);
+        setBackgroundImage(response.user.backgroundImage);
+        setUser(prev => prev ? { ...prev, backgroundImage: response.user.backgroundImage } : prev);
+        setImageKey(Date.now());
+        Toast.show({
+          type: 'success',
+          text1: 'Фон обновлён',
+          visibilityTime: 2000,
+        });
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Сервер не вернул обновленное изображение.',
+          visibilityTime: 2000,
+        });
+      }
+    } catch (error) {
+      console.error('❌ Ошибка загрузки изображения:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Не удалось загрузить изображение.',
+        visibilityTime: 2000,
+      });
+    }
+  };
   
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        console.log("Запуск загрузки данных профиля...");
+        console.log("🚀 Загружаем профиль пользователя...");
         setLoading(true);
         const userData = await getUserProfile();
-        console.log("✅ Данные пользователя получены:", userData);
+        console.log("✅ Данные пользователя:", userData);
   
-        let activeSosId = null;
-  
-        if (userData.id) {
-          console.log(`📡 Ищем активный SOS-сигнал для userId: ${userData.id}`);
-          
-          // ✅ Теперь вызываем API для поиска активного SOS
-          const sosResponse = await getSosSignalByUserId(userData.id);
-  
-          console.log("🎯 Ответ от getSosSignalByUserId:", sosResponse);
-  
-          if (sosResponse && sosResponse.status === "active") {
-            activeSosId = sosResponse._id;
-            console.log(`✅ Найден активный SOS: ${activeSosId}`);
-          } else {
-            console.warn("⚠️ У пользователя нет активного SOS-сигнала.");
-          }
+        setUser(userData);
+        if (userData?.backgroundImage) {
+          setBackgroundImage(userData.backgroundImage);
         }
   
-        setUser({
-          ...userData,
-          sosSignalActive: !!activeSosId,
-          sosSignalId: activeSosId,
-        });
+        // Проверяем, есть ли ID пользователя, прежде чем делать запрос SOS
+        if (userData?.id) {
+          console.log("📡 Проверяем активный SOS-сигнал для пользователя:", userData.id);
+          const activeSos = await getSosSignalByUserId(userData.id);
+  
+          if (activeSos) {
+            console.log("Найден активный SOS-сигнал:", activeSos);
+            setSosSignal(activeSos);
+          } else {
+            console.log(" У пользователя нет активного SOS-сигнала.");
+          }
+        } else {
+          console.warn("Ошибка: ID пользователя отсутствует.");
+        }
       } catch (err: any) {
-        console.error("❌ Ошибка при загрузке данных пользователя:", err.message);
-        setError(err.message || "Ошибка при загрузке данных пользователя.");
+        console.error("Ошибка загрузки данных пользователя:", err.message);
+        setError(err.message || "Ошибка загрузки данных.");
       } finally {
-        console.log("✅ Загрузка завершена, setLoading(false)");
         setLoading(false);
       }
     };
@@ -119,14 +186,6 @@ const ProfileMain: React.FC = () => {
     );
   }
 
-  const fetchSosSignal = async (sosId: string) => {
-    try {
-      const response = await getSosSignalById(sosId);
-    } catch (error){
-      console.error("❌ Ошибка загрузки SOS-сигнала:", error)
-    } 
-  };
-
   // Отображение профиля
   return (
     <View style={styles.container}>
@@ -145,49 +204,65 @@ const ProfileMain: React.FC = () => {
             >
               <QrIcon width={22} height={22} />
             </TouchableOpacity>
-            {user.sosSignalActive ? (
-              <Pressable onPress={() => router.push(`/sos-signal/${user.sosSignalId}`)} style={styles.sosActiveContainer}>
-                <ProfileSosIcon/>
-                <Text style={styles.sosActiveText}>Cигнал SOS активирован</Text>
+            {sosSignal ? (
+              <Pressable onPress={() => router.push(`/sos-signal/${sosSignal._id}`)} style={styles.sosActiveContainer}>
+                <ProfileSosIcon />
+                <Text style={styles.sosActiveText}>SOS активирован</Text>
               </Pressable>
             ) : (
               ''
             )}
             <View style={styles.rightIcons}>
-              {user.sosSignalActive ? (
+              {sosSignal ? (
                 ''
               ) : (
                 <TouchableOpacity onPress={() => router.push("/sos")} style={styles.sosIcon}>
                   <SosIcon width={22} height={22} />
                 </TouchableOpacity>
               )}
-              <TouchableOpacity onPress={() => router.push("/settings")} style={styles.settingIcon}>
+              <TouchableOpacity onPress={() => router.push("/settings")} style={[ sosSignal ? styles.settingIconSos : styles.settingIcon]}>
                 <SettingsIcon width={22} height={22} />
               </TouchableOpacity>
             </View>
           </View>
-          <TouchableOpacity onPress={() => setModalVisible(true)}>
+          <TouchableOpacity
+            onPress={async () => {
+              if (!backgroundImage) {
+                await handleImagePick();
+              } else {
+                setModalVisible(true);
+              }
+            }}
+          >
             <View style={styles.coverImageContainer}>
-            {backgroundImage ? ( 
-              <Image
-                resizeMode="cover"
-                source={{
-                  uri: `${IMAGE_URL}${backgroundImage}?key=${imageKey}`,
-                  cache: 'reload',
-                }}
-                style={styles.coverImage}
-              />              
-              ): (
-              <View style={styles.coverImage} />
-            )}
+              {backgroundImage ? (
+                <Image
+                  resizeMode="cover"
+                  source={{
+                    uri: `${backgroundImage}?key=${imageKey}`,
+                    cache: 'reload',
+                  }}
+                  style={styles.coverImage}
+                />
+              ) : (
+                <View style={styles.coverImage} />
+              )}
             </View>
-          </TouchableOpacity>  
-          <Modal visible={isModalVisible} animationType="slide">
-            <EditBackgroundImage
-            backgroundImage={backgroundImage || ''}
-            onClose={() => setModalVisible(false)}
-            onSave={handleSave}/>
-          </Modal>          
+          </TouchableOpacity>
+        <Modal visible={isModalVisible} animationType="slide">
+          <EditBackgroundImage
+            backgroundImage={selectedImage || backgroundImage || ''}
+            onClose={() => { 
+              setModalVisible(false);
+              setEditing(false);
+              setSelectedImage(null); 
+            }} 
+            onSave={(newImage) => {
+              handleSave(newImage);
+            }} 
+            isEditing={isEditing} 
+          />
+        </Modal> 
           {user && <ProfileHeader user={user} isOwnProfile={true} onUpdateUserProfile={updateUserProfile} />}
           <ProfileStats user={user} />
           <View style={styles.divider} />

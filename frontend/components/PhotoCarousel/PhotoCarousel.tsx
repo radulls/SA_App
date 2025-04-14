@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
-import { View, Image, ScrollView, StyleSheet, Dimensions } from 'react-native';
-
-const screenWidth = Dimensions.get('window').width;
+import { View, Image, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 
 interface PhotoCarouselProps {
   photos: string[];
@@ -9,15 +7,20 @@ interface PhotoCarouselProps {
 
 const PhotoCarousel: React.FC<PhotoCarouselProps> = ({ photos }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { width: screenWidth } = useWindowDimensions(); // Динамически получаем ширину экрана
 
   const handleScroll = (event: any) => {
-    const index = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
+    const index = Math.round(event.nativeEvent.contentOffset.x / Math.min(screenWidth, 600));
     setCurrentIndex(index);
   };
 
+  // Вычисляем ширину и высоту контейнера динамически
+  const containerWidth = Math.min(screenWidth, 600);
+  const containerHeight = containerWidth; // Сохраняем пропорции 1:1
+
   return (
     <View style={styles.photoCarouselContainer}>
-      <View style={[styles.photoCarouselWrapper, { width: Math.min(screenWidth, 600) }]}>
+      <View style={[styles.photoCarouselWrapper, { width: containerWidth }]}>
         <ScrollView
           horizontal
           pagingEnabled
@@ -26,8 +29,8 @@ const PhotoCarousel: React.FC<PhotoCarouselProps> = ({ photos }) => {
           scrollEventThrottle={16}
         >
           {photos.map((photo, index) => (
-            <View key={index} style={[styles.photoWrapper, { width: Math.min(screenWidth, 600) }]}>
-              <Image source={{ uri: photo }} style={styles.image} resizeMode="cover" />
+            <View key={index} style={{ width: containerWidth, height: containerHeight, overflow: 'hidden' }}>
+              <Image source={{ uri: photo }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
             </View>
           ))}
         </ScrollView>
@@ -35,7 +38,13 @@ const PhotoCarousel: React.FC<PhotoCarouselProps> = ({ photos }) => {
         {/* Индикатор (точки) */}
         <View style={styles.indicatorContainer}>
           {photos.map((_, index) => (
-            <View key={index} style={[styles.indicatorDot, currentIndex === index && styles.activeDot]} />
+            <View
+              key={index}
+              style={[
+                styles.indicatorDot,
+                currentIndex === index && styles.activeDot,
+              ]}
+            />
           ))}
         </View>
       </View>
@@ -46,21 +55,10 @@ const PhotoCarousel: React.FC<PhotoCarouselProps> = ({ photos }) => {
 const styles = StyleSheet.create({
   photoCarouselContainer: {
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 5,
   },
   photoCarouselWrapper: {
-    maxWidth: 600,
-    width: '100%',
     overflow: 'hidden',
-  },
-  photoWrapper: {
-    width: '100%',
-    height: 414,
-    overflow: 'hidden',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
   },
   indicatorContainer: {
     flexDirection: 'row',
@@ -68,11 +66,11 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   indicatorDot: {
-    width: 8,
-    height: 8,
+    width: 6,
+    height: 6,
     borderRadius: 4,
     backgroundColor: '#E8E8E8',
-    marginHorizontal: 5,
+    marginHorizontal: 4,
   },
   activeDot: {
     backgroundColor: '#000',

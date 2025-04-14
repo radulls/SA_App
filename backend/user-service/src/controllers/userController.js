@@ -61,6 +61,16 @@ const generateUserQRCode = async (userId) => {
   }
 };
 
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select('-password'); // Исключаем поле пароля
+    res.status(200).json(users);
+  } catch (error) {
+    console.error('Ошибка при получении всех пользователей:', error.message);
+    res.status(500).json({ message: 'Ошибка сервера.' });
+  }
+};
+
 //Subscription
 //===================================
 const subscribeUser = async (req, res) => {
@@ -192,6 +202,7 @@ const getPublicProfile = async (req, res) => {
         id: user._id,
         firstName: user.firstName,
         lastName: user.lastName,
+        hideLastName: user.hideLastName,
         username: user.username,
         city: user.city?.name || 'Не указан',
         qrCodeLink: profileLink,
@@ -250,19 +261,23 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Код недействителен или уже использован.' });
     }
 
-    // Проверяем, существует ли уже пользователь с таким кодом
-    const existingUser = await User.findOne({ code });
-    if (existingUser) {
-      return res.status(400).json({ message: 'Пользователь с таким кодом уже существует.' });
-    }
+    // Проверяем, кто создал код (если у модели `Code` есть `createdBy`)
+    const inviter = validCode.createdBy ? await User.findById(validCode.createdBy) : null;
 
-    // Создаём нового пользователя
-    const newUser = await User.create({ code });
+    // Создаём нового пользователя и связываем его с пригласившим
+    const newUser = await User.create({
+      code,
+      invitedBy: inviter ? inviter._id : null, // Привязываем к пригласителю
+    });
+
     console.log('Пользователь успешно создан:', newUser);
 
-    // Помечаем код как использованный
+    // **Обновляем код как использованный и устанавливаем usedAt**
     validCode.isUsed = true;
+    validCode.usedAt = new Date(); // 🟢 Устанавливаем дату использования
     await validCode.save();
+
+    console.log('✅ Код использован:', validCode);
 
     // Генерируем токены
     const token = jwt.sign(
@@ -280,9 +295,11 @@ const registerUser = async (req, res) => {
     res.status(201).json({
       message: 'Пользователь успешно зарегистрирован.',
       userId: newUser._id,
+      invitedBy: inviter ? inviter._id : null, // Отправляем ID пригласившего
       token,
       refreshToken,
     });
+
   } catch (error) {
     console.error('Ошибка при регистрации пользователя:', error);
     res.status(500).json({ message: 'Внутренняя ошибка сервера.' });
@@ -528,7 +545,7 @@ const changePassword = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
-    const { username, email, phone, city, password, firstName, lastName, aboutMe } = req.body;
+    const { username, email, phone, city, password, firstName, lastName, hideLastName, aboutMe } = req.body;
     const userId = req.user.id;
 
     // Логика ограничения количества запросов
@@ -558,13 +575,13 @@ const updateUser = async (req, res) => {
       return res.status(404).json({ message: 'Пользователь не найден.' });
     }
 
-    // Удаляем старые фотографии, если они существуют
+    // Обновляем изображения
     if (req.files) {
       if (req.files.profileImage) {
         if (user.profileImage) {
           const oldProfileImagePath = `.${user.profileImage}`;
           if (fs.existsSync(oldProfileImagePath)) {
-            fs.unlinkSync(oldProfileImagePath); // Удаление старого файла
+            fs.unlinkSync(oldProfileImagePath);
           }
         }
         updates.profileImage = `/uploads/${req.files.profileImage[0].filename}`;
@@ -574,7 +591,7 @@ const updateUser = async (req, res) => {
         if (user.backgroundImage) {
           const oldBackgroundImagePath = `.${user.backgroundImage}`;
           if (fs.existsSync(oldBackgroundImagePath)) {
-            fs.unlinkSync(oldBackgroundImagePath); // Удаление старого файла
+            fs.unlinkSync(oldBackgroundImagePath);
           }
         }
         updates.backgroundImage = `/uploads/${req.files.backgroundImage[0].filename}`;
@@ -622,6 +639,12 @@ const updateUser = async (req, res) => {
     if (firstName) updates.firstName = firstName;
     if (lastName) updates.lastName = lastName;
     if (aboutMe) updates.aboutMe = aboutMe;
+    
+    if (typeof hideLastName !== 'undefined') {
+      console.log('🔄 Преобразуем hideLastName:', hideLastName, typeof hideLastName);
+      updates.hideLastName = hideLastName === 'true' || hideLastName === true;
+    }
+    console.log('📝 Итоговые обновляемые данные:', updates);    
 
     // Обновляем пользователя
     const updatedUser = await User.findByIdAndUpdate(userId, updates, { new: true });
@@ -649,42 +672,52 @@ const updateUser = async (req, res) => {
 const sendVerificationCode = async (req, res) => {
   try {
     const { email } = req.body;
+    const userId = req.user?.id; // ✅ Берем ID пользователя из токена
+
+    if (!userId) {
+      console.error('❌ Ошибка: Нет ID пользователя в `req.user`');
+      return res.status(401).json({ message: 'Ошибка: Нет авторизации. Войдите в аккаунт.' });
+    }
 
     if (!email) {
-      console.error('Email отсутствует.');
       return res.status(400).json({ message: 'Email обязателен.' });
     }
 
-    const userId = req.user.id; // Получаем userId из токена (добавлено verifyToken)
     const user = await User.findById(userId);
-
     if (!user) {
-      console.error('Пользователь не найден для ID:', userId);
+      console.error('❌ Ошибка: Пользователь не найден.');
       return res.status(404).json({ message: 'Пользователь не найден.' });
     }
 
-    // Простой паттерн проверки email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      console.error('Некорректный email:', email);
-      return res.status(400).json({ message: 'Некорректный email.' });
+    // 🔒 Проверяем, не было ли недавнего запроса (антиспам)
+    const lastSentTime = user.lastEmailCodeSentAt || 0;
+    const now = Date.now();
+    const cooldown = 60000; // 60 секунд между запросами
+
+    if (now - lastSentTime < cooldown) {
+      console.warn('⏳ Ошибка: Слишком частые запросы. Подождите немного.');
+      return res.status(429).json({ message: 'Слишком частые запросы. Попробуйте позже.' });
     }
 
-    // Генерация кода подтверждения
     const verificationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
-    console.log('Генерируем код:', verificationCode);
+    console.log('🔑 Генерируем код:', verificationCode);
 
-    // Обновляем пользователя
-    user.email = email; // Сохраняем email
-    user.emailVerificationCode = verificationCode; // Сохраняем код подтверждения
+    // НЕ обновляем email сразу! Вместо этого сохраняем в `tempEmail`
+    user.tempEmail = email;
+    user.emailVerificationCode = verificationCode;
+    user.lastEmailCodeSentAt = now; // Запоминаем время отправки
+    console.log("💾 Перед сохранением в БД:", {
+      tempEmail: user.tempEmail,
+      emailVerificationCode: user.emailVerificationCode,
+    });
+    
     await user.save();
 
-    console.log('Пользователь обновлен с кодом:', {
-      email: user.email,
+    console.log('✅ Пользователь обновлен с кодом (email не изменен):', {
+      tempEmail: user.tempEmail,
       emailVerificationCode: user.emailVerificationCode,
     });
 
-    // Отправляем email
     await transporter.sendMail({
       from: 'noreply@yourapp.com',
       to: email,
@@ -694,8 +727,61 @@ const sendVerificationCode = async (req, res) => {
 
     res.status(200).json({ message: 'Код подтверждения отправлен.' });
   } catch (error) {
-    console.error('Ошибка при отправке кода подтверждения:', error.message);
+    console.error('❌ Ошибка при отправке кода подтверждения:', error.message);
     res.status(500).json({ message: 'Ошибка при отправке кода.' });
+  }
+};
+
+const verifyEmailCode = async (req, res) => {
+  try {
+    const { email, code } = req.body;
+    const userId = req.user?.id; // Получаем ID пользователя
+
+    if (!userId) {
+      console.error("❌ Ошибка: Нет ID пользователя в `req.user`");
+      return res.status(401).json({ message: "Нет авторизации." });
+    }
+
+    const user = await User.findOne({ _id: userId });
+
+    if (!user) {
+      console.error("❌ Ошибка: Пользователь не найден.");
+      return res.status(404).json({ message: "Пользователь не найден." });
+    }
+
+    if (user.tempEmail !== email) {
+      console.error("❌ Ошибка: Этот email не запрашивался для смены.", {
+        storedTempEmail: user.tempEmail,
+        requestEmail: email
+      });
+      return res.status(400).json({ message: "Этот email не запрашивался для смены." });
+    }
+
+    if (user.emailVerificationCode !== code) {
+      console.error("❌ Ошибка: Неверный код подтверждения.", {
+        storedCode: user.emailVerificationCode,
+        requestCode: code
+      });
+      return res.status(400).json({ message: "Неверный код подтверждения." });
+    }
+    console.log("📌 Email подтверждён, очищаем `tempEmail` и `emailVerificationCode`", {
+      email: user.email,
+      tempEmail: user.tempEmail,
+      emailVerificationCode: user.emailVerificationCode
+    });
+    
+    // ✅ Всё ок, обновляем email
+    user.email = user.tempEmail;
+    user.tempEmail = null;
+    user.emailVerificationCode = null;
+    user.emailVerified = true;
+    await user.save();
+
+    console.log("✅ Email подтверждён и обновлён:", user.email);
+    return res.status(200).json({ message: "Email подтверждён!", email: user.email });
+  } catch (error) {
+    console.error("❌ Ошибка при проверке кода:", error);
+    return res.status(500).json({ message: "Ошибка сервера." });
   }
 };
 
@@ -721,77 +807,6 @@ const verifyResetPasswordCode = async (req, res) => {
     res.status(200).json({ message: 'Код успешно подтверждён.' });
   } catch (error) {
     console.error('Ошибка при проверке кода смены пароля:', error.message);
-    res.status(500).json({ message: 'Ошибка сервера.' });
-  }
-};
-
-const verifyEmailCode = async (req, res) => {
-  try {
-    const { email, code } = req.body;
-
-    if (!email || !code) {
-      return res.status(400).json({ message: 'Email и код обязательны.' });
-    }
-
-    // Логика ограничения количества попыток
-    const maxAttempts = 5; // Максимальное количество попыток
-    const lockoutTime = 1 * 60 * 1000; // 15 минут
-    const attemptKey = `emailVerifyAttempts:${email}`;
-    const lockoutKey = `emailVerifyLockout:${email}`;
-
-    // Проверяем, заблокирован ли пользователь
-    const isLocked = await redisClient.get(lockoutKey);
-    if (isLocked) {
-      return res.status(429).json({ message: 'Слишком много попыток' });
-    }
-
-    // Проверяем количество попыток
-    let attempts = await redisClient.get(attemptKey);
-    attempts = attempts ? parseInt(attempts, 10) : 0;
-
-    if (attempts >= maxAttempts) {
-      await redisClient.set(lockoutKey, 'locked', 'PX', lockoutTime);
-      await redisClient.del(attemptKey);
-      return res.status(429).json({ message: 'Слишком много попыток' });
-    }
-
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(404).json({ message: 'Пользователь не найден.' });
-    }
-
-    // Если email уже подтверждён
-    if (user.emailVerified) {
-      console.log('Email уже подтверждён:', email);
-      return res.status(200).json({ message: 'Email уже подтверждён.' });
-    }
-
-    // Проверяем код
-    if (user.emailVerificationCode !== code) {
-      console.error('Неверный код подтверждения для пользователя:', user._id);
-
-      // Увеличиваем счётчик попыток
-      await redisClient.incr(attemptKey);
-      await redisClient.expire(attemptKey, lockoutTime / 1000); // Устанавливаем время истечения
-
-      return res.status(400).json({ message: 'Неверный код подтверждения.' });
-    }
-
-    console.log('Код подтверждения совпал для пользователя:', user._id);
-
-    // Если всё успешно, обновляем данные
-    user.emailVerified = true;
-    user.emailVerificationCode = null;
-    await user.save();
-
-    // Сбрасываем количество попыток при успешном подтверждении
-    await redisClient.del(attemptKey);
-
-    console.log('Пользователь успешно обновлён:', user);
-    res.status(200).json({ message: 'Email подтверждён.' });
-  } catch (error) {
-    console.error('Ошибка при проверке кода:', error);
     res.status(500).json({ message: 'Ошибка сервера.' });
   }
 };
@@ -979,6 +994,7 @@ const getUserProfileById = async (req, res) => {
         id: user._id,
         firstName: user.firstName,
         lastName: user.lastName,
+        hideLastName: user.hideLastName,
         username: user.username,
         city: user.city?.name || 'Не указан',
         profileImage: user.profileImage,
@@ -1015,9 +1031,96 @@ const getUsersByIds = async (req, res) => {
   }
 };
 
+const deleteProfileImage = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = await User.findById(userId);
+
+    if (!user || !user.profileImage) {
+      return res.status(404).json({ message: 'Фото профиля не найдено.' });
+    }
+
+    const imagePath = path.join(__dirname, '../../', user.profileImage); // Путь к файлу
+    if (fs.existsSync(imagePath)) {
+      fs.unlinkSync(imagePath); // Удаляем файл с сервера
+    }
+
+    user.profileImage = null; // Очищаем поле в базе данных
+    await user.save();
+
+    res.status(200).json({ message: 'Фото профиля успешно удалено.' });
+  } catch (error) {
+    console.error('Ошибка при удалении фото профиля:', error.message);
+    res.status(500).json({ message: 'Ошибка сервера.' });
+  }
+};
+
+const deleteBackgroundImage = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = await User.findById(userId);
+
+    if (!user || !user.backgroundImage) {
+      return res.status(404).json({ message: 'Фоновое изображение не найдено.' });
+    }
+
+    const imagePath = path.join(__dirname, '../../', user.backgroundImage); // Путь к файлу
+    if (fs.existsSync(imagePath)) {
+      fs.unlinkSync(imagePath); // Удаляем файл с сервера
+    }
+
+    user.backgroundImage = null; // Очищаем поле в базе данных
+    await user.save();
+
+    res.status(200).json({ message: 'Фоновое изображение успешно удалено.' });
+  } catch (error) {
+    console.error('Ошибка при удалении фонового изображения:', error.message);
+    res.status(500).json({ message: 'Ошибка сервера.' });
+  }
+};
+
+const updatePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: 'Старый и новый пароль обязательны' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'Пользователь не найден' });
+    }
+
+    // Проверяем текущий пароль
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Старый пароль неверный' });
+    }
+
+    // ✅ НЕ хешируем пароль вручную, потому что `pre('save')` это сделает!
+    user.password = newPassword; // Передаём сырой пароль
+
+    // Логируем перед сохранением
+    console.log('⚡ Новый пароль перед сохранением:', newPassword);
+
+    await user.save(); // `pre('save')` в `userSchema` автоматически его захеширует
+
+    // Проверяем, как сохранился пароль
+    const updatedUser = await User.findById(req.user.id);
+    console.log('🔒 Новый хэшированный пароль в БД:', updatedUser.password);
+
+    res.json({ message: 'Пароль успешно изменен' });
+  } catch (error) {
+    console.error('Ошибка при обновлении пароля:', error);
+    res.status(500).json({ message: 'Ошибка сервера' });
+  }
+};
+
 module.exports = {
   refreshAccessToken,
   generateUserQRCode,
+  getAllUsers,
   getPublicProfile,
   registerUser,
   validateActivationCode,
@@ -1041,5 +1144,8 @@ module.exports = {
   getSubscribers, 
   getSubscriptions,
   checkSubscription,
-  getUsersByIds
+  getUsersByIds,
+  deleteProfileImage,
+  deleteBackgroundImage,
+  updatePassword
 };

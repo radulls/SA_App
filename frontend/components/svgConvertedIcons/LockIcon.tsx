@@ -2,7 +2,7 @@ import React from 'react';
 import Svg, { Path } from 'react-native-svg';
 import { StyleSheet } from 'react-native';
 
-const LockIcon = ({ width = 20, height = 22, fill = "white" }) => (
+const LockIcon = ({ width = 22, height = 22, fill = "white" }) => (
   <Svg width={width} height={height} viewBox="0 0 20 22" fill="none" style={styles.lock}>
     <Path
       fillRule="evenodd"

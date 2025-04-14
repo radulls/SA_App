@@ -2,6 +2,7 @@ const express = require('express');
 const { 
   refreshAccessToken,
   generateUserQRCode,
+  getAllUsers,
   getPublicProfile,
   registerUser, 
   validateActivationCode,
@@ -24,13 +25,18 @@ const {
   getSubscribers, 
   getSubscriptions,
   checkSubscription,
-  getUsersByIds  
+  getUsersByIds,
+  deleteProfileImage,
+  deleteBackgroundImage,
+  updatePassword  
 } = require('../controllers/userController');
 const { upload, processUploadedFiles } = require('../middlewares/upload.jsx');
 const { verifyToken } = require('../middlewares/authMiddleware');
 const User = require('../models/User'); // Замените путь на корректный
 
 const router = express.Router();
+
+router.get('/', verifyToken, getAllUsers);
 
 // Маршрут для обновления токена
 router.post('/refresh-token', refreshAccessToken);
@@ -44,6 +50,8 @@ router.post('/register', registerUser);
 
 // Логин пользователя
 router.post('/login', loginUser);
+
+router.post('/update-password', verifyToken, updatePassword);
 
 // Получение данных текущего пользователя
 router.get('/profile', verifyToken, async (req, res) => {
@@ -83,6 +91,10 @@ router.patch(
   updateUser // Обновление данных пользователя
 );
 
+router.delete('/profile-image', verifyToken, deleteProfileImage);
+router.delete('/background-image', verifyToken, deleteBackgroundImage);
+
+
 // Отправка кода подтверждения на email
 router.patch('/send-code', verifyToken, sendVerificationCode);
 
@@ -108,7 +120,7 @@ router.post('/check-verify-status', verifyToken, checkVerificationStatus);
 router.post('/verify-code', (req, res, next) => {
   console.log('Пришел запрос на /verify-code:', req.body);
   next();
-}, verifyEmailCode);
+}, verifyToken, verifyEmailCode);
 
 // Обновление данных для верификации
 router.patch(

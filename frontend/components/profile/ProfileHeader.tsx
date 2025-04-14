@@ -1,37 +1,111 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, Modal, Image, ActivityIndicator } from 'react-native';
-import { IMAGE_URL, UserDataProps } from '@/api';
+import { View, StyleSheet, Text, TouchableOpacity, Modal, Image, Platform, Alert } from 'react-native';
+import { IMAGE_URL, UserDataProps, updateUser } from '@/api';
 import EditProfileImage from './EditProfileImage';
+import { BlurView } from 'expo-blur'; // Импортируем BlurView
+import * as ImagePicker from 'expo-image-picker';
+import { getFullName } from '@/utils/getFullName';
 
 interface ProfileHeaderProps {
   user: UserDataProps | null;
-  isOwnProfile: boolean; // Определяем, чей профиль
-  onUpdateUserProfile?: (updatedProfileImage: string) => void; // Обновление фото профиля
+  isOwnProfile: boolean;
+  onUpdateUserProfile?: (updatedProfileImage: string) => void;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, isOwnProfile, onUpdateUserProfile }) => {
   const [profileImage, setProfileImage] = useState<string | null>(user?.profileImage || null);
   const [isModalVisible, setModalVisible] = useState(false);
   const [imageKey, setImageKey] = useState(Date.now());
-  const [loading, setLoading] = useState<boolean>(!user); // Если user === null, ждем
+  const [loading, setLoading] = useState<boolean>(!user);
+  const [shouldHideName, setShouldHideName] = useState(true);
+  const [isEditing, setEditing] = useState<boolean>(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      console.log('Статус верификации:', user.verificationStatus);
+      setShouldHideName(isOwnProfile && user.verificationStatus !== 'verified');
+    }
+  }, [user, isOwnProfile]);  
 
   useEffect(() => {
     if (user?.profileImage) {
-      setProfileImage(user.profileImage);
+      let fixedUrl = user.profileImage;
+      if (!user.profileImage.startsWith('http')) {
+        fixedUrl = `${IMAGE_URL}${user.profileImage}`;
+      }
+      console.log('🔥 Устанавливаем фото профиля:', fixedUrl); // 👀 Логируем, что реально устанавливается
+      setProfileImage(fixedUrl);
     }
   }, [user]);
-
-  const handleSave = (newImage: string) => {
-    setProfileImage(newImage);
-    setImageKey(Date.now());
-    if (onUpdateUserProfile) onUpdateUserProfile(newImage);
-    setModalVisible(false);
+   
+  const handleImagePick = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false,
+      quality: 1,
+    });
+  
+    if (!result.canceled && result.assets) {
+      const selectedImageUri = result.assets[0].uri;
+      setSelectedImage(selectedImageUri);
+      setModalVisible(true);
+      setTimeout(() => setEditing(true), 100);
+    }    
   };
-
+  
+  const handleSave = async (newImage: string) => {
+    try {
+      let fileUri = newImage;
+      let fileType = 'image/jpeg';
+      let fileName = `profile-${Date.now()}.jpg`;
+      let fileBlob = null;
+  
+      if (Platform.OS === 'web') {
+        const response = await fetch(fileUri);
+        fileBlob = await response.blob();
+        fileBlob = new File([fileBlob], fileName, { type: fileType });
+      } else {
+        fileBlob = {
+          uri: fileUri,
+          type: fileType,
+          name: fileName,
+        } as any;
+      }
+  
+      const formData = new FormData();
+      formData.append('profileImage', fileBlob);
+  
+      console.log('📤 Отправляем фото профиля:', formData);
+      console.log("🔍 Отправляем файл:", {
+        uri: fileUri,
+        type: fileType,
+        name: fileName,
+        blob: fileBlob
+      });      
+  
+      const response = await updateUser({}, formData);
+  
+      if (response?.user?.profileImage) {
+        console.log(" Фото профиля загружено на сервер:", response.user.profileImage);
+        
+        setProfileImage(response.user.profileImage);
+        setImageKey(Date.now()); // Обновляем ключ кэша
+  
+        if (onUpdateUserProfile) onUpdateUserProfile(response.user.profileImage);
+        setModalVisible(false); 
+      } else {
+        Alert.alert('Ошибка', 'Сервер не вернул обновленное изображение.');
+      }
+    } catch (error) {
+      console.error(' Ошибка загрузки изображения:', error);
+      Alert.alert('Ошибка', 'Не удалось загрузить изображение.');
+    }
+  };
+  
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#000" />
         <Text>Загрузка данных...</Text>
       </View>
     );
@@ -45,46 +119,72 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, isOwnProfile, onUpd
     );
   }
 
+  console.log('Пользователь:', user);
+  console.log('Статус верификации:', user?.verificationStatus);
+
+
   return (
     <View style={styles.container}>
       <View style={styles.topContainer}>
         <View style={styles.nameContainer}>
-          <Text style={styles.name}>{user?.firstName} {user?.lastName}</Text>
-          <Text style={styles.username}>@{user?.username}</Text>
+          {shouldHideName ? (
+          <View style={styles.nameWrapper}>
+            <BlurView intensity={25} style={styles.blurContainer}/>
+            <Text style={styles.placeholderText}>Имя Фамилия</Text>
+          </View>          
+        ) : (
+          <Text style={styles.name}>{getFullName(user)}</Text>
+        )}
+          <Text style={styles.username}>@{user.username}</Text>
           <View style={styles.locationContainer}>
             <View style={styles.locationIcon}>
               <Text style={styles.locationIconText}>sa</Text>
             </View>
-            <Text style={styles.locationText}>{user?.city}</Text>
+            <Text style={styles.locationText}>{user.city}</Text>
           </View>
         </View>
 
         {/* Фото профиля */}
-        <TouchableOpacity 
-          onPress={() => isOwnProfile && setModalVisible(true)} 
-          disabled={!isOwnProfile} // Отключаем кликабельность, если не свой профиль
+        <TouchableOpacity
+          onPress={async () => {
+            if (!profileImage) {
+              await handleImagePick(); // Если фото нет — сразу открываем загрузку
+            } else {
+              setModalVisible(true); //  Если фото есть — открываем редактор
+            }
+          }}
         >
           {profileImage ? (
             <Image
-              source={{ uri: `${IMAGE_URL}${profileImage}?key=${imageKey}`, cache: 'reload' }}
+              source={{ uri: `${profileImage}?key=${imageKey}` }}  //  Добавляем key для обновления
               style={styles.profileImage}
-              resizeMode="cover"
+              onError={() => console.log(" Ошибка загрузки фото:", profileImage)} // Логируем ошибку
             />
           ) : (
             <View style={styles.profileImage} />
           )}
         </TouchableOpacity>
       </View>
-
       <View style={styles.descriptionContainer}>
-        <Text style={styles.description}>{user?.aboutMe}</Text>
+        <Text style={styles.description}>{user.aboutMe}</Text>
       </View>
       {/* Модальное окно для редактирования фото (только для владельца профиля) */}
       {isOwnProfile && (
-        <Modal visible={isModalVisible} animationType="slide">
-          <EditProfileImage profileImage={profileImage || ''} onClose={() => setModalVisible(false)} onSave={handleSave} />
-        </Modal>
-      )}
+      <Modal visible={isModalVisible} animationType="slide">
+       <EditProfileImage 
+        profileImage={selectedImage || profileImage || ''} 
+        onClose={() => { 
+          setModalVisible(false);
+          setEditing(false);
+          setSelectedImage(null);
+        }} 
+        onSave={(newImage) => {
+          handleSave(newImage);
+        }} 
+        isEditing={isEditing} 
+      />
+      </Modal>
+    )}
     </View>
   );
 };
@@ -111,13 +211,13 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: "SFUIDisplay-bold",
     color: '#000000',
   },
   username: {
     fontSize: 14,
     color: '#000000',
-    fontWeight: '500',
+    fontFamily: "SFUIDisplay-medium",
     marginTop: 2,
   },
   locationContainer: {
@@ -136,14 +236,14 @@ const styles = StyleSheet.create({
   locationIconText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontFamily: "SFUIDisplay-bold",
     alignItems: 'center',
     marginBottom: 2,
   },
   locationText: {
     marginLeft: 3,
     fontSize: 14,
-    fontWeight: 'bold',
+    fontFamily: "SFUIDisplay-bold",
     color: '#000000',
     marginBottom: 2,
   },
@@ -160,7 +260,7 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 14,
     color: '#000000',
-    fontWeight: '400',
+    fontFamily: "SFUIDisplay-regular",
   },
   loadingContainer: {
     flex: 1,
@@ -175,6 +275,22 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     fontSize: 16,
+  },
+  nameWrapper: {
+    position: 'relative',
+    overflow: 'visible'
+  },
+  blurContainer: {
+    ...StyleSheet.absoluteFillObject, 
+    borderRadius: 5,
+    zIndex: 1,
+  },
+  placeholderText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000000',
+    textAlign: 'center',
+    padding: 8,
   },
 });
 

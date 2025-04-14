@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import SosMapView from '../ViewMap/SosMapView';
 import { IMAGE_URL } from '@/api';
+import { getFullName } from '@/utils/getFullName';
 
 interface SosDetailsProps {
   user: {
@@ -44,10 +45,15 @@ const SosDetails: React.FC<SosDetailsProps> = ({ user, location, tags, title, de
         {user && (
           <>
             <View style={styles.profileImageContainer}>
-              <Image source={{ uri: `${IMAGE_URL}${user.profileImage}` }} style={styles.profileImage} resizeMode="cover" />
+              <Image 
+                source={{ uri: `${IMAGE_URL}${user.profileImage}` }} 
+                style={styles.profileImage} 
+                resizeMode="cover" 
+                onError={(e) => console.log("Ошибка загрузки фото:", e.nativeEvent.error)}
+              />
             </View>
             <View style={styles.userInfo}>
-              <Text style={styles.name}>{user.firstName} {user.lastName}</Text>
+              <Text style={styles.name}>{getFullName(user)}</Text>
               <Text style={styles.username}>@{user.username}</Text>
               <View style={styles.locationContainer}>
                 <View style={styles.locationIcon}>
@@ -117,29 +123,37 @@ const styles = StyleSheet.create({
     height: 68,
     zIndex: 1,
     top: -34,
+    borderRadius: 34,
+    backgroundColor: '#C4C4C4',   
   },
   profileImage: {
     width: '100%',
     height: '100%',
     borderRadius: 34,
   },
+  placeholderProfileImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 34, 
+    backgroundColor: '#C4C4C4',   
+  },
   userInfo: {
     backgroundColor: '#F6F6F6',
     width: '100%',
     alignItems: 'center',
-    paddingBottom: 24,
+    paddingBottom: 20,
     paddingTop: 40,
-    borderRadius: 16,
+    borderRadius: 20,
   },
   name: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: "SFUIDisplay-bold",
   },
   username: {
     fontSize: 14,
-    fontWeight: '500',
-    paddingTop: 5,
-    paddingBottom: 13,
+    fontFamily: "SFUIDisplay-medium",
+    paddingTop: 4,
+    paddingBottom: 11,
   },
   locationContainer: {
     flexDirection: 'row',
@@ -157,32 +171,32 @@ const styles = StyleSheet.create({
   locationIconText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: "SFUIDisplay-bold",
     alignItems: 'center',
     marginBottom: 2,
   },
   userCity: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: "SFUIDisplay-bold",
   },
   label: {
     fontSize: 14,
-    fontWeight: '700',
-    paddingVertical: 10,
-    marginTop: 10,
+    fontFamily: "SFUIDisplay-bold",
+    marginTop: 20,
+    marginBottom: 8,
   },
   address: {
     fontSize: 14,
-    fontWeight: '400',
+    fontFamily: "SFUIDisplay-regular",
   },
   showMap: {
-    fontSize: 14,
-    fontWeight: '700',
-    paddingTop: 5,
+    fontSize: 12,
+    fontFamily: "SFUIDisplay-bold",
+    paddingTop: 4,
     paddingBottom: 20,
   },
   mapWrapper: {
-    borderRadius: 12,
+    borderRadius: 20,
     overflow: 'hidden',
   },
   mapContainer: {
@@ -192,17 +206,18 @@ const styles = StyleSheet.create({
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 8,
   },
   tag: {
     backgroundColor: '#F22C2C',
-    padding: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 7.5,
     borderRadius: 20,
     alignItems: 'center',
   },
   tagText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: "SFUIDisplay-bold",
     color: '#fff',
   },
   noTags: {
@@ -212,19 +227,19 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: "SFUIDisplay-bold",
     marginTop: 20,
     marginBottom: 10,
   },
   info: {
     fontSize: 14,
-    fontWeight: '400',
+    fontFamily: "SFUIDisplay-regular",
     marginBottom: 5,
-    lineHeight: 20,
+    lineHeight: 16,
   },
   readMore: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: "SFUIDisplay-bold",
     color: '#000',
   },
 });

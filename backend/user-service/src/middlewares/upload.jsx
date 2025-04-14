@@ -27,15 +27,20 @@ const fileFilter = (req, file, cb) => {
 const processImage = (filePath, isPng) =>
   new Promise((resolve, reject) => {
     const outputPath = filePath.replace(/(\.jpeg|\.jpg|\.png)$/i, `${isPng ? '.png' : '.jpg'}`);
-    const qualityOption = isPng ? '-strip' : '-quality 85';
-    const command = `magick convert ${filePath} -resize 800x ${qualityOption} ${outputPath}`; // Изменено на фиксированную ширину
+
+    let command;
+    if (isPng) {
+      command = `convert "${filePath}" -auto-orient -resize "2400x2400>" -strip -define png:compression-level=0 "${outputPath}"`;
+    } else {
+      command = `convert "${filePath}" -auto-orient -resize "2400x2400>" -quality 100 -sampling-factor 4:4:4 -strip "${outputPath}"`;
+    }
 
     exec(command, (error) => {
       if (error) {
-        console.error(`Ошибка обработки изображения ${filePath}:`, error.message);
+        console.error(`❌ Ошибка обработки изображения ${filePath}:`, error.message);
         reject(error);
       } else {
-        console.log(`Файл обработан и сохранён: ${outputPath}`);
+        console.log(`✅ Файл сохранён без потерь: ${outputPath}`);
         resolve(outputPath);
       }
     });
@@ -51,6 +56,7 @@ const processUploadedFiles = (req, res, next) => {
         const isPng = file.mimetype === 'image/png';
         try {
           const processedPath = await processImage(file.path, isPng);
+          console.log(`📥 Файл загружен: ${file.originalname}, размер: ${file.size} байт`);
           file.processedPath = processedPath; // Сохраняем путь обработанного файла
         } catch (error) {
           console.error(`Ошибка обработки файла ${file.originalname}:`, error);
@@ -68,7 +74,7 @@ const processUploadedFiles = (req, res, next) => {
 const upload = multer({
   storage,
   limits: {
-    fileSize: 1024 * 1024 * 10, // Ограничение 5MB
+    fileSize: 1024 * 1024 * 20, // Ограничение 5MB
   },
   fileFilter,
 });

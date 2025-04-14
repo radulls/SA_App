@@ -28,7 +28,9 @@ const VerificationNameForm: React.FC<VerificationNameFormProps> = ({ value, onDa
         onChange={(val) => onDataChange({ lastName: val })}
       />
       <View style={styles.lockTextContainer}>
-        <LockIcon/>
+        <View style={styles.iconContainer}>
+        <LockIcon />
+        </View>
         <Text style={styles.text}>
           После верификации аккаунта, информация удаляется, не передаётся и не хранится на серверах, в целях нашей и вашей безопасности.
         </Text>
@@ -41,30 +43,36 @@ const VerificationNameForm: React.FC<VerificationNameFormProps> = ({ value, onDa
 const styles = StyleSheet.create({
 	stepIndicator: {
 		fontSize: 18,
-		marginTop: 186,
+		marginTop: 150,
     color: '#fff',
-    fontWeight: '700'
+    fontFamily: "SFUIDisplay-Bold",
 	},
-  instructions: {
+	instructions: {
 		fontSize: 12,
+		fontFamily: "SFUIDisplay-Regular",
+    color: '#fff',
 		marginTop: 10,
 		marginBottom: 26,
-    color: '#fff',
-    fontWeight: '400'
 	},
   lockTextContainer: {
-		width: '90%',
-		flexDirection: 'row',
-		alignItems: 'center',
-		marginTop: 22,
-		zIndex: 999999,
-		marginBottom: 20,
-	},
+    flexDirection: 'row',
+    alignItems: 'flex-start', 
+    marginTop: 22,
+    marginBottom: 20,
+  },
+  iconContainer: {
+    width: 22, 
+    height: 22, 
+    marginRight: 8, 
+    flexShrink: 0, 
+  },
   text: {
-		fontSize: 10,
+    fontSize: 10,
     color: '#fff',
-    fontWeight: '500'
-	},
+    fontFamily: "SFUIDisplay-medium",
+    flexShrink: 1,
+    flexGrow: 1, 
+  },
 })
 
 export default VerificationNameForm;

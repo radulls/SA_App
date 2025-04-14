@@ -5,7 +5,7 @@ import ErrorMessage from '../../components/ErrorMessage';
 import Button from '../../components/Button';
 import { Link } from 'expo-router';
 import { router } from 'expo-router';
-import { loginUser } from '@/api';
+import { getUserProfile, loginUser } from '@/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LoginScreen = () => {
@@ -22,8 +22,7 @@ const LoginScreen = () => {
   
     try {
       const { identifier, password } = formData;
-  
-      console.log('Отправка данных на сервер:', { identifier, password });
+      console.log('🔄 Отправка данных на сервер:', { identifier, password });
   
       if (!identifier || !password) {
         setErrorMessage('Заполните все поля.');
@@ -31,29 +30,30 @@ const LoginScreen = () => {
         return;
       }
   
+      // ✅ Авторизуем пользователя
       const response = await loginUser(identifier, password);
-      console.log('Ответ от сервера:', response);
+      console.log('✅ Ответ от сервера:', response);
   
+      // ✅ Сохраняем токен
       await AsyncStorage.setItem('token', response.token);
   
-      // Переход на экран с капчей
-      router.push('/captcha');
-    } catch (error: any) {
-      console.error('Ошибка при авторизации:', error);
+      // 🔥 Принудительно загружаем актуальные данные пользователя
+      const updatedUser = await getUserProfile();
+      console.log('📡 Обновленные данные пользователя:', updatedUser);
   
-      if (error.message === 'Слишком много попыток') {
-        setErrorMessage('Слишком много попыток');
-      } else if (error.message === 'Аккаунт не существует') {
-        setErrorMessage('Аккаунт не существует');
-      } else if (error.message === 'Неверный логин или пароль') {
-        setErrorMessage('Неверный логин или пароль');
-      } else {
-        setErrorMessage('Произошла ошибка. Попробуйте позже.');
-      }
+      // ✅ Сохраняем обновлённые данные пользователя
+      await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+  
+      // ✅ Переход на домашнюю страницу
+      router.push('/home');
+    } catch (error: any) {
+      console.error('❌ Ошибка при авторизации:', error);
+      setErrorMessage('Произошла ошибка. Попробуйте позже.');
     } finally {
       setIsLoading(false);
     }
   };
+  
   
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -68,11 +68,9 @@ const LoginScreen = () => {
               onChange={(e) => setFormData((prev) => ({ ...prev, identifier: e }))}
             />
             <View style={styles.passwordContainer}>        
-              <View style={styles.forgotContainer}>
-                <Link style={styles.forgotPassword} href="/reset-password">
-                  Забыли пароль?
-                </Link>
-              </View>        
+              <Link style={styles.forgotPassword} href="/reset-password">
+                Забыли пароль?
+              </Link>      
               {/* </View> */}
               <InputField
                 value={formData.password}
@@ -80,7 +78,7 @@ const LoginScreen = () => {
                 onChange={(e) => setFormData((prev) => ({ ...prev, password: e }))}
                 label=" Пароль"
               />
-          </View>
+            </View>
             {errorMessage && (
               <ErrorMessage message={errorMessage} />
             )}
@@ -102,11 +100,8 @@ const LoginScreen = () => {
 
 const styles = StyleSheet.create({
   scrollContainer: {
-    marginHorizontal: 'auto',
     flexGrow: 1,
     backgroundColor: 'rgba(255, 255, 255, 1)',
-    width: '100%',
-    maxWidth: 600,
   },
   container: {
     flexGrow: 1,
@@ -116,19 +111,18 @@ const styles = StyleSheet.create({
   erorMessageWrapper: {
     marginTop: 40,
   },
-  content: {
-    backgroundColor: 'rgba(0, 0, 0, 100)',
-    paddingHorizontal: 16,
-    paddingTop: 59,
-    maxWidth: 600,
-    width: '100%',
-  },
+	content: {
+		backgroundColor: 'rgba(0, 0, 0, 100)',
+		paddingHorizontal: 16,
+		paddingTop: 58,
+		maxWidth: 600,
+		width: '100%',
+	},
   logo: {
     backgroundColor: 'rgba(67, 67, 67, 1)',
     alignSelf: 'center',
     width: 186,
     height: 240,
-    marginTop: 30,
   },
   formContainer: {
     marginTop: 28,
@@ -137,8 +131,8 @@ const styles = StyleSheet.create({
   title: {
     color: 'rgba(255, 255, 255, 1)',
     fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 27,
+    marginBottom: 29,
+    fontFamily: "SFUIDisplay-Bold",
   },
   passwordContainer: {
     position: 'relative',
@@ -152,7 +146,7 @@ const styles = StyleSheet.create({
   passwordLabel: {
     color: 'rgba(255, 255, 255, 1)',
     fontSize: 14,
-    fontWeight: '700'
+    fontFamily: "SFUIDisplay-Bold",
   },
   forgotContainer: {
     position: 'relative',
@@ -160,9 +154,10 @@ const styles = StyleSheet.create({
   forgotPassword: {
     color: '#94B3FF',
     fontSize: 12,
-    fontWeight: '700',
     position: 'absolute',
-    right: 0
+    right: 0,
+    fontFamily: "SFUIDisplay-Bold",
+    zIndex: 1
   },
   signUpText: {
     fontSize: 12,
@@ -173,10 +168,12 @@ const styles = StyleSheet.create({
   },
   signUpTextGray: {
     color: 'rgba(139, 139, 139, 1)',
+    fontFamily: "SFUIDisplay-medium",
   },
   signUpTextBlue: {
     color: 'rgba(148, 179, 255, 1)',
     fontWeight: '700',
+    fontFamily: "SFUIDisplay-Bold",
   },
   footer: {
     paddingBottom: 41,

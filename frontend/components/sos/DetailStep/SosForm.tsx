@@ -34,7 +34,7 @@ const SosForm: React.FC<SosFormProps> = ({
 
   return (
     <View>
-      <Text style={styles.label}>Локация:</Text>
+      <Text style={styles.label}>Локация</Text>
       <TouchableOpacity onPress={goBackToMap} style={styles.adressContainer}>
         <Text style={styles.address}>{location.address}</Text>
       </TouchableOpacity>
@@ -72,30 +72,31 @@ const SosForm: React.FC<SosFormProps> = ({
 const styles = StyleSheet.create({
   label: {
     fontSize: 14,
-    fontWeight: '700',
-    paddingVertical: 10,
+    fontFamily: "SFUIDisplay-bold",
+    paddingBottom: 6,
   },
   adressContainer: {
     justifyContent: 'center',
-    height: 43,
-    paddingHorizontal: 15,
+    height: 48,
+    paddingHorizontal: 14,
     borderRadius: 12,
-    marginBottom: 10,
+    marginBottom: 20,
     backgroundColor: '#F3F3F3',
   },
   address: {
     fontSize: 14,
-    fontWeight: '400',
+    fontFamily: "SFUIDisplay-regular",
   },
   tagContainer: {
-    paddingBottom: 20,
+    marginBottom: 18,
   },
   tagButton: {
     backgroundColor: '#E8E8E8',
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 7.5,
     borderRadius: 20,
-    margin: 5,
+    marginRight: 8,
+    marginBottom: 12,
     alignItems: 'center',
     flex: 1,
   },
@@ -104,7 +105,7 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: "SFUIDisplay-semibold",
     color: '#000',
   },
   selectedTagText: {
@@ -113,15 +114,16 @@ const styles = StyleSheet.create({
   input: {
     fontSize: 14,
     fontWeight: '400',
-    height: 43,
-    paddingHorizontal: 15,
+    height: 48,
+    paddingHorizontal: 14,
     borderRadius: 12,
-    marginBottom: 10,
+    marginBottom: 20,
     backgroundColor: '#F3F3F3',
   },
   description: {
     height: 100,
-    paddingVertical: 18,
+    paddingVertical: 16,
+    marginBottom: 20,
   },
 });
 

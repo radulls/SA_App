@@ -9,6 +9,7 @@ import IconBack from '@/components/svgConvertedIcons/iconBack';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import ScanQr from '@/components/svgConvertedIcons/scanQr';
 import * as Linking from 'expo-linking';
+import { getFullName } from '@/utils/getFullName';
 
 const ProfileQRCard: React.FC = () => {
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
@@ -105,9 +106,7 @@ const ProfileQRCard: React.FC = () => {
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
         <View style={styles.headerIcons}>
-          <View style={styles.iconBack}>
-            <IconBack onPress={goBack} width={14} height={14} />
-          </View>
+          <IconBack onPress={goBack} width={14} height={14} />
           <ScanQr />
         </View>
         {loading ? (
@@ -125,7 +124,7 @@ const ProfileQRCard: React.FC = () => {
                 style={styles.profilePicture}
               />
               <Text style={styles.userName}>
-                {user?.firstName} {user?.lastName}
+                {user ? getFullName(user) : ''}
               </Text>
               <View style={styles.userInfoContainer}>
               <View style={styles.locationIcon}>
@@ -183,10 +182,7 @@ const styles = StyleSheet.create({
     height: 22,
     marginTop: 55,
     width: '100%',
-  },
-  iconBack: {
-    marginLeft: -20
-  },
+  }, 
   header: {
     flexDirection: 'column',
     alignItems: 'stretch',

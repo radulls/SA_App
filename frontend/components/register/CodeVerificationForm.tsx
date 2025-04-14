@@ -12,36 +12,34 @@ export interface CodeVerificationFormRef {
 
 const CodeVerificationForm = forwardRef<CodeVerificationFormRef, ValueProps>(({ value, email, onDataChange }, ref) => {
   const [error, setError] = useState<string | null>(null);
+  const [isCodeChecked, setIsCodeChecked] = useState(false); // Новый стейт для предотвращения повторного запроса
 
   const validateInput = async () => {
     setError(null);
-
+  
     if (!value.trim()) {
       setError('Код обязателен.');
       return Promise.reject('Validation Error');
     }
-
+  
     if (!email) {
       setError('Email отсутствует.');
       return Promise.reject('Email отсутствует');
     }
-
+  
+    if (isCodeChecked) {
+      console.log("⚠️ Код уже проверен, повторный запрос не отправляется");
+      return;
+    }
+  
     try {
+      console.log("🔍 Отправка запроса на /verify-code...");
       const result = await verifyEmailCode(email, value.trim());
-      console.log('Код успешно подтвержден');
+      console.log('✅ Код успешно подтвержден');
+      setIsCodeChecked(true); // Запоминаем, что код уже был подтвержден
     } catch (err: any) {
-      if (err.message === 'Слишком много попыток') {
-        setError('Слишком много попыток');
-      } else if (err.message === 'Неверный код подтверждения.') {
-        setError('Неверный код подтверждения.');
-      } else {
-        const customError = handleError(err);
-        if (customError) {
-          setError(customError);
-        } else {
-          setError('Произошла ошибка. Попробуйте снова.');
-        }
-      }
+      console.error("❌ Ошибка верификации:", err);
+      setError(handleError(err) || "Произошла ошибка. Попробуйте снова.");
       return Promise.reject(err.message || 'Произошла ошибка. Попробуйте снова.');
     }
   };

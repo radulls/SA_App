@@ -6,20 +6,35 @@ export const IMAGE_URL = 'http://89.108.118.249:5001';
 
 export interface UserDataProps {
   id?: string;
+  _id?: string;
   firstName: string;
   lastName: string;
+  hideLastName?: boolean;
   aboutMe: string;
   username: string;
-  city: string; // Меняем тип на строку
+  city: string;
+  phone?: string;
+  email?: string;
   intro?: string;
   profileImage?: string;
-  backgroundImage?: string;
+  backgroundImage?: string | null;
   subscribers?: number;
   rating?: number;
   qrCode?: string;
-  isSubscribed?: boolean; // ✅ Добавляем статус подписки
-  sosSignalActive?: boolean; // ✅ Добавляем флаг активного SOS
+  isSubscribed?: boolean;
+  sosSignalActive?: boolean;
   sosSignalId?: string;
+  verificationStatus?: string;
+  role?: string;
+  password?: string;
+  passportPhoto?: string; // Фото паспорта
+  selfiePhoto?: string; // Селфи пользователя
+}
+
+
+export interface UpdatePasswordRequest {
+  oldPassword: string;
+  newPassword: string;
 }
 
 // Создаём экземпляр axios
@@ -91,9 +106,13 @@ api.interceptors.response.use(
 );
 
 // Общие методы
-export const post = async <T>(url: string, data: T): Promise<any> => {
+export const post = async <T>(
+  url: string,
+  data: T,
+  config: Record<string, any> = {} // Добавляем возможность передавать заголовки
+): Promise<any> => {
   try {
-    const response = await api.post(url, data);
+    const response = await api.post(url, data, config); // Передаём `config` в запрос
     return response.data;
   } catch (error: any) {
     const customError = handleError(error);
@@ -126,6 +145,28 @@ export const get = async (url: string): Promise<any> => {
     if (!customError) {
       console.log('Скрытая ошибка GET:', error.message);
     }
+    throw error;
+  }
+};
+
+export const getAllUsers = async (): Promise<UserDataProps[]> => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+
+    if (!token) {
+      throw new Error('Токен отсутствует. Пожалуйста, авторизуйтесь.');
+    }
+
+    const response = await api.get('/users', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log('✅ Получен список пользователей:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Ошибка при получении списка пользователей:', error.message);
     throw error;
   }
 };
@@ -225,6 +266,26 @@ export const changePassword = async (
   }
 };
 
+export const updatePasswordWithOld = async (data: UpdatePasswordRequest): Promise<any> => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+
+    if (!token) {
+      throw new Error('Ошибка: Нет авторизации. Войдите в аккаунт.');
+    }
+
+    const response = await post('/users/update-password', data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    console.log('✅ Пароль успешно обновлен:', response);
+    return response;
+  } catch (error: any) {
+    console.error('❌ Ошибка при обновлении пароля:', error);
+    throw new Error(handleError(error) || 'Ошибка при смене пароля. Попробуйте снова.');
+  }
+};
+
 export const validateActivationCode = async (code: string): Promise<any> => {
   try {
     const response = await post('/users/validate-code', { code });
@@ -270,7 +331,47 @@ export const updateUser = async (
 };
 
 export const sendVerificationCode = async (email: string): Promise<any> => {
-  return await patch('/users/send-code', { email });
+  try {
+    const token = await AsyncStorage.getItem('token');
+
+    if (!token) {
+      throw new Error('Ошибка: Нет авторизации. Войдите в аккаунт.');
+    }
+
+    console.log('📩 Отправляем запрос на код:', { email });
+
+    const response = await patch('/users/send-code', { email }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    console.log('✅ Код отправлен:', response);
+    return response;
+  } catch (error: any) {
+    console.error('❌ Ошибка при отправке кода:', error);
+    throw new Error(handleError(error) || 'Ошибка при отправке кода.');
+  }
+};
+
+export const verifyEmailCode = async (email: string, code: string): Promise<any> => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+
+    if (!token) {
+      throw new Error('Ошибка: Нет авторизации. Войдите в аккаунт.');
+    }
+
+    console.log('🔍 Проверяем код:', { email, code });
+
+    const response = await api.post('/users/verify-code', { email, code }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    console.log('✅ Код подтверждён:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Ошибка при подтверждении кода:', error);
+    throw new Error(handleError(error) || 'Неверный код подтверждения.');
+  }
 };
 
 export const verifyResetPasswordCode = async (email: string, code: string): Promise<any> => {
@@ -286,29 +387,6 @@ export const verifyResetPasswordCode = async (email: string, code: string): Prom
     if (error.response?.status === 404) {
       throw new Error('Пользователь не найден.');
     }
-    throw error;
-  }
-};
-
-export const verifyEmailCode = async (email: string, code: string): Promise<any> => {
-  try {
-    console.log('Отправляем запрос на проверку кода:', { email, code });
-    const response = await post('/users/verify-code', { email, code });
-    console.log('Ответ от сервера на проверку кода:', response);
-    return response;
-  } catch (error: any) {
-    if (error.response?.status === 429) {
-      throw new Error('Слишком много попыток');
-    }
-    if (error.response?.data?.message === 'Неверный код подтверждения.') {
-      throw new Error('Неверный код подтверждения.');
-    }
-
-    const customError = handleError(error);
-    if (!customError) {
-      console.log('Скрытая ошибка проверки кода');
-    }
-
     throw error;
   }
 };
@@ -380,6 +458,10 @@ export const getUserProfile = async (): Promise<UserDataProps> => {
       id: userData._id, 
       firstName: userData.firstName || '',
       lastName: userData.lastName || '',
+      hideLastName: userData.hideLastName || false,
+      email: userData.email || '',
+      phone: userData.phone || '',
+      role: userData.role || '',      
       aboutMe: userData.aboutMe || 'Всем привет, меня зовут Катя, катаюсь на скейте и сноуборде, люблю вкусную еду)',
       username: userData.username || '',
       city: typeof userData.city === 'string' ? userData.city : userData.city?.name || 'Не указан',
@@ -388,6 +470,7 @@ export const getUserProfile = async (): Promise<UserDataProps> => {
       qrCode: userData.qrCode || '',
       subscribers: userData.subscribers ?? 0, // Проверяем наличие подписчиков
       rating: userData.rating ?? 0, // Проверяем наличие рейтинга
+      verificationStatus: userData.verificationStatus || 'not_verified', //
     };
   } catch (error: any) {
     console.error('❌ Ошибка при получении данных пользователя:', error.message);
@@ -407,6 +490,7 @@ export const getPublicProfile = async (userId: string): Promise<UserDataProps> =
       id: userData._id,
       firstName: userData.firstName || '',
       lastName: userData.lastName || '',
+      hideLastName: userData.hideLastName || false,
       aboutMe: userData.aboutMe || '',
       username: userData.username || '',
       city: typeof userData.city === 'string' ? userData.city : userData.city?.name || 'Не указан', // Проверяем, строка или объект
@@ -430,6 +514,7 @@ export const getUserProfileById = async (userId: string): Promise<UserDataProps>
       id: userData._id,
       firstName: userData.firstName || '',
       lastName: userData.lastName || '',
+      hideLastName: userData.hideLastName || false,
       aboutMe: userData.aboutMe || 'Основатель магазина Скейтшоп SK8, в сфободное время фотографирую природу.',
       username: userData.username || '',
       city: typeof userData.city === 'string' ? userData.city : userData.city?.name || 'Не указан',
@@ -505,28 +590,69 @@ export const checkIfSubscribed = async (userId: string): Promise<boolean> => {
   }
 };
 
+export const deleteProfileImage = async (): Promise<any> => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+    if (!token) {
+      throw new Error('Токен отсутствует. Пожалуйста, авторизуйтесь.');
+    }
+
+    const response = await api.delete('/users/profile-image', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    console.log('Фото профиля удалено:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Ошибка при удалении фото профиля:', error.message);
+    throw error;
+  }
+};
+
+export const deleteBackgroundImage = async (): Promise<any> => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+    if (!token) {
+      throw new Error('Токен отсутствует. Пожалуйста, авторизуйтесь.');
+    }
+
+    const response = await api.delete('/users/background-image', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    console.log('Фоновое изображение удалено:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Ошибка при удалении фонового изображения:', error.message);
+    throw error;
+  }
+};
+
 // Обработка ошибок
 export const handleError = (error: any): string | null => {
   if (error.response?.data?.message) {
     const serverMessage = error.response.data.message;
 
+    console.log("🔴 Получено сообщение от сервера в handleError:", serverMessage);
+
     const allowedMessages = [
-      'Неверный активационный код.',
-      'Неверный код подтверждения.',
-      'Код обязателен.',
-      'Email уже используется.',
-      'Телефон уже используется.',
-      'ID уже используется.',
-      'Пользователь не найден',
+      "Неверный активационный код.",
+      "Неверный код подтверждения.",
+      "Код обязателен.",
+      "Email уже используется.",
+      "Телефон уже используется.",
+      "ID уже используется.",
+      "Пользователь не найден",
     ];
 
     if (allowedMessages.includes(serverMessage)) {
-      return serverMessage; // Возвращаем серверное сообщение
+      return serverMessage; // Возвращаем конкретное сообщение
     }
   }
 
-  console.log('Скрытая ошибка:', error.response?.data || error.message);
-  return 'Произошла ошибка. Попробуйте снова.';
+  console.log("❌ Скрытая ошибка в handleError:", error.response?.data || error.message);
+  return "Произошла ошибка. Попробуйте снова.";
 };
+
 
 export default api;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet, Text, Alert } from 'react-native';
+import { View, ScrollView, StyleSheet, Text, Alert, Platform } from 'react-native';
 import VerificationNameForm from '../components/verification/VerificationNameForm';
 import VerificationPhotoForm from '../components/verification/VerificationPhotoForm';
 import IconBack from '@/components/svgConvertedIcons/iconBack';
@@ -49,41 +49,51 @@ const VerificationScreen: React.FC = () => {
     try {
       const userId = await AsyncStorage.getItem('userId');
       if (!userId) throw new Error('userId не найден');
-
+  
+      console.log('📸 Отправляемые файлы:', verificationData);
+  
       const formData = new FormData();
       formData.append('userId', userId);
-
-      const appendImageToFormData = (uri: string, fieldName: string) => {
-        formData.append(fieldName, {
-          uri,
-          name: `${fieldName}.${uri.split('.').pop()}`,
-          type: `image/${uri.split('.').pop()?.toLowerCase() || 'jpeg'}`,
-        } as any);
+  
+      // Функция добавления файлов в FormData
+      const appendImageToFormData = async (fileObject: any, fieldName: string) => {
+        if (Platform.OS === 'web') {
+          const response = await fetch(fileObject.uri);
+          const blob = await response.blob();
+          const fileType = blob.type.split('/')[1] || 'jpeg';
+          const fileName = `${fieldName}.${fileType}`;
+          formData.append(fieldName, new File([blob], fileName, { type: blob.type }));
+        } else {
+          formData.append(fieldName, {
+            uri: fileObject.uri,
+            name: `${fieldName}.${fileObject.uri.split('.').pop() || 'jpg'}`,
+            type: `image/${fileObject.uri.split('.').pop()?.toLowerCase() || 'jpeg'}`,
+          } as any);
+        }
       };
-
+  
       if (verificationData.passportPhoto) {
-        console.log('Добавляем паспортное фото...');
-        appendImageToFormData(verificationData.passportPhoto, 'passportPhoto');
+        console.log('📤 Добавляем паспортное фото...');
+        await appendImageToFormData(verificationData.passportPhoto, 'passportPhoto');
       }
-
       if (verificationData.selfiePhoto) {
-        console.log('Добавляем селфи...');
-        appendImageToFormData(verificationData.selfiePhoto, 'selfiePhoto');
+        console.log('📤 Добавляем селфи...');
+        await appendImageToFormData(verificationData.selfiePhoto, 'selfiePhoto');
       }
-
-      console.log('Отправляем FormData:', formData);
-
+  
+      console.log('📤 Отправляем FormData:', formData);
+  
       const response = await patchWithFiles('/users/verify', formData);
-
-      console.log('Ответ сервера:', response);
-
+      console.log('✅ Ответ сервера:', response);
+  
       Alert.alert('Успех', 'Фото успешно загружены!');
       router.push('/home');
     } catch (error: any) {
-      console.error('Ошибка:', error.message || error.response?.data || error);
+      console.error('❌ Ошибка:', error.message || error.response?.data || error);
       Alert.alert('Ошибка', error.message || 'Неизвестная ошибка');
     }
   };
+  
 
   const renderStepContent = () => {
     if (step === 1) {
@@ -114,44 +124,62 @@ const VerificationScreen: React.FC = () => {
   };
 
   return (
+    <View style={styles.backgroundContainer}>
     <View style={styles.container}>
-      <View style={styles.headerIcons}>
-        <IconBack onPress={() => (step > 1 ? setStep(step - 1) : router.back())} />
+      <View style={styles.topContainer}>
+        <IconBack onPress={() => (step > 1 ? setStep(step - 1) : router.back())} 
+        style={styles.iconBack}
+        />
+       <View style={styles.titleWrapper}> 
         <Text style={styles.headerTitle}>Верификация</Text>
       </View>
+      </View> 
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         {renderStepContent()}
       </ScrollView>
+    </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+    backgroundContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 100)',
+  },
   container: {
     backgroundColor: 'rgba(0, 0, 0, 100)',
     flex: 1,
     width: '100%',
+    height: '100%',
     paddingHorizontal: 16,
     maxWidth: 600,
-    marginHorizontal: 'auto'
+    marginHorizontal: 'auto',
+    paddingTop: 58,
   },
-  headerIcons: {
+  topContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    paddingHorizontal: 16,
-    marginTop: 75,
     position: 'relative',
-    height: 22,
+    marginBottom: 40,
+  },
+  iconBack: {
+    width: 32, // Фиксированная ширина иконки
+    zIndex: 20,
+  },
+  titleWrapper: {
+    flex: 1,
+    position: 'absolute',
+    width: '100%',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 15,
-    paddingRight: 40,
     color: '#fff',
-    textAlign: 'center',
-    width: '100%',
     fontWeight: '700',
+    fontSize: 15,
+    fontFamily: "SFUIDisplay-bold",
   },
   scrollViewContent: {
     flexGrow: 1,

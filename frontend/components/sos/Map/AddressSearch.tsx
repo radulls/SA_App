@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, TextInput, FlatList, TouchableOpacity, Text, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import * as Location from 'expo-location';
 import Fuse from 'fuse.js';
+import DeleteAdressIcon from '@/components/svgConvertedIcons/MapIcons/deleteAdressIcon';
 
 // Интерфейсы
 interface AddressSuggestion {
@@ -138,16 +139,31 @@ const AddressSearch: React.FC<AddressSearchProps> = ({ onSelectAddress, initialA
 
   return (
     <View style={styles.container}>
-      <TextInput
-        value={address}
-        onChangeText={(text) => {
-          setAddress(text);
-          debouncedFetch(text);
-        }}
-        placeholderTextColor='#000'
-        placeholder="Введите адрес"
-        style={styles.input}
-      />
+      <View style={styles.inputContainer}>
+        <TextInput
+          value={address}
+          onChangeText={(text) => {
+            setAddress(text);
+            debouncedFetch(text);
+          }}
+          placeholderTextColor='#000'
+          placeholder="Введите адрес"
+          style={styles.input}
+          underlineColorAndroid="transparent"
+        />
+       {address.length > 0 && (
+          <TouchableOpacity
+            style={styles.deleteIcon}
+            onPress={() => {
+              setAddress('');
+              setSuggestions([]);
+            }}
+          >
+            <DeleteAdressIcon />
+          </TouchableOpacity>
+        )}     
+      </View>
+      
       {loading && <ActivityIndicator size="small" color="#000" style={styles.loader} />}
       <FlatList
         data={suggestions}
@@ -171,6 +187,14 @@ const styles = StyleSheet.create({
       web: 0,
     }),    
   },
+  inputContainer:{
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    borderRadius: 12,
+    backgroundColor: '#f3f3f3',
+    marginBottom: 10,
+  },
   input: {
     fontSize: 14,
     fontWeight: '400',
@@ -178,7 +202,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#f3f3f3',
     padding: 16,
     borderRadius: 12,
-    marginBottom: 10,
+    width: '100%',
+    ...Platform.select({
+      web: {
+        outlineStyle: 'none',
+      },
+    }),
+  },
+  deleteIcon:{
+    marginRight: 15,
   },
   loader: {
     marginBottom: 10,

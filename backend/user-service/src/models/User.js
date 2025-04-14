@@ -3,9 +3,11 @@ const bcrypt = require('bcrypt');
 
 const userSchema = new mongoose.Schema({
   code: { type: String, unique: true, required: true }, // Обязательный код на первом шаге
+  invitedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, 
   username: { type: String, unique: true, default: null }, // Делаем обязательным, но генерируем временные уникальные значения
   firstName: { type: String, required: false },
   lastName: { type: String, required: false },
+  hideLastName: { type: Boolean, required: false, default: false },
   aboutMe: { type: String, required: false },
   passportPhoto: { type: String, required: false },
   selfiePhoto: { type: String, required: false },
@@ -13,6 +15,7 @@ const userSchema = new mongoose.Schema({
   backgroundImage: { type: String, required: false },
   qrCode: { type: String, required: false },
   email: { type: String, unique: true, default: null }, // Аналогично
+  tempEmail: { type: String, required: false }, // Временный email для подтверждения
   phone: { type: String, unique: true, default: null },
   city: { type: mongoose.Schema.Types.ObjectId, ref: 'City', required: false },
   role: { type: String, enum: ['user', 'admin', 'creator'], default: 'user' },
@@ -30,7 +33,7 @@ const userSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   verificationStatus: {
     type: String,
-    enum: ['not_verified', 'pending', 'verified', 'rejected'],
+    enum: ['not_verified', 'pending', 'verified', 'paymant', 'rejected', 'blocked'],
     default: 'not_verified',
   },
   emailVerificationCode: { type: String },

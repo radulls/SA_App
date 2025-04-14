@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
 	},
 	headerTitle: {
 		fontSize: 15,
-		// fontFamily: "SFUIDisplay-Bold",
+		fontFamily: "SFUIDisplay-Bold",
 		color: 'black',
 		textAlign: 'center',
 		width: '100%',
@@ -155,25 +155,24 @@ const styles = StyleSheet.create({
 		// position:'absolute',
 		top: 0,
 		left: 0,
-		minWidth: 400,
 		paddingLeft: 16,
 		paddingRight: 16,
 		paddingBottom: 41,
 		// maxWidth: 600,
 	},
 	stepIndicator1: {
-		// fontFamily: "SFUIDisplay-Bold",
+		fontFamily: "SFUIDisplay-Bold",
 		fontSize: 18,
-		marginTop: 186,
+		marginTop: 150,
 	},
 	stepIndicator2: {
-		// fontFamily: "SFUIDisplay-Bold",
+		fontFamily: "SFUIDisplay-Bold",
 		fontSize: 18,
-		marginTop: 148,
+		marginTop: 150,
 	},
 	instructions: {
 		fontSize: 12,
-		// fontFamily: "SFUIDisplay-Regular",
+		fontFamily: "SFUIDisplay-Regular",
 		marginTop: 10,
 		marginBottom: 26,
 	},
@@ -183,7 +182,6 @@ const styles = StyleSheet.create({
 		marginBottom: 20,
 	},
 	lockTextContainer: {
-		width: '90%',
 		flexDirection: 'row',
 		alignItems: 'center',
 		marginTop: 22,
@@ -197,7 +195,7 @@ const styles = StyleSheet.create({
 	},
 	text: {
 		fontSize: 10,
-		// fontFamily: "SFUIDisplay-Regular",
+		fontFamily: "SFUIDisplay-Regular",
 	},
 	Button: {
 		marginBottom: 41,

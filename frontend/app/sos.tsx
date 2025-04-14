@@ -30,7 +30,6 @@ const SosPage = () => {
       hours: splitDigits(formatNumber(hours > 0 ? hours : 0)),
     };
   };
-    
 
   useEffect(() => {
     const fetchAccess = async () => {
@@ -111,44 +110,46 @@ const SosPage = () => {
     return (
       <View style={styles.container}> 
         <View style={[styles.contentContainer, styles.acessDenied]}>
-          <Pressable onPress={closeSos} style={styles.closeDenied}>
-            <CloseIcon/>
-          </Pressable>   
-          <SosIcon width={150} height={150}/>
-          <Text style={styles.sosTitle}>SOS</Text>
-          <Text style={styles.sosSubTitle}>Эта функция будет доступна после 2х месяцев членства в объединении.</Text>
-          {/* Кастомное оформление времени */}
-          <View style={styles.timeContainer}>
-            {/* Месяцы */}
-            <View style={styles.timeBlock}>
-              <View style={styles.numbersContainer}>
-                {remaining.months.map((digit, index) => (
-                  <Text key={`month-${index}`} style={styles.timeNumber}>{digit}</Text>
-                ))}
-              </View>              
-              <Text style={styles.timeLabel}>мес.</Text>
+          <View style={styles.sosContainer}>
+            <Pressable onPress={closeSos} style={styles.closeDenied}>
+              <CloseIcon/>
+            </Pressable>   
+            <SosIcon width={150} height={150}/>
+            <Text style={styles.sosTitle}>SOS</Text>
+            <Text style={styles.sosSubTitle}>Эта функция будет доступна после 2х месяцев членства в объединении.</Text>
+            {/* Кастомное оформление времени */}
+            <View style={styles.timeContainer}>
+              {/* Месяцы */}
+              <View style={styles.timeBlock}>
+                <View style={styles.numbersContainer}>
+                  {remaining.months.map((digit, index) => (
+                    <Text key={`month-${index}`} style={styles.timeNumber}>{digit}</Text>
+                  ))}
+                </View>              
+                <Text style={styles.timeLabel}>мес.</Text>
+              </View>
+              <Text style={styles.dots}>:</Text>
+              {/* Дни */}
+              <View style={styles.timeBlock}>
+                <View style={styles.numbersContainer}>
+                  {remaining.days.map((digit, index) => (
+                    <Text key={`day-${index}`} style={styles.timeNumber}>{digit}</Text>
+                  ))}
+                </View>            
+                <Text style={styles.timeLabel}>дн.</Text>
+              </View>
+              <Text style={styles.dots}>:</Text>
+              {/* Часы */}
+              <View style={styles.timeBlock}>
+                <View style={styles.numbersContainer}>
+                  {remaining.hours.map((digit, index) => (
+                    <Text key={`hour-${index}`} style={styles.timeNumber}>{digit}</Text>
+                  ))}
+                </View>            
+                <Text style={styles.timeLabel}>ч.</Text>
+              </View>
             </View>
-            <Text style={styles.dots}>:</Text>
-            {/* Дни */}
-            <View style={styles.timeBlock}>
-              <View style={styles.numbersContainer}>
-                {remaining.days.map((digit, index) => (
-                  <Text key={`day-${index}`} style={styles.timeNumber}>{digit}</Text>
-                ))}
-              </View>            
-              <Text style={styles.timeLabel}>дн.</Text>
-            </View>
-            <Text style={styles.dots}>:</Text>
-            {/* Часы */}
-            <View style={styles.timeBlock}>
-              <View style={styles.numbersContainer}>
-                {remaining.hours.map((digit, index) => (
-                  <Text key={`hour-${index}`} style={styles.timeNumber}>{digit}</Text>
-                ))}
-              </View>            
-              <Text style={styles.timeLabel}>ч.</Text>
-            </View>
-          </View>
+          </View>         
         </View>
       </View>
     );
@@ -157,13 +158,15 @@ const SosPage = () => {
   return (
     <View style={styles.container}>
       <View style={styles.contentContainer}>
-        <View style={styles.topBlock}>
-          <TouchableOpacity style={styles.closeIcon} onPress={closeSos}>
-            <CloseIcon fill='#000' />
-          </TouchableOpacity>
-          <Text style={styles.title}>Сигнал SOS</Text>
-          <Text style={styles.subtitle}>Используйте, когда вам нужна помощь</Text>
-        </View>
+      <View style={styles.topContainer}>
+  <View style={styles.headerContainer}>
+    <TouchableOpacity style={styles.closeIcon} onPress={closeSos}>
+      <CloseIcon fill='#000' />
+    </TouchableOpacity>
+    <Text style={styles.title}>Сигнал SOS</Text>
+  </View>
+  <Text style={styles.subtitle}>Используйте, когда вам нужна помощь</Text>
+</View>
 
         {/* Первый шаг: выбор локации */}
         {step === 1 && (
@@ -207,34 +210,54 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  acessDenied:{
+  
+  topContainer: {
+    paddingTop: 56, // Отступ от верхней границы экрана
+  },
+  headerContainer: {
+    flexDirection: 'row', // Размещаем элементы в строку
+    alignItems: 'center', // Выравниваем элементы по центру по вертикали
+    justifyContent: 'center', // Выравниваем элементы по центру по горизонтали
+    position: 'relative', // Позиционируем контейнер относительно
+  },
+
+  acessDenied: {
     backgroundColor: '#FF3B00',
+    width: '100%',
+    maxWidth: '100%', // Переопределяем ограничение
+
+  },
+  sosContainer:{
+    maxWidth: 600,
+    width: '100%',
+    marginHorizontal: 'auto', // Для центрирования контента внутри
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 16,
-    position: 'relative'
+    position: 'relative',
+    height: '100%',
   },
   closeDenied:{
     position: 'absolute',
     top: Platform.select({
-      ios: 40,
-      android: 40,
-      web: 10,
+      ios: 60,
+      android: 60,
+      web: 60,
     }),  
-    left: 4,
-    padding: 20
+    left: 16,
+    
   },
   sosTitle:{
     color: '#fff',
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: "SFUIDisplay-bold",
     paddingTop: 35,
     paddingBottom: 15,
   },
   sosSubTitle:{
     color: '#fff',
     fontSize: 14,
-    fontWeight: '400',
+    fontFamily: "SFUIDisplay-medium",
     textAlign: 'center',
     width: '90%'
   },
@@ -255,7 +278,7 @@ const styles = StyleSheet.create({
   },
   timeNumber:{
     fontSize: 30,
-    fontWeight: '400',
+    fontFamily: "SFUIDisplay-medium",
     paddingVertical: 18,
     paddingHorizontal: 10,
     backgroundColor: '#EFEFEF',
@@ -263,7 +286,7 @@ const styles = StyleSheet.create({
   },
   dots:{
     fontSize: 30,
-    fontWeight: '400',
+    fontFamily: "SFUIDisplay-medium",
     marginTop: 15,
     marginHorizontal: 4
   },
@@ -271,39 +294,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700'
   },
-  topBlock: {
-    backgroundColor: '#fff',
-    position: 'relative',
-    paddingHorizontal: 16,
-    paddingVertical: 17,
-    alignItems: 'center'
-  },
   title: {
     fontSize: 15,
-    paddingTop: Platform.select({
-      ios: 40,
-      android: 40,
-      web: 0,
-    }),    
-    fontWeight: '700',
+    fontFamily: "SFUIDisplay-bold",
+    textAlign: 'center', // Выравниваем текст по центру
+    flex: 1, // Занимаем все доступное пространство
   },
   subtitle: {
     fontSize: 12,
-    paddingTop: 10,
-    fontWeight: '400',
-    color: '#8b8b8b'
+    paddingTop: 9,
+    paddingBottom: 14,
+    fontFamily: "SFUIDisplay-regular",
+    color: '#8b8b8b',
+    textAlign: 'center', // Выравниваем текст по центру
   },
-  closeIcon: {
-    position: 'absolute',
-    left: 0,
-    padding: 20,
-    top: Platform.select({
-      ios: 40,
-      android: 40,
-      web: 0,
-    }),   
-    zIndex: 1000
-  }
+closeIcon: {
+  position: 'absolute', // Абсолютное позиционирование для кнопки закрытия
+  left: 20, // Отступ слева
+  zIndex: 1000, // Убедимся, что кнопка поверх других элементов
+},
 });
 
 export default SosPage;

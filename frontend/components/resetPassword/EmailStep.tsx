@@ -52,18 +52,19 @@ const EmailStep = forwardRef<EmailStepRef, Props>(({ value, onDataChange, onNext
 
 const styles = StyleSheet.create({
   form: {
-    marginTop: 30,
+    marginTop: 28,
   },
   title: {
     fontSize: 18,
     color: '#fff',
-    fontWeight: '700',
+    fontFamily: "SFUIDisplay-bold",
   },
   description: {
     marginTop: 10,
     color: '#fff',
     fontSize: 12,
     marginBottom: 30,
+    fontFamily: "SFUIDisplay-medium",
   },
 });
 

@@ -5,6 +5,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { IMAGE_URL } from '@/api';
 import IconBack from '@/components/svgConvertedIcons/iconBack';
 import CheckMarkIcon from '@/components/svgConvertedIcons/checkMarkIcon';
+import { getFullName } from '@/utils/getFullName';
 IMAGE_URL
 
 // Интерфейс для данных о помощниках
@@ -163,7 +164,8 @@ const SelectHelpersScreen = () => {
                           {item.user.username}
                         </Text>            
                         <Text style={styles.name}>
-                          {item.user.firstName} {item.user.lastName} 
+                          {getFullName(item.user)}
+                          {/* {item.user.firstName} {item.user.lastName}  */}
                         </Text>
                       </View>         
                     </View>   

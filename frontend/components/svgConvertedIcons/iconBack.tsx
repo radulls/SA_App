@@ -4,7 +4,7 @@ import { TouchableOpacity } from 'react-native';
 import PropTypes from 'prop-types';
 import { StyleSheet } from 'react-native';
 
-const IconBack = ({ width = 14, height = 14, fill = "white", onPress }: { width?: number; height?: number; fill?: string; onPress: () => void }) => (
+const IconBack = ({ width = 9, height = 14, fill = "white", onPress }: { width?: number; height?: number; fill?: string; onPress?: () => void }) => (
   <TouchableOpacity onPress={onPress} style={styles.container}>
     <Svg width={width} height={height} viewBox="0 0 8 14" fill="none">
       <Path
@@ -26,7 +26,6 @@ IconBack.propTypes = {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
     zIndex: 100
   }
 })

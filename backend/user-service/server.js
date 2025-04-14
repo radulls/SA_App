@@ -22,6 +22,9 @@ app.use('/api/captcha', require('./src/routes/captchaRoutes'));
 app.use('/api/users', require('./src/routes/userRoutes')); 
 app.use('/api/reports', require('./src/routes/reportRoutes'))
 app.use('/api/cities', require('./src/routes/cityRoutes')); 
+app.use('/api/blockedUsers', require('./src/routes/blockedUsers'));
+app.use('/api/codes', require('./src/routes/codeRoutes'));
+app.use('/api/admin', require('./src/routes/adminRoutes'));
 app.use('/uploads', express.static('uploads'));
 
 // Проверка работы сервера

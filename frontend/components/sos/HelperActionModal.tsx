@@ -224,11 +224,11 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     paddingHorizontal: 16,
-    paddingBottom: 50,
+    paddingBottom: 52,
     gap: 12,
   },
   optionButton: {
-    paddingVertical: 18, 
+    paddingVertical: 17, 
     paddingHorizontal: 16,
     width: '100%',
     backgroundColor: '#F5F5F5', 
@@ -236,38 +236,39 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: "SFUIDisplay-bold",
     color: '#1A1A1A',
     textAlign: 'left'
   },
   copySendContainer:{
     flexDirection: 'row', 
     justifyContent: 'space-between', 
-    marginBottom: 12 
+    marginBottom: 7, 
+    gap: 12,
   },
   rowButton: { 
     alignItems: 'center', 
-    paddingVertical: 18, 
+    paddingVertical: 14, 
     backgroundColor: '#F5F5F5', 
     borderRadius: 12, 
     flex: 1, 
     justifyContent: 'center', 
-    marginHorizontal: 5 
   },
   rowButtonText: { 
     fontSize: 12, 
     color: '#000', 
-    fontWeight: '500', 
-    paddingTop: 10 
+    fontFamily: "SFUIDisplay-medium",
+    paddingTop: 10,
   },
   dragHandleContainer: {
     width: '100%',
     alignItems: 'center',
-    paddingVertical: 10, 
+    paddingTop: 11, 
+    paddingBottom: 2,
   },
   dragHandle: {
-    width: 50,
-    height: 5,
+    width: 36,
+    height: 4,
     backgroundColor: '#DADBDA',
     borderRadius: 3,
   },  
