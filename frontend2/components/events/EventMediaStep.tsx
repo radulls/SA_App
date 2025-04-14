@@ -11,6 +11,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import type { FullEventData } from '@/types/event';
 import DeletePhotoIcon from '../svgConvertedIcons/deletePhotoIcon';
+import { EVENT_IMAGE_URL } from '@/api/eventApi';
 
 interface Props {
   eventData: FullEventData;
@@ -157,13 +158,12 @@ const styles = StyleSheet.create({
   },
   removeIcon: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 2,
-    zIndex: 1,
-  },
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -12 }, { translateY: -12 }],
+    zIndex: 2,
+    elevation: 2,
+  },  
   rowWrap: {
     width: '100%',
     gap: 12,

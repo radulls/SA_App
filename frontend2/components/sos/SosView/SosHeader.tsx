@@ -39,43 +39,43 @@ const SosHeader: React.FC<SosHeaderProps> = ({ onClose, sosId }) => {
   };
 
   return (
-<View style={styles.topItems}>
-  {/* Первый контейнер (закрыть) */}
-  <View style={styles.leftContainer}>
-    <TouchableOpacity style={styles.closeIcon} onPress={onClose}>
-      <CloseIcon fill="#000" />
-    </TouchableOpacity>
-  </View>
-
-  {/* Заголовок */}
-  <View style={styles.titleContainer}>
-    <Text style={styles.sosTitle}>Сигнал SOS</Text>
-  </View>
-
-  {/* Третий контейнер (хелперс, хелперкаунт, опшнс) */}
-  <View style={styles.rightContainer}>
-    <View style={styles.options}>
-      <View style={styles.helpers}>
-        <TouchableOpacity style={styles.closeIcon} onPress={navigateToHelpers}>
-          <SosHelpersIcon />
+    <View style={styles.topItems}>
+      {/* Первый контейнер (закрыть) */}
+      <View style={styles.leftContainer}>
+        <TouchableOpacity style={styles.closeIcon} onPress={onClose}>
+          <CloseIcon fill="#000" />
         </TouchableOpacity>
-        {helperCount > 0 && <Text style={styles.helperCount}>{helperCount}</Text>}
       </View>
 
-      <TouchableOpacity style={[styles.closeIcon, styles.moreOptions]} onPress={() => setIsModalVisible(true)}>
-        <MoreOptionsIcon fill="#000" />
-      </TouchableOpacity>
-    </View>
-  </View>
+      {/* Заголовок */}
+      <View style={styles.titleContainer}>
+        <Text style={styles.sosTitle}>Сигнал SOS</Text>
+      </View>
 
-  {/* Модалка */}
-  <HelperActionModal
-    visible={isModalVisible}
-    onClose={() => setIsModalVisible(false)}
-    sosId={sosId}
-    mode="options" // Меню с "Копировать", "Поделиться", "Пожаловаться"
-  />
-</View>
+      {/* Третий контейнер (хелперс, хелперкаунт, опшнс) */}
+      <View style={styles.rightContainer}>
+        <View style={styles.options}>
+          <View style={styles.helpers}>
+            <TouchableOpacity style={styles.closeIcon} onPress={navigateToHelpers}>
+              <SosHelpersIcon fill='#000'/>
+            </TouchableOpacity>
+            {helperCount > 0 && <Text style={styles.helperCount}>{helperCount}</Text>}
+          </View>
+
+          <TouchableOpacity style={[styles.closeIcon, styles.moreOptions]} onPress={() => setIsModalVisible(true)}>
+            <MoreOptionsIcon fill="#000" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Модалка */}
+      <HelperActionModal
+        visible={isModalVisible}
+        onClose={() => setIsModalVisible(false)}
+        sosId={sosId}
+        mode="options" // Меню с "Копировать", "Поделиться", "Пожаловаться"
+      />
+    </View>
   );
 };
 

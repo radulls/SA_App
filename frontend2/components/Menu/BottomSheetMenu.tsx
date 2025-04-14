@@ -92,81 +92,98 @@ const BottomSheetMenu: React.FC<BottomSheetMenuProps> = ({ isVisible, onClose, b
   ).current;
 
   return (
-    <Modal visible={isVisible} transparent>
-      <Animated.View style={[styles.overlay, { opacity: fadeAnim }]} />
-      <TouchableOpacity 
-        style={styles.touchableOverlay} 
-        activeOpacity={1} 
-        onPress={() => closeWithAnimation()}
-      >
-        <Animated.View 
-        style={[styles.menuContainer, { transform: [{ translateY }] }]}>          
-          <View style={styles.dragHandleContainer} {...panResponder.panHandlers}>
+    <Modal visible={isVisible} transparent animationType="none">
+      <View style={styles.modalOverlay}>
+        {/* Кликабельный фон */}
+        <TouchableOpacity
+          style={styles.backdropTouchable}
+          activeOpacity={1}
+          onPress={() => closeWithAnimation()}
+        />
+  
+        <Animated.View
+          style={[styles.menuContainer, { transform: [{ translateY }] }]}
+          {...panResponder.panHandlers}
+        >
+          <View style={styles.dragHandleContainer}>
             <View style={styles.dragHandle} />
           </View>
+  
           <View style={styles.rowButtons}>
-            {buttons.filter(button => button.isRowButton).map((button, index) => (
-              <TouchableOpacity key={index} style={styles.rowButton} onPress={button.onPress}>
-                {button.icon && <View style={styles.icon}>{button.icon}</View>}
-                <Text style={styles.rowButtonText}>{button.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <View style={styles.columnButtons}>
-            {buttons.filter(button => !button.isRowButton).map((button, index, arr) => (
-              <React.Fragment key={index}>
-               <TouchableOpacity
-                  style={styles.menuButton}
+            {buttons
+              .filter((button) => button.isRowButton)
+              .map((button, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.rowButton}
                   onPress={button.onPress}
                 >
                   {button.icon && <View style={styles.icon}>{button.icon}</View>}
-                  <Text
-                    style={[
-                      styles.buttonText,
-                      ['Заблокировать', 'Удалить'].includes(button.label) && styles.blockText,
-                      { color: button.labelColor || '#1A1A1A' }
-                    ]}
-                  >
-                    {button.label}
-                  </Text>
+                  <Text style={styles.rowButtonText}>{button.label}</Text>
                 </TouchableOpacity>
-                {index < arr.length - 1 && <View style={styles.separator} />}
-              </React.Fragment>
-            ))}
+              ))}
           </View>
+  
+          <View style={styles.columnButtons}>
+            {buttons
+              .filter((button) => !button.isRowButton)
+              .map((button, index, arr) => (
+                <React.Fragment key={index}>
+                  <TouchableOpacity
+                    style={styles.menuButton}
+                    onPress={button.onPress}
+                    disabled={button.disabled}
+                  >
+                    {button.icon && <View style={styles.icon}>{button.icon}</View>}
+                    <Text
+                      style={[
+                        styles.buttonText,
+                        ['Заблокировать', 'Удалить', 'Пожаловаться'].includes(button.label)
+                          ? styles.blockText
+                          : { color: button.labelColor || '#1A1A1A' },
+                      ]}
+                    >
+                      {button.label}
+                    </Text>
+                  </TouchableOpacity>
+                  {index < arr.length - 1 && <View style={styles.separator} />}
+                </React.Fragment>
+              ))}
+          </View>
+  
           <TouchableOpacity style={styles.cancelButton} onPress={() => closeWithAnimation()}>
             <Text style={styles.buttonText}>Отмена</Text>
           </TouchableOpacity>
         </Animated.View>
-      </TouchableOpacity>
+      </View>
     </Modal>
   );
+  
 };
 
 const styles = StyleSheet.create({
-  overlay: { 
-    position: 'absolute', 
-    top: 0, 
-    left: 0, 
-    right: 0, 
-    bottom: 0, 
-    backgroundColor: 'rgba(0, 0, 0, 0.3)' 
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
-  touchableOverlay: { 
-    flex: 1, 
-    justifyContent: 'flex-end', 
-    alignSelf: 'center', 
-    width: '100%', 
-    maxWidth: 600 
+  
+  backdropTouchable: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
   },
-  menuContainer: { 
-    width: '100%',
+  
+  menuContainer: {
+    zIndex: 2,
     backgroundColor: '#fff',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     paddingHorizontal: 16,
     paddingBottom: 52,
     gap: 12,
+    width: '100%',
+    maxWidth: 600,
+    alignSelf: 'center',
   },
   dragHandleContainer: {
     width: '100%',
@@ -226,6 +243,7 @@ const styles = StyleSheet.create({
   },
   buttonText: { 
     fontSize: 12, 
+    fontWeight: '700',
     fontFamily: "SFUIDisplay-bold", 
     color: '#1A1A1A', 
     textAlign: 'left' 

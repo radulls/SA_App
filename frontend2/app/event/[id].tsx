@@ -12,7 +12,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useLocalSearchParams } from 'expo-router';
 import { getEventById, toggleParticipationEvent } from '@/api/eventApi';
-import { EventData, toggleLikeEvent } from '@/api/eventApi';
+import { EventData, toggleLikeEvent, deleteEvent, togglePinEvent } from '@/api/eventApi';
 import { POST_IMAGE_URL } from '@/api/postApi';
 import PhotoCarousel from '@/components/PhotoCarousel/PhotoCarousel';
 import SosMapView from '@/components/sos/ViewMap/SosMapView';
@@ -28,6 +28,10 @@ import Toast from 'react-native-toast-message';
 import EventCommentsBottomSheet from '@/components/events/EventCommentsBottomSheet';
 import { getCommentsByEvent } from '@/api/eventComment';
 import EventHeader from '@/components/events/EventHeader';
+import ReadMore from '@fawazahmed/react-native-read-more';
+import { ExpandableText } from '@/components/events/ExpandableText';
+
+const DESCRIPTION_LINE_LIMIT = 4;
 
 const EventDetailsPage = () => {
   const { id } = useLocalSearchParams();
@@ -97,7 +101,7 @@ const EventDetailsPage = () => {
   
     const fetchComments = async () => {
       try {
-        const comments = await getCommentsByEvent(event._id); // 👈 реализуй, если нет
+        const comments = await getCommentsByEvent(event._id);
         setCommentsCount(comments.length);
       } catch (error) {
         console.error('Ошибка загрузки комментариев:', error);
@@ -191,8 +195,33 @@ const EventDetailsPage = () => {
       Toast.show({ type: 'error', text1: 'Не удалось изменить участие', position: 'bottom' });
     }
   };
+
+  const handleDelete = async () => {
+    try {
+      await deleteEvent(event._id);
+      Toast.show({ type: 'success', text1: 'Мероприятие удалено' });
+      router.back(); // вернуться назад после удаления
+    } catch (err) {
+      Toast.show({ type: 'error', text1: 'Ошибка при удалении' });
+    }
+  };
   
+  const handlePin = async () => {
+    try {
+      await togglePinEvent(event._id);
+      Toast.show({ type: 'success', text1: 'Закреплено / откреплено' });
+    } catch (err) {
+      Toast.show({ type: 'error', text1: 'Ошибка при закреплении' });
+    }
+  };
   
+  const handleEdit = () => {
+    if (!event) return;
+    router.push({
+      pathname: '/create-event',
+      params: { eventId: event._id },
+    });
+  };  
 
   const cityName =
   event.from === 'subdivision'
@@ -207,7 +236,15 @@ const EventDetailsPage = () => {
           source={{ uri: `${POST_IMAGE_URL}${event.cover}` }}
           style={styles.coverImage}
         />
-        <EventHeader eventId={event._id} onBack={() => router.back()} />
+       <EventHeader
+        eventId={event._id}
+        onBack={() => router.back()}
+        mode={currentUserId === event.userId ? 'owner' : 'options'}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onPin={handlePin}
+      />
+
       </View>
 
         {/* Блок с инфой на жёлтом фоне */}
@@ -268,7 +305,6 @@ const EventDetailsPage = () => {
           </View>
         )}
 
-  
         {/* Фото */}
         {event.photos?.length > 0 && (
           <PhotoCarousel photos={event.photos.map(photo => `${POST_IMAGE_URL}${photo}`)} />
@@ -278,41 +314,20 @@ const EventDetailsPage = () => {
         {event.description && (
           <View style={styles.descriptionBlock}>
             <Text style={styles.label}>Описание</Text>
-
-            <View
-              onLayout={(e) => {
-                const { height } = e.nativeEvent.layout;
-                const lineHeight = 20; // подгони под fontSize
-                const linesCount = Math.round(height / lineHeight);
-                if (linesCount > 4 && !isLongDescription) {
-                  setIsLongDescription(true);
-                }
-              }}
-            >
-              <Text
-                style={[styles.text, !showFullDescription && { height: 4 * 20, overflow: 'hidden' }]}
-              >
-                {event.description}
-              </Text>
-            </View>
-
-            {isLongDescription && (
-              <TouchableOpacity onPress={() => setShowFullDescription(prev => !prev)}>
-                <Text style={{ color: '#000', fontWeight: '700', marginTop: 4 }}>
-                  {showFullDescription ? 'Скрыть' : 'Читать полностью'}
-                </Text>
-              </TouchableOpacity>
-            )}
+            <ExpandableText
+              text={event.description}
+              numberOfLines={4}
+              textStyle={styles.text}
+              toggleStyle={styles.toggleText}
+            />
           </View>
         )}
-
         {/* Партнёры */}
         {(event.partnersUsers?.length > 0 || event.partnersMarkets?.length > 0) && (
           <View style={styles.partnersBlock}>
             <Text style={styles.label}>Партнёры</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.partnersContainer}>
               {[...event.partnersUsers, ...event.partnersMarkets].map((partner: any) => {
-                console.log('🧩 partner:', partner); 
                 const isUser = 'username' in partner;
                 const avatar = partner.profileImage || partner.avatar;
                 const name = isUser
@@ -376,7 +391,6 @@ const EventDetailsPage = () => {
           </Text>
         </TouchableOpacity>
 
-
         <EventCommentsBottomSheet
           isVisible={isCommentsVisible}
           onClose={() => setIsCommentsVisible(false)}
@@ -402,22 +416,23 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 600,
     backgroundColor: '#fff',
-    position: 'relative'
+    position: 'relative',
+    gap: 20
   },
   coverWrapper: {
     position: 'relative',
     width: '100%',
     height: 250,
-    marginBottom: -80, // сколько нужно перекрыть карточкой
+    marginBottom: -80, 
   },
   coverImage: {
     width: '100%',
     height: 250,
-    marginBottom: -80, // 👈 на сколько карточка залезает
+    marginBottom: -80, 
   },  
   infoCardContainer: {
     paddingHorizontal: 16,
-    marginTop: -10, // 👈 наезжает на картинку
+    marginTop: -10,
     zIndex: 2,
   },  
   infoCard: {
@@ -471,15 +486,12 @@ const styles = StyleSheet.create({
   map: {
     width: '100%',
     height: 200,
-    marginTop: 8,
   },
   descriptionBlock: {
     paddingHorizontal: 16,
-    paddingTop: 20,
   },
   partnersBlock: {
     paddingHorizontal: 16,
-    paddingTop: 20,
   },
   partnersContainer:{
     marginTop: 12,
@@ -502,7 +514,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 10,
     alignItems: 'center',
-    marginBottom: 40,
     marginHorizontal: 16,
   },
   buttonParticipating:{
@@ -517,7 +528,6 @@ const styles = StyleSheet.create({
   },
   locationBlock: {
     paddingHorizontal: 16,
-    paddingTop: 24,
   },
   mapWrapper: {
     borderRadius: 20,
@@ -560,7 +570,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8E8E8',
     borderRadius: 8,
     paddingVertical: 12,
-    paddingHorizontal: 28,
+    width: '100%',
+    alignItems: 'center'
   },
   viewButtonText: {
     fontWeight: '700',
@@ -593,6 +604,19 @@ const styles = StyleSheet.create({
 	number:{
 		fontWeight: '600'
 	},
+  toggle: {
+    marginTop: 10,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  toggleButton: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+  },
+  toggleText: {
+    color: '#000',
+    fontWeight: 'bold',
+  },
 });
 
 

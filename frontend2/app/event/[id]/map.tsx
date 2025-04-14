@@ -23,21 +23,23 @@ const EventMapScreen = () => {
   return (
     <View style={styles.container}>
       {/* Карта с кастомной иконкой для мероприятий */}
-      <SosMapView
-        location={{ latitude, longitude }}
-        customIcon="eventGeotag"
-      />
-      {/* Кнопка назад */}
-      <SafeAreaView style={styles.backButtonWrapper}>
-        <View style={styles.backButton}>
-          <IconBack onPress={() => router.back()} fill='black'/>
-        </View>
-      </SafeAreaView>
+      <View style={styles.contentContainer}>
+        <SosMapView
+          location={{ latitude, longitude }}
+          customIcon="eventGeotag"
+        />
+        {/* Кнопка назад */}
+        <SafeAreaView style={styles.backButtonWrapper}>
+          <View style={styles.backButton}>
+            <IconBack onPress={() => router.back()} fill='black'/>
+          </View>
+        </SafeAreaView>
 
-      {/* Блок с адресом */}
-      <View style={styles.addressBlock}>
-        <Text style={styles.addressLabel}>Локация</Text>
-        <Text style={styles.addressText}>{fullAddress}</Text>
+        {/* Блок с адресом */}
+        <View style={styles.addressBlock}>
+          <Text style={styles.addressLabel}>Локация</Text>
+          <Text style={styles.addressText}>{fullAddress}</Text>
+        </View>
       </View>
     </View>
   );
@@ -46,6 +48,12 @@ const EventMapScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    alignItems: 'center'
+  },
+  contentContainer:{
+    flex: 1,
+    maxWidth: 600,
+    width: '100%'
   },
   backButtonWrapper: {
     position: 'absolute',

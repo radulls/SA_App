@@ -7,6 +7,7 @@ export default function Index() {
   const linkStyle = {fontSize: 24, marginBottom: 16}
   const [userId, setUserId] = useState<string | null>(null);
   const sosId = "67c2e5a6050f7300adeb1d46";
+  const eventId = "67faea7378769e20f626e8d1";
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,7 +34,7 @@ export default function Index() {
         alignItems: "center",
         padding: 16,
       }}>
-        <Link style={linkStyle} href="/auth/login">Вход</Link>
+        <Link style={[linkStyle, {marginTop: 40}]} href="/auth/login">Вход</Link>
         <Link style={linkStyle} href="/register">Регистрация</Link>
         <Link style={linkStyle} href="/verification">Верификация</Link>
         <Link style={linkStyle} href="/home">Профиль</Link>
@@ -44,14 +45,13 @@ export default function Index() {
         <Link style={linkStyle} href={`/sos-signal/${sosId}`}>
           Сос сигнал
         </Link>
-        <Link style={linkStyle} href="/eventCreation">Создать пост</Link>
         <Link style={linkStyle} href="/search">Поиск</Link>
         <Link style={linkStyle} href="/messages">Сообщения</Link>
         <Link style={linkStyle} href="/message">Сообщение</Link>
         <Link style={linkStyle} href="/settings">Настройки</Link>
         <Link style={linkStyle} href="/dome">Дом</Link>
         <Link style={linkStyle} href="/PostView">Детальный видеопост</Link>
-        {/* <Text>Edit app/index.tsx to edit this screen.</Text> */}
+        <Link style={linkStyle} href={`/event/${eventId}`}>Мероприятие</Link>
       </View>
     </ScrollView>
   );

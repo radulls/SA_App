@@ -92,7 +92,6 @@ const EventCommentsBottomSheet: React.FC<EventCommentsBottomSheetProps> = ({ isV
     setIsCommentMenuVisible(true);
   };
   
-  
   const flattenReplies = (comment: any): any[] => {
     const result: any[] = [];
     const stack = [...(comment.replies || [])];
@@ -247,28 +246,23 @@ const EventCommentsBottomSheet: React.FC<EventCommentsBottomSheetProps> = ({ isV
   };
   
   return (
-    <Modal visible={isVisible} transparent>
-      {/* Затемнение */}
-      <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
-        <Pressable
-          style={{ flex: 1 }}
-          onPress={closeWithAnimation}
-        />
-      </Animated.View>
-    
-      {/* Сам BottomSheet (НЕ Touchable!) */}
-      <View style={styles.touchableOverlay}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={{ flex: 1, justifyContent: 'flex-end' }}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-        >
-          <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
-            <View style={styles.dragHandleContainer} {...panResponder.panHandlers}>
+    <>
+      <Modal visible={isVisible} transparent animationType="none">
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={styles.backdropTouchable}
+            activeOpacity={1}
+            onPress={closeWithAnimation}
+          />
+          <Animated.View
+            style={[styles.modalContainer, { transform: [{ translateY }] }]}
+            {...panResponder.panHandlers}
+          >
+            <View style={styles.dragHandleContainer}>
               <View style={styles.dragHandle} />
             </View>
             <Text style={styles.title}>Ответы</Text>
-
+  
             <ScrollView
               style={{ flex: 1 }}
               contentContainerStyle={{ paddingBottom: 20 }}
@@ -276,77 +270,107 @@ const EventCommentsBottomSheet: React.FC<EventCommentsBottomSheetProps> = ({ isV
               showsVerticalScrollIndicator={false}
             >
               {comments
-                .filter(c => !c.parentCommentId)
-                .map(comment => renderComment(comment))}
+                .filter((c) => !c.parentCommentId)
+                .map((comment) => renderComment(comment))}
             </ScrollView>
-
-            <SafeAreaView>
-              <View style={styles.inputContainer}>
-                {replyTo && 
-                  <View style={styles.replyToContainer}>
-                    <Text style={styles.replyingTo}>Ваш ответ 
-                    <Text style={styles.replyToUsername}>@{replyTo.username}</Text>
-                    </Text>
-                    <TouchableOpacity onPress={() => setReplyTo(null)}>
-                      <CloseIcon fill='#000'/>
-                    </TouchableOpacity>                    
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 0}
+            >
+              <SafeAreaView>
+                <View style={styles.inputContainer}>
+                  {replyTo && (
+                    <View style={styles.replyToContainer}>
+                      <Text style={styles.replyingTo}>
+                        Ваш ответ <Text style={styles.replyToUsername}>@{replyTo.username}</Text>
+                      </Text>
+                      <TouchableOpacity onPress={() => setReplyTo(null)}>
+                        <CloseIcon fill="#000" />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                  <View style={styles.inputRow}>
+                    <TextInput
+                      style={styles.input}
+                      value={text}
+                      onChangeText={setText}
+                      placeholder="Ваш комментарий"
+                      placeholderTextColor="#999"
+                    />
+                    <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
+                      <CreatePostIcon />
+                    </TouchableOpacity>
                   </View>
-                }
-                <View style={styles.inputRow}>
-                  <TextInput
-                    style={styles.input}
-                    value={text}
-                    onChangeText={setText}
-                    placeholder="Ваш комментарий"
-                    placeholderTextColor="#999" 
-                  />
-                  
-                  <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-                    <CreatePostIcon/>
-                  </TouchableOpacity>
                 </View>
-              </View>
-            </SafeAreaView>
-
+              </SafeAreaView>
+            </KeyboardAvoidingView>
           </Animated.View>
-        </KeyboardAvoidingView>
-        <BottomSheetMenu
-          isVisible={isCommentMenuVisible}
-          onClose={() => setIsCommentMenuVisible(false)}
-          buttons={[
-            selectedComment?.userId === currentUserId
-              ? {
-                  label: 'Удалить',
-                  onPress: handleCommentDelete,
-                }
-              : {
-                  label: 'Пожаловаться',
-                  onPress: () => {
-                    setIsCommentMenuVisible(false);
-                    setTimeout(() => setIsCommentReportVisible(true), 200);
-                  },
+        </View>
+      </Modal>
+  
+      {/* Меню комментариев */}
+      <BottomSheetMenu
+        isVisible={isCommentMenuVisible}
+        onClose={() => setIsCommentMenuVisible(false)}
+        buttons={[
+          selectedComment?.userId === currentUserId
+            ? {
+                label: 'Удалить',
+                onPress: handleCommentDelete,
+              }
+            : {
+                label: 'Пожаловаться',
+                onPress: () => {
+                  setIsCommentMenuVisible(false);
+                  setTimeout(() => setIsCommentReportVisible(true), 200);
                 },
-          ]}
-        />
-        <ReportMenu
-          isVisible={isCommentReportVisible}
-          onClose={() => setIsCommentReportVisible(false)}
-          userId={selectedComment?._id} // <-- это должен быть _id комментария
-          type="comment"
-        />
-      </View>
-    </Modal>
+              },
+        ]}
+      />
+  
+      {/* Меню жалоб */}
+      <ReportMenu
+        isVisible={isCommentReportVisible}
+        onClose={() => setIsCommentReportVisible(false)}
+        userId={selectedComment?._id}
+        type="comment"
+      />
+    </>
   );
+  
 };
 
 const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
+  
+  backdropTouchable: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  
+  modalContainer: {
+    backgroundColor: 'white',
+    padding: 16,
+    paddingBottom: 20,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    height: '100%',
+    maxHeight: '80%',
+    maxWidth: 600,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  
   overlay: { 
     position: 'absolute', 
     top: 0, 
     left: 0, 
     right: 0, 
     bottom: 0, 
-    backgroundColor: 'rgba(0,0,0,0.3)' 
+    backgroundColor: 'rgba(0, 0, 0, 0.3)' 
   },
   touchableOverlay: { 
     flex: 1, 
@@ -365,7 +389,7 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   sheet: {
-    height: '70%', 
+    height: SCREEN_HEIGHT * 0.8,
     backgroundColor: '#fff',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,

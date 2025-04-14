@@ -77,27 +77,35 @@ const EventDateTimeStep: React.FC<EventDateTimeStepProps> = ({
         <View style={styles.inputWrapper}>
           {icon}
           <input
-            type={mode}
-            value={value || ''}
-            placeholder={placeholder}
-            onChange={(e) =>
-              setEventData((prev) => ({ ...prev, [field!]: e.target.value }))
-            }
-            style={{
-              border: 'none',
-              backgroundColor: 'transparent',
-              fontSize: 14,
-              flex: 1,
-              outline: 'none',
-              color: '#000',
-              appearance: 'none',
-            }}
-          />
+  type={mode === 'date' ? 'date' : 'time'}
+  value={value ?? ''}
+  placeholder={placeholder}
+  onInput={(e) => {
+    const val = (e.target as HTMLInputElement).value;
+    setEventData((prev) => ({
+      ...prev,
+      [field!]: val,
+    }));
+  }}
+  style={{
+    flex: 1,
+    fontSize: 14,
+    backgroundColor: 'transparent',
+    border: 'none',
+    color: '#000',
+    padding: 0,
+    margin: 0,
+    outline: 'none',
+    minHeight: 24,
+    cursor: 'pointer',
+  }}
+/>
+
         </View>
       );
     }
-    
-
+  
+    // mobile — ничего не меняем
     return (
       <TouchableOpacity
         onPress={() => handleOpenPicker(field, mode)}
@@ -111,6 +119,7 @@ const EventDateTimeStep: React.FC<EventDateTimeStepProps> = ({
       </TouchableOpacity>
     );
   };
+  
 
   return (
     <View style={styles.container}>

@@ -5,14 +5,19 @@ import IconBack from '@/components/svgConvertedIcons/iconBack';
 import MoreOptionsIcon from '@/components/svgConvertedIcons/MoreOptionsIcon';
 import EventParticipantsIcon from '@/components/svgConvertedIcons/sosIcons/sosHelpersIcon';
 import { getEventParticipants } from '@/api/eventApi';
-import HelperActionModal from '../sos/HelperActionModal';
+import HelperEventMenu from './HelperEventMenu';
 
 interface EventHeaderProps {
   eventId: string;
   onBack: () => void;
+  mode: 'owner' | 'options';
+  onEdit?: () => void;
+  onDelete?: () => void;
+  onPin?: () => void;
 }
 
-const EventHeader: React.FC<EventHeaderProps> = ({ eventId, onBack }) => {
+
+const EventHeader: React.FC<EventHeaderProps> = ({ eventId, onBack, mode, onEdit, onDelete, onPin }) => {
   const [participantCount, setParticipantCount] = useState(0);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const router = useRouter();
@@ -62,11 +67,14 @@ const EventHeader: React.FC<EventHeaderProps> = ({ eventId, onBack }) => {
         </View>
       </View>
 
-      <HelperActionModal
+      <HelperEventMenu
         visible={isModalVisible}
         onClose={() => setIsModalVisible(false)}
-        sosId={eventId}
-        mode="options"
+        eventId={eventId}
+        mode={mode}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onPin={onPin}
       />
     </View>
   );

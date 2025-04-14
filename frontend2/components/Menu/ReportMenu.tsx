@@ -42,12 +42,15 @@ const ReportMenu: React.FC<ReportMenuProps> = ({ isVisible, onClose, userId, typ
     }
   };
 
-  const closeWithAnimation = () => {
+  const closeWithAnimation = (callback?: () => void) => {
     Animated.parallel([
       Animated.timing(translateY, { toValue: 300, duration: 200, useNativeDriver: true }),
       Animated.timing(fadeAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
-    ]).start(onClose);
-  };
+    ]).start(() => {
+      onClose();
+      if (callback) callback();
+    });
+  };  
 
   const handleReportSubmit = async (topicId: string) => {
     try {
@@ -61,13 +64,22 @@ const ReportMenu: React.FC<ReportMenuProps> = ({ isVisible, onClose, userId, typ
         await reportPost(userId, topicId);
       }
   
-      Toast.show({ type: 'success', text1: 'Жалоба отправлена.', position: 'bottom' });
-      
+      // Переносим показ Toast после закрытия
+      closeWithAnimation(() => {
+        Toast.show({
+          type: 'success',
+          text1: 'Жалоба отправлена.',
+        });
+      });
+  
     } catch (error) {
       console.error('❌ Ошибка при отправке жалобы:', error);
-      Toast.show({ type: 'error', text1: 'Ошибка', text2: 'Не удалось отправить жалобу.', position: 'bottom' });
-    } finally {
-      closeWithAnimation();
+      closeWithAnimation(() => {
+        Toast.show({
+          type: 'error',
+          text1: 'Не удалось отправить жалобу.',
+        });
+      });
     }
   };
   
@@ -96,11 +108,21 @@ const ReportMenu: React.FC<ReportMenuProps> = ({ isVisible, onClose, userId, typ
   ).current;
 
   return (
-    <Modal visible={isVisible} transparent>
-      <Animated.View style={[styles.overlay, { opacity: fadeAnim }]} />
-      <TouchableOpacity style={styles.touchableOverlay} activeOpacity={1} onPress={closeWithAnimation}>
-        <Animated.View style={[styles.menuContainer, { transform: [{ translateY }] }]}>  
-          <View style={styles.dragHandleContainer} {...panResponder.panHandlers}>
+    <Modal visible={isVisible} transparent animationType="none">
+      <View style={styles.modalOverlay}>
+        {/* Кликабельный фон */}
+        <TouchableOpacity
+          style={styles.backdropTouchable}
+          activeOpacity={1}
+          onPress={() => closeWithAnimation()}
+        />
+  
+        {/* Bottom Sheet */}
+        <Animated.View
+          style={[styles.menuContainer, { transform: [{ translateY }] }]}
+          {...panResponder.panHandlers}
+        >
+          <View style={styles.dragHandleContainer}>
             <View style={styles.dragHandle} />
           </View>
           <View style={styles.titleContainer}>
@@ -108,47 +130,51 @@ const ReportMenu: React.FC<ReportMenuProps> = ({ isVisible, onClose, userId, typ
           </View>
           {loadingTopics ? (
             <ActivityIndicator size="large" color="#000" />
+          ) : reportTopics.length > 0 ? (
+            reportTopics.map((topic) => (
+              <TouchableOpacity
+                key={topic._id}
+                style={styles.reportButton}
+                onPress={() => handleReportSubmit(topic._id)}
+              >
+                <Text style={styles.reportText}>{topic.name}</Text>
+              </TouchableOpacity>
+            ))
           ) : (
-            reportTopics.length > 0 ? (
-              reportTopics.map((topic) => (
-                <TouchableOpacity key={topic._id} style={styles.reportButton} onPress={() => handleReportSubmit(topic._id)}>
-                  <Text style={styles.reportText}>{topic.name}</Text>
-                </TouchableOpacity>
-              ))
-            ) : (
-              <Text style={styles.noTopicsText}>Нет доступных тем жалоб.</Text>
-            )
+            <Text style={styles.noTopicsText}>Нет доступных тем жалоб.</Text>
           )}
         </Animated.View>
-      </TouchableOpacity>
+      </View>
     </Modal>
   );
+  
 };
 
 const styles = StyleSheet.create({
-  overlay: { 
-    position: 'absolute', 
-    top: 0, 
-    left: 0, 
-    right: 0, 
-    bottom: 0, 
-    backgroundColor: 'rgba(0, 0, 0, 0.3)' 
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
-  touchableOverlay: { 
-    flex: 1, 
-    justifyContent: 'flex-end', 
-    alignSelf: 'center', 
-    width: '100%', 
-    maxWidth: 600 
+  
+  backdropTouchable: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
   },
-  menuContainer: { 
-    backgroundColor: '#fff', 
-    borderTopLeftRadius: 16, 
-    borderTopRightRadius: 16, 
-    paddingHorizontal: 20, 
+  
+  menuContainer: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingHorizontal: 20,
     paddingBottom: 40,
-    gap: 5
+    gap: 5,
+    width: '100%',
+    maxWidth: 600,
+    alignSelf: 'center',
+    zIndex: 2,
   },
+  
   dragHandleContainer: { 
     width: '100%', 
     alignItems: 'center', 

@@ -66,14 +66,13 @@ export interface EventData {
   };
 }
 
-
 export interface CreateEventPayload {
   title: string;
   description?: string;
   hashtags?: string[];
   mentions?: string[];
   photos?: File[];
-  cover?: string; 
+  cover?: string | File;
   from?: 'user' | 'subdivision';
   subdivisionId?: string;
   isOnline: boolean;
@@ -88,6 +87,11 @@ export interface CreateEventPayload {
 
 export interface UpdateEventPayload extends CreateEventPayload {
   existingPhotos?: string[];
+  location?: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  } | null;
 }
 
 const eventApi = axios.create({
@@ -136,7 +140,14 @@ export const updateEvent = async (eventId: string, data: UpdateEventPayload): Pr
   if (data.from) formData.append('from', data.from);
   if (data.subdivisionId) formData.append('subdivisionId', data.subdivisionId);
   formData.append('isOnline', String(data.isOnline));
-  if (!data.isOnline && data.address) formData.append('address', data.address);
+
+  // 🧭 Локация, если офлайн
+  if (!data.isOnline && data.location) {
+    formData.append('address', data.location.address);
+    formData.append('latitude', String(data.location.latitude));
+    formData.append('longitude', String(data.location.longitude));
+  }
+
   formData.append('startDateTime', data.startDateTime);
   formData.append('endDateTime', data.endDateTime);
   formData.append('isFree', String(data.isFree));
@@ -144,12 +155,12 @@ export const updateEvent = async (eventId: string, data: UpdateEventPayload): Pr
   if (data.partnersUsers) formData.append('partnersUsers', JSON.stringify(data.partnersUsers));
   if (data.partnersMarkets) formData.append('partnersMarkets', JSON.stringify(data.partnersMarkets));
 
-  // 🔼 Обновляем фото
+  // 📷 Фото
   data.photos?.forEach(photo => {
     formData.append('photos', photo);
   });
 
-  // ✅ Новая обложка (если передана)
+  // 🖼️ Обложка
   if (data.cover && typeof data.cover !== 'string') {
     formData.append('cover', data.cover);
   }
@@ -160,6 +171,7 @@ export const updateEvent = async (eventId: string, data: UpdateEventPayload): Pr
 
   return response.data.event;
 };
+
 
 // ✅ Удалить мероприятие
 export const deleteEvent = async (eventId: string) => {
