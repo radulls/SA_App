@@ -1,0 +1,1 @@
+// fake core js placeholder

@@ -1,0 +1,83 @@
+{
+  "expo": {
+    "name": "sa",
+    "slug": "sa",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "myapp",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "newArchEnabled": true,
+      "bundleIdentifier": "com.stillrunner.sa",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Приложению требуется доступ к вашей медиатеке для выбора фото и видео",
+        "NSPhotoLibraryAddUsageDescription": "Приложению требуется доступ для сохранения медиафайлов",
+        "NSCameraUsageDescription": "Приложению требуется доступ к камере для съемки фото и видео",
+        "NSMicrophoneUsageDescription": "Приложению требуется доступ к микрофону для записи видео со звуком"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "newArchEnabled": true,
+      "package": "com.stillrunner.sa",
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_MEDIA_LOCATION"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png",
+      "build": {
+        "babel": {
+          "include": ["ffmpeg-kit-react-native"]
+        }
+      }
+    },    
+    "plugins": [
+      "expo-router",
+      [
+        "expo-font",
+        {
+          "custom": {
+            "SFUIDisplayBold": "./assets/fonts/SFUIDisplay-Bold.otf"
+          }
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Разрешите доступ к вашей медиатеке для выбора фото и видео",
+          "savePhotosPermission": "Разрешите доступ для сохранения медиафайлов",
+          "isAccessMediaLocationEnabled": true
+        }
+      ],
+      "expo-video"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "55854dc2-aa51-42db-aa56-c0022ba2f51d"
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+/* globals.css */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  pointer-events: none; /* если хочешь отключить клики */
+}
