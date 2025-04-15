@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   sheet: {
-    maxHeight: '70%', 
+    height: '70%', 
     backgroundColor: '#fff',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
