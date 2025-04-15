@@ -20,6 +20,7 @@ import * as FileSystem from 'expo-file-system';
 import { Ionicons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
 import CheckMarkIcon from '../svgConvertedIcons/checkMarkIcon';
+import { useRouter } from 'expo-router';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -34,6 +35,7 @@ interface MediaAsset extends MediaLibrary.Asset {
 }
 
 const SelectMediaStep: React.FC<Props> = ({ media, setMedia, onNext }) => {
+  const router = useRouter();
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [albums, setAlbums] = useState<MediaLibrary.Album[]>([]);
@@ -43,6 +45,9 @@ const SelectMediaStep: React.FC<Props> = ({ media, setMedia, onNext }) => {
   const [showAlbumsDropdown, setShowAlbumsDropdown] = useState(false);
   const [previewItem, setPreviewItem] = useState<MediaAsset | null>(null);
   
+  const handleBack = () => {
+    router.push('/home');
+  }
   const albumSelectorRef = useRef<any>(null);
 
   const cleanUri = (uri: string): string => {
@@ -363,7 +368,7 @@ const SelectMediaStep: React.FC<Props> = ({ media, setMedia, onNext }) => {
       <View style={styles.contentContainer}>
         {/* Хэдер */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => setMedia({ photos: [], videos: [] })}>
+          <TouchableOpacity onPress={handleBack}>
             <Text style={styles.headerText}>Отмена</Text>
           </TouchableOpacity>
 
