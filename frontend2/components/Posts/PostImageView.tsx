@@ -9,10 +9,10 @@ interface PostImageViewProps {
 const PostImageView: React.FC<PostImageViewProps> = ({ uri, maxWidth = Dimensions.get('window').width }) => {
   const [aspectRatio, setAspectRatio] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+
   const screenWidth = Dimensions.get('window').width;
   const screenHeight = Dimensions.get('window').height;
-
-  const finalWidth = Platform.OS === 'web' ? Math.min(maxWidth, 600) : screenWidth;
+  const finalWidth = Math.min(maxWidth, screenWidth);
 
   useEffect(() => {
     Image.getSize(
@@ -36,29 +36,18 @@ const PostImageView: React.FC<PostImageViewProps> = ({ uri, maxWidth = Dimension
     );
   }
 
-  const isTall = aspectRatio < 0.8;
-  const isWide = aspectRatio > 1.2;
+  // Вычисляем размер с ограничением по экрану
+  let width = finalWidth;
+  let height = width / aspectRatio;
 
-  let imageStyle = {
-    width: finalWidth,
-    height: finalWidth,
-  };
-
-  if (isTall) {
-    imageStyle = {
-      width: finalWidth,
-      height: screenHeight * 0.92,
-    };
-  } else if (isWide) {
-    imageStyle = {
-      width: finalWidth,
-      height: finalWidth / aspectRatio,
-    };
+  if (height > screenHeight) {
+    height = screenHeight;
+    width = height * aspectRatio;
   }
 
   return (
-    <View style={[styles.imageWrapper, { width: finalWidth, justifyContent: isWide ? 'center' : 'flex-start' }]}>
-      <Image source={{ uri }} resizeMode="cover" style={imageStyle} />
+    <View style={[styles.imageWrapper, { width, height }]}>
+      <Image source={{ uri }} resizeMode="contain" style={{ width, height }} />
     </View>
   );
 };
@@ -67,6 +56,7 @@ const styles = StyleSheet.create({
   imageWrapper: {
     backgroundColor: '#000',
     alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

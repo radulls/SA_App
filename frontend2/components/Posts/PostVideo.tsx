@@ -1,6 +1,6 @@
 import { ResizeMode, Video } from 'expo-av';
 import React, { useEffect, useRef, useState } from 'react';
-import { Platform, View, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { Platform, View, StyleSheet, Text, TouchableOpacity, Image } from 'react-native';
 
 interface PostVideoProps {
   uri: string;
@@ -11,29 +11,24 @@ interface PostVideoProps {
 const PostVideo: React.FC<PostVideoProps> = ({ uri, preview, onPress }) => {
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
   const [error, setError] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (Platform.OS === 'web' && videoRef.current) {
       const video = videoRef.current;
-  
+
       const handleLoadedData = () => {
+        setIsLoaded(true);
         video.currentTime = 0.1;
       };
-  
-      const handleSeeked = () => {
-        video.pause(); // только после того, как кадр обновился
-      };
-  
+
       video.addEventListener('loadeddata', handleLoadedData);
-      video.addEventListener('seeked', handleSeeked);
-  
       return () => {
         video.removeEventListener('loadeddata', handleLoadedData);
-        video.removeEventListener('seeked', handleSeeked);
       };
     }
-  }, [videoSrc]);  
+  }, [videoSrc]);
 
   useEffect(() => {
     if (Platform.OS === 'web') {
@@ -43,6 +38,7 @@ const PostVideo: React.FC<PostVideoProps> = ({ uri, preview, onPress }) => {
           const mimeType = uri.substring(uri.indexOf(':') + 1, uri.indexOf(';'));
           const byteCharacters = atob(base64Data);
           const byteArrays = [];
+
           for (let i = 0; i < byteCharacters.length; i += 512) {
             const slice = byteCharacters.slice(i, i + 512);
             const byteNumbers = new Array(slice.length);
@@ -52,6 +48,7 @@ const PostVideo: React.FC<PostVideoProps> = ({ uri, preview, onPress }) => {
             const byteArray = new Uint8Array(byteNumbers);
             byteArrays.push(byteArray);
           }
+
           const blob = new Blob(byteArrays, { type: mimeType });
           const url = URL.createObjectURL(blob);
           setVideoSrc(url);
@@ -65,54 +62,35 @@ const PostVideo: React.FC<PostVideoProps> = ({ uri, preview, onPress }) => {
     }
   }, [uri]);
 
-  if (Platform.OS === 'web') {
-    if (error) {
+    if (Platform.OS === 'web') {
       return (
-        <View style={styles.wrapper}>
-          <Text style={styles.error}>Не удалось загрузить видео</Text>
-        </View>
+        <TouchableOpacity onPress={onPress} style={styles.wrapper}>
+          <Image
+            source={{ uri: preview || '' }}
+            resizeMode="cover"
+            style={StyleSheet.absoluteFill}
+          />
+        </TouchableOpacity>
       );
     }
-
+  
     return (
-      <View style={styles.wrapper}>
-       <video
-          ref={videoRef}
-          src={videoSrc || ''}
-          muted
-          playsInline
-          preload="metadata"
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+      <TouchableOpacity onPress={onPress} style={styles.wrapper}>
+        <Video
+          source={{ uri }}
+          resizeMode={ResizeMode.COVER}
+          shouldPlay={false}
+          isMuted
+          useNativeControls={false}
+          usePoster={!!preview}
+          posterSource={preview ? { uri: preview } : undefined}
+          style={styles.nativeVideo}
+          onError={() => {}}
         />
-
-
-        {onPress && (
-          <TouchableOpacity
-            style={StyleSheet.absoluteFill}
-            onPress={onPress}
-          />
-        )}
-      </View>
+      </TouchableOpacity>
     );
-  }
-
-  return (
-    <TouchableOpacity onPress={onPress} style={styles.wrapper}>
-      <Video
-        source={{ uri }}
-        resizeMode={ResizeMode.COVER}
-        shouldPlay={false}
-        isMuted
-        useNativeControls={false}
-        usePoster={!!preview}
-        posterSource={preview ? { uri: preview } : undefined}
-        style={styles.nativeVideo}
-        onError={() => setError(true)}
-      />
-    </TouchableOpacity>
-  );
-};
-
+  };
+  
 const styles = StyleSheet.create({
   wrapper: {
     width: '100%',

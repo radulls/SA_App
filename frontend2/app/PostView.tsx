@@ -18,7 +18,7 @@ import LikeIcon from '@/components/svgConvertedIcons/Posts/likeIcon';
 import CommentIcon from '@/components/svgConvertedIcons/Posts/commentIcon';
 import RepostIcon from '@/components/svgConvertedIcons/Posts/repostIcon';
 import IconBack from '@/components/svgConvertedIcons/iconBack';
-import PostImageView from '@/components/Posts/PostImageView';
+import PostMediaView from '@/components/Posts/PostMediaView';
 import moment from 'moment';
 
 const PostView = () => {
@@ -94,7 +94,17 @@ const PostView = () => {
 
         {/* Фото */}
         <View style={styles.imageContainer}>
-          <PostImageView uri={`${POST_IMAGE_URL}${post.photos[selectedIndex]}`} maxWidth={600}/>
+          <PostMediaView
+            uri={
+              post.photos?.length
+                ? `${POST_IMAGE_URL}${post.photos[selectedIndex]}`
+                : `${POST_IMAGE_URL}${post.videos[selectedIndex - post.photos.length]}`
+            }
+            preview={post.videoPreviews?.[selectedIndex - post.photos.length]
+              ? `${POST_IMAGE_URL}${post.videoPreviews[selectedIndex - post.photos.length]}`
+              : undefined}
+            maxWidth={600}
+          />
         </View>
 
         {/* Контент */}
